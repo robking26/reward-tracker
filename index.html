@@ -14,9 +14,28 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
+  :root {
+    --bg: #0a0a0a;
+    --surface: #161616;
+    --surface-2: #1f1f1f;
+    --surface-3: #2a2a2a;
+    --border: #2a2a2a;
+    --text: #f5f5f5;
+    --text-dim: #888;
+    --text-faint: #555;
+    --ring-track: #2a2a2a;
+    --accent: #b87333;
+    --accent-bright: #c8843d;
+    --accent-soft: rgba(184, 115, 51, 0.14);
+    --accent-tint: rgba(184, 115, 51, 0.06);
+    --accent-border: rgba(184, 115, 51, 0.25);
+    --ring-fill: #c8843d;
+    --ring-fill-glow: rgba(200, 132, 61, 0.4);
+  }
+
   html, body {
-    background: #0a0a0a;
-    color: #f5f5f5;
+    background: var(--bg);
+    color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
     min-height: 100vh;
     min-height: 100dvh;
@@ -26,15 +45,16 @@
     padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
   }
 
+  /* TOP HEADER */
   .top-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 8px 0 24px;
+    margin: 8px 0 20px;
   }
   .header-greeting {
     font-size: 13px;
-    color: #888;
+    color: var(--text-dim);
     margin-bottom: 2px;
   }
   .header-day {
@@ -46,9 +66,9 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: #161616;
-    border: 1px solid #2a2a2a;
-    color: #888;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -59,7 +79,7 @@
   }
   .refresh-btn:active {
     transform: scale(0.92);
-    background: #1f1f1f;
+    background: var(--surface-2);
   }
   .refresh-btn.spinning { animation: spin 0.8s linear infinite; }
   @keyframes spin {
@@ -67,22 +87,23 @@
     to { transform: rotate(360deg); }
   }
 
+  /* STATUS BADGE */
   .status-strip {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     padding: 0 2px;
   }
   .status-badge-strip {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: rgba(184, 115, 51, 0.14);
-    padding: 5px 11px;
+    background: var(--accent-soft);
+    padding: 6px 12px;
     border-radius: 100px;
     font-size: 10px;
-    color: #c8843d;
+    color: var(--accent-bright);
     text-transform: uppercase;
     letter-spacing: 0.12em;
     font-weight: 700;
@@ -92,15 +113,21 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #c8843d;
+    background: var(--accent-bright);
+  }
+  .status-strip-meta {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: auto;
   }
 
+  /* LOADING / ERROR */
   .loading {
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 60px 0;
-    color: #555;
+    color: var(--text-faint);
     font-size: 14px;
   }
   .loading::after {
@@ -116,7 +143,6 @@
     75% { content: '..'; }
     100% { content: '...'; }
   }
-
   .error-card {
     background: rgba(232, 116, 109, 0.1);
     border: 1px solid rgba(232, 116, 109, 0.3);
@@ -138,147 +164,314 @@
     background: rgba(0,0,0,0.3);
     border-radius: 6px;
     font-size: 12px;
-    color: #f5f5f5;
+    color: var(--text);
     word-break: break-all;
   }
 
+  /* WEEK CARD */
   .week-card {
-    background: #161616;
-    border: 1px solid #2a2a2a;
-    border-radius: 20px;
-    padding: 22px 20px;
-    margin-bottom: 16px;
+    background: var(--surface);
+    border-radius: 22px;
+    padding: 22px 18px;
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
   }
-  .week-card-title {
-    font-size: 12px;
-    color: #888;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-weight: 600;
-    margin-bottom: 16px;
-  }
-  .week-total {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    margin-bottom: 4px;
-  }
-  .week-total-num {
-    font-size: 48px;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 1;
-    color: #c8843d;
-  }
-  .week-total-label {
-    font-size: 14px;
-    color: #555;
-  }
-  .week-meta {
-    font-size: 12px;
-    color: #888;
-    margin-bottom: 18px;
-  }
-
-  .days-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    background: #2a2a2a;
-    border-radius: 14px;
-    overflow: hidden;
-  }
-  .day-row {
-    background: #161616;
-    padding: 14px 16px;
+  .week-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 14px;
   }
-  .day-row.today {
-    background: rgba(184, 115, 51, 0.06);
-  }
-  .day-name {
-    font-size: 14px;
-    font-weight: 500;
-  }
-  .day-row.today .day-name {
-    color: #c8843d;
-    font-weight: 700;
-  }
-  .day-name .day-date {
-    font-size: 11px;
-    color: #555;
-    margin-left: 6px;
-    font-weight: 400;
-  }
-  .day-right {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  .day-steps {
-    font-size: 14px;
-    color: #888;
-    font-variant-numeric: tabular-nums;
-  }
-  .day-points {
-    background: rgba(184, 115, 51, 0.15);
-    color: #c8843d;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 700;
-    min-width: 36px;
-    text-align: center;
-  }
-  .day-points.zero {
-    background: #1f1f1f;
-    color: #555;
-  }
-
-  .activity-card {
-    background: #161616;
-    border: 1px solid #2a2a2a;
-    border-radius: 20px;
-    padding: 18px 20px;
-    margin-bottom: 16px;
-  }
-  .activity-card-title {
+  .week-card-title {
     font-size: 12px;
-    color: #888;
+    color: var(--text-dim);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     font-weight: 600;
+  }
+  .week-card-link {
+    font-size: 11px;
+    color: var(--accent-bright);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.5;
+  }
+
+  /* HERO RING */
+  .week-ring-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 22px;
+  }
+  .week-ring {
+    width: 200px;
+    height: 200px;
+    position: relative;
+  }
+  .week-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+  .week-ring .ring-track {
+    fill: none;
+    stroke: var(--ring-track);
+    stroke-width: 13;
+  }
+  .week-ring .ring-fill {
+    fill: none;
+    stroke: var(--ring-fill);
+    stroke-width: 13;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 12px var(--ring-fill-glow));
+    transition: stroke-dashoffset 1s cubic-bezier(0.34, 1.2, 0.64, 1);
+  }
+  .week-ring-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .week-ring-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 4px;
+  }
+  .week-ring-number {
+    font-size: 58px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    color: var(--text);
+  }
+  .week-ring-target {
+    font-size: 16px;
+    color: var(--text-faint);
+    margin-top: 2px;
+    font-weight: 500;
+  }
+
+  /* DAYS ROW */
+  .days-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0;
     margin-bottom: 12px;
+  }
+  .day-mini {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+  }
+  .day-mini-ring {
+    width: 30px;
+    height: 30px;
+    position: relative;
+  }
+  .day-mini-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+  .day-mini-ring .ring-track {
+    fill: none;
+    stroke: var(--ring-track);
+    stroke-width: 2.5;
+  }
+  .day-mini-ring .ring-fill {
+    fill: none;
+    stroke: var(--ring-fill);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+  }
+  .day-mini-ring.future .ring-track {
+    stroke: var(--ring-track);
+    stroke-dasharray: 2 3;
+  }
+  .day-mini-num {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ring-fill);
+  }
+  .day-mini-num.zero { color: var(--text-faint); font-weight: 500; }
+  .day-mini-num.future { color: transparent; }
+  .day-mini-letter {
+    font-size: 9px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+  }
+  .day-mini.today .day-mini-letter {
+    color: var(--accent-bright);
+    font-weight: 700;
+  }
+  .day-mini.today .day-mini-ring {
+    outline: 1.5px solid var(--text);
+    outline-offset: 2px;
+    border-radius: 50%;
+  }
+
+  /* WEEK FOOTER */
+  .week-footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 6px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .week-footer strong { color: var(--text); font-weight: 600; }
+
+  /* SECONDARY CARDS */
+  .secondary-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .small-card {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 12px;
+    border: 1px solid var(--border);
+  }
+  .small-card-label {
+    font-size: 9px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 5px;
+  }
+  .small-card-value {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+    color: var(--text);
+  }
+  .small-card-meta {
+    font-size: 10px;
+    color: var(--text-faint);
+  }
+  .cluster-dots {
+    display: flex;
+    gap: 5px;
+    margin-top: 4px;
+  }
+  .dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+  }
+  .dot.filled {
+    background: var(--accent-bright);
+    border-color: var(--accent-bright);
+  }
+
+  /* REWARD STRIP */
+  .reward-strip {
+    background: linear-gradient(135deg, var(--accent-soft), var(--accent-tint));
+    border: 1px solid var(--accent-border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+  }
+  .reward-strip-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--accent-bright);
+    color: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+  .reward-strip-text { flex: 1; }
+  .reward-strip-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .reward-strip-detail {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .reward-strip-arrow {
+    color: var(--accent-bright);
+    font-size: 16px;
+  }
+
+  /* ACTIVITY */
+  .activity-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+  }
+  .activity-card-title {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    margin-bottom: 10px;
   }
   .activity-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid #2a2a2a;
-    font-size: 14px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
   }
   .activity-row:last-child { border-bottom: none; }
-  .activity-label { color: #f5f5f5; }
-  .activity-meta { color: #888; font-size: 12px; }
-  .activity-value { color: #c8843d; font-weight: 600; }
+  .activity-label { color: var(--text); }
+  .activity-meta { color: var(--text-dim); font-size: 11px; }
+  .activity-value {
+    color: var(--accent-bright);
+    font-weight: 600;
+  }
   .activity-empty {
     text-align: center;
-    color: #555;
-    font-size: 13px;
-    padding: 12px 0;
+    color: var(--text-faint);
+    font-size: 12px;
+    padding: 8px 0;
   }
 
+  /* SYNC */
   .sync-footer {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    font-size: 11px;
-    color: #555;
-    margin: 16px 0 8px;
+    font-size: 10px;
+    color: var(--text-faint);
+    margin: 14px 0 6px;
   }
   .sync-dot {
     width: 6px;
@@ -291,10 +484,10 @@
   .v-tag {
     text-align: center;
     color: #333;
-    font-size: 10px;
+    font-size: 9px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    margin-top: 24px;
+    margin-top: 16px;
   }
 </style>
 </head>
@@ -310,6 +503,7 @@
 
 <div class="status-strip">
   <div class="status-badge-strip">Bronze · 2026</div>
+  <div class="status-strip-meta" id="statusMeta">16 weeks to Silver</div>
 </div>
 
 <div id="content">
@@ -321,9 +515,10 @@
   <span id="syncText">Waiting</span>
 </div>
 
-<div class="v-tag">Reward Tracker · v0.2.1</div>
+<div class="v-tag">Reward Tracker · v0.3</div>
 
 <script>
+  // ===== GREETING =====
   function setGreeting() {
     const hour = new Date().getHours();
     let greeting;
@@ -339,6 +534,7 @@
   }
   setGreeting();
 
+  // ===== SCORING =====
   function stepsToPoints(stepCount) {
     if (stepCount >= 12500) return 8;
     if (stepCount >= 10000) return 5;
@@ -363,13 +559,15 @@
     return Math.min(raw, 8);
   }
 
+  // ===== DATES =====
   function getWeekDays() {
     const today = new Date();
     today.setHours(0,0,0,0);
     const todayDow = (today.getDay() + 6) % 7;
     const monday = new Date(today);
     monday.setDate(today.getDate() - todayDow);
-    const letters = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const letters = ['M','T','W','T','F','S','S'];
+    const fullNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const days = [];
     for (let i = 0; i < 7; i++) {
       const d = new Date(monday);
@@ -378,7 +576,8 @@
       days.push({
         key,
         date: d,
-        name: letters[i],
+        letter: letters[i],
+        fullName: fullNames[i],
         isFuture: d > today,
         isToday: d.getTime() === today.getTime()
       });
@@ -386,9 +585,6 @@
     return days;
   }
 
-  // ===== DATE SHIFT HELPER =====
-  // Steps/swims logged on day N+1 actually represent activity from day N.
-  // Subtract one day from the sheet date to get the actual activity date.
   function shiftDateBackOne(dateStr) {
     if (!dateStr) return null;
     const [y, m, d] = dateStr.split('-').map(Number);
@@ -397,6 +593,36 @@
     return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
   }
 
+  function formatActivityDate(dateStr) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const diff = Math.round((today - date) / 86400000);
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Yesterday';
+    return date.toLocaleDateString('en-GB', { weekday: 'long' });
+  }
+
+  // ===== RINGS =====
+  function ringSvg(score, size, strokeWidth, max = 8) {
+    const r = (size - strokeWidth) / 2;
+    const cx = size / 2;
+    const cy = size / 2;
+    const circumference = 2 * Math.PI * r;
+    const fillRatio = Math.min(score / max, 1);
+    const dashOffset = circumference * (1 - fillRatio);
+    return `
+      <svg viewBox="0 0 ${size} ${size}">
+        <circle class="ring-track" cx="${cx}" cy="${cy}" r="${r}"></circle>
+        <circle class="ring-fill" cx="${cx}" cy="${cy}" r="${r}"
+                stroke-dasharray="${circumference}"
+                stroke-dashoffset="${dashOffset}"></circle>
+      </svg>
+    `;
+  }
+
+  // ===== LOAD =====
   async function loadData() {
     if (APPS_SCRIPT_URL === "PASTE_YOUR_URL_HERE") {
       showError(
@@ -444,24 +670,25 @@
     document.getElementById('syncText').textContent = text;
   }
 
+  // ===== RENDER =====
   function render(data) {
     const weekDays = getWeekDays();
 
-    // SHIFT: steps logged today are yesterday's data, so subtract one day from each sheet date
+    // Shift step dates back one day (logged the morning after)
     const stepsByDate = {};
     (data.steps || []).forEach(s => {
       const actualDate = shiftDateBackOne(s.date);
       if (actualDate) stepsByDate[actualDate] = s.count;
     });
 
-    // SHIFT: same logic for swims
+    // Shift swim dates back one day
     const swimsByDate = {};
     (data.swims || []).forEach(s => {
       const actualDate = shiftDateBackOne(s.date);
       if (actualDate) swimsByDate[actualDate] = s.distance;
     });
 
-    // NO SHIFT: gym visits are logged in real time (via geofence trigger)
+    // Gym visits — no shift, logged real-time
     const gymVisits = data.gymVisits || [];
 
     const dayResults = weekDays.map(day => {
@@ -473,90 +700,144 @@
 
     const weekTotal = dayResults.reduce((sum, d) => sum + (d.points || 0), 0);
 
+    // Last activity
+    let lastActivity = 'no activity yet';
+    for (let i = dayResults.length - 1; i >= 0; i--) {
+      const d = dayResults[i];
+      if (d.points && d.points > 0) {
+        if (d.isToday) lastActivity = 'today';
+        else {
+          const diff = Math.round((new Date(weekDays[6].date) - d.date) / 86400000);
+          if (diff === 0) lastActivity = 'today';
+          else lastActivity = formatActivityDate(d.key).toLowerCase();
+        }
+        break;
+      }
+    }
+
+    // Activity for this week
     const weekStart = weekDays[0].key;
     const weekEnd = weekDays[6].key;
     const recentVisits = gymVisits.filter(v =>
       v.date >= weekStart && v.date <= weekEnd && v.event === 'entry'
     );
-
-    // For swims display, we want to show by actual swim date (not sheet date)
     const recentSwims = Object.entries(swimsByDate)
       .filter(([date, distance]) => date >= weekStart && date <= weekEnd && distance > 0)
       .map(([date, distance]) => ({ date, distance }));
 
-    document.getElementById('content').innerHTML = `
-      <div class="week-card">
-        <div class="week-card-title">This week</div>
-        <div class="week-total">
-          <span class="week-total-num">${weekTotal}</span>
-          <span class="week-total-label">/ 50 points</span>
+    // Reward strip
+    let rewardStrip = '';
+    if (weekTotal >= 50) {
+      rewardStrip = `
+        <div class="reward-strip">
+          <div class="reward-strip-icon">★</div>
+          <div class="reward-strip-text">
+            <div class="reward-strip-title">Tier 2 unlocked</div>
+            <div class="reward-strip-detail">Pick your reward before next Sunday</div>
+          </div>
+          <div class="reward-strip-arrow">›</div>
         </div>
-        <div class="week-meta">${weekTotal >= 50 ? 'Tier 2 reached.' : weekTotal >= 40 ? 'Tier 1 reached.' : (50 - weekTotal) + ' more for Tier 2.'}</div>
-
-        <div class="days-list">
-          ${dayResults.map(d => renderDayRow(d)).join('')}
-        </div>
-      </div>
-
-      <div class="activity-card">
-        <div class="activity-card-title">This week's activity</div>
-        ${recentVisits.length === 0 && recentSwims.length === 0 ? `
-          <div class="activity-empty">No gym visits or swims yet this week</div>
-        ` : ''}
-        ${recentVisits.map(v => `
-          <div class="activity-row">
-            <div>
-              <div class="activity-label">Gym visit</div>
-              <div class="activity-meta">${formatActivityDate(v.date)}${v.time ? ' · ' + v.time : ''}</div>
-            </div>
-            <div class="activity-value">+5</div>
+      `;
+    } else if (weekTotal >= 40) {
+      rewardStrip = `
+        <div class="reward-strip">
+          <div class="reward-strip-icon">★</div>
+          <div class="reward-strip-text">
+            <div class="reward-strip-title">Tier 1 unlocked</div>
+            <div class="reward-strip-detail">Pick now, or push for Tier 2</div>
           </div>
-        `).join('')}
-        ${recentSwims.map(s => `
-          <div class="activity-row">
-            <div>
-              <div class="activity-label">Swim</div>
-              <div class="activity-meta">${formatActivityDate(s.date)} · ${Math.round(s.distance)}m</div>
-            </div>
-            <div class="activity-value">+5</div>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  }
-
-  function renderDayRow(day) {
-    if (day.isFuture) {
-      return `
-        <div class="day-row">
-          <div class="day-name">${day.name} <span class="day-date">${day.date.getDate()}</span></div>
-          <div class="day-right">
-            <div class="day-steps">—</div>
-            <div class="day-points zero">·</div>
-          </div>
+          <div class="reward-strip-arrow">›</div>
         </div>
       `;
     }
-    return `
-      <div class="day-row ${day.isToday ? 'today' : ''}">
-        <div class="day-name">${day.name} <span class="day-date">${day.date.getDate()}</span></div>
-        <div class="day-right">
-          <div class="day-steps">${day.steps.toLocaleString()} steps</div>
-          <div class="day-points ${day.points === 0 ? 'zero' : ''}">${day.points}</div>
+
+    document.getElementById('content').innerHTML = `
+      <div class="week-card">
+        <div class="week-card-header">
+          <div class="week-card-title">Points this week</div>
+          <div class="week-card-link">View statement ›</div>
+        </div>
+
+        <div class="week-ring-wrap">
+          <div class="week-ring">
+            ${ringSvg(weekTotal, 200, 13, 50)}
+            <div class="week-ring-center">
+              <div class="week-ring-label">This week</div>
+              <div class="week-ring-number">${weekTotal}</div>
+              <div class="week-ring-target">/ 50</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="days-row">
+          ${dayResults.map(d => renderDayMini(d)).join('')}
+        </div>
+
+        <div class="week-footer">
+          Last points earned <strong>${lastActivity}</strong>
         </div>
       </div>
+
+      <div class="secondary-row">
+        <div class="small-card">
+          <div class="small-card-label">Cluster</div>
+          <div class="small-card-value">0 / 4</div>
+          <div class="cluster-dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+        </div>
+        <div class="small-card">
+          <div class="small-card-label">To Silver</div>
+          <div class="small-card-value">16 wks</div>
+          <div class="small-card-meta">0 / 16 done</div>
+        </div>
+      </div>
+
+      ${rewardStrip}
+
+      ${(recentVisits.length > 0 || recentSwims.length > 0) ? `
+        <div class="activity-card">
+          <div class="activity-card-title">This week's activity</div>
+          ${recentVisits.map(v => `
+            <div class="activity-row">
+              <div>
+                <div class="activity-label">Gym visit</div>
+                <div class="activity-meta">${formatActivityDate(v.date)}${v.time ? ' · ' + v.time : ''}</div>
+              </div>
+              <div class="activity-value">+5</div>
+            </div>
+          `).join('')}
+          ${recentSwims.map(s => `
+            <div class="activity-row">
+              <div>
+                <div class="activity-label">Swim</div>
+                <div class="activity-meta">${formatActivityDate(s.date)} · ${Math.round(s.distance)}m</div>
+              </div>
+              <div class="activity-value">+5</div>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
     `;
   }
 
-  function formatActivityDate(dateStr) {
-    const [y, m, d] = dateStr.split('-').map(Number);
-    const date = new Date(y, m - 1, d);
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const diff = Math.round((today - date) / 86400000);
-    if (diff === 0) return 'Today';
-    if (diff === 1) return 'Yesterday';
-    return date.toLocaleDateString('en-GB', { weekday: 'long' });
+  function renderDayMini(d) {
+    return `
+      <div class="day-mini ${d.isToday ? 'today' : ''}">
+        <div class="day-mini-ring ${d.isFuture ? 'future' : ''}">
+          ${d.isFuture ? `
+            <svg viewBox="0 0 30 30">
+              <circle class="ring-track" cx="15" cy="15" r="13.75"></circle>
+            </svg>
+          ` : ringSvg(d.points, 30, 2.5, 8)}
+          <div class="day-mini-num ${d.points === 0 ? 'zero' : ''} ${d.isFuture ? 'future' : ''}">${d.isFuture ? '' : d.points}</div>
+        </div>
+        <div class="day-mini-letter">${d.letter}</div>
+      </div>
+    `;
   }
 
   loadData();
