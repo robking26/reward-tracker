@@ -9,7 +9,7 @@
 <title>Reward Tracker</title>
 <script>
   // 👇 PASTE YOUR GOOGLE APPS SCRIPT URL BELOW (the one ending in /exec)
-  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzWFaZRctlYwlQUknF5WTDsDvJfEF64G-C9fCfu6m-NtnwhuHVYIRtUne6i6Vib3y-z/exec";
+  const APPS_SCRIPT_URL = "PASTE_YOUR_URL_HERE";
 </script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -26,7 +26,6 @@
     padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
   }
 
-  /* Header */
   .top-header {
     display: flex;
     justify-content: space-between;
@@ -62,15 +61,12 @@
     transform: scale(0.92);
     background: #1f1f1f;
   }
-  .refresh-btn.spinning {
-    animation: spin 0.8s linear infinite;
-  }
+  .refresh-btn.spinning { animation: spin 0.8s linear infinite; }
   @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
   }
 
-  /* Status badge */
   .status-strip {
     display: flex;
     align-items: center;
@@ -99,7 +95,6 @@
     background: #c8843d;
   }
 
-  /* Loading */
   .loading {
     display: flex;
     align-items: center;
@@ -122,7 +117,6 @@
     100% { content: '...'; }
   }
 
-  /* Error */
   .error-card {
     background: rgba(232, 116, 109, 0.1);
     border: 1px solid rgba(232, 116, 109, 0.3);
@@ -148,7 +142,6 @@
     word-break: break-all;
   }
 
-  /* Week summary */
   .week-card {
     background: #161616;
     border: 1px solid #2a2a2a;
@@ -187,7 +180,6 @@
     margin-bottom: 18px;
   }
 
-  /* Days */
   .days-list {
     display: flex;
     flex-direction: column;
@@ -245,7 +237,6 @@
     color: #555;
   }
 
-  /* Activity */
   .activity-card {
     background: #161616;
     border: 1px solid #2a2a2a;
@@ -280,7 +271,6 @@
     padding: 12px 0;
   }
 
-  /* Sync */
   .sync-footer {
     display: flex;
     align-items: center;
@@ -331,7 +321,7 @@
   <span id="syncText">Waiting</span>
 </div>
 
-<div class="v-tag">Reward Tracker · v0.2</div>
+<div class="v-tag">Reward Tracker · v0.2.1</div>
 
 <script>
   function setGreeting() {
@@ -361,15 +351,15 @@
     return onDate.length > 0 ? 5 : 0;
   }
 
-  function swimPoints(swims, dateStr) {
-    const onDate = swims.filter(s => s.date === dateStr && s.distance > 0);
-    return onDate.length > 0 ? 5 : 0;
+  function swimPoints(swimsByDate, dateStr) {
+    const distance = swimsByDate[dateStr] || 0;
+    return distance > 0 ? 5 : 0;
   }
 
-  function dailyTotal(stepCount, gymVisits, swims, dateStr) {
+  function dailyTotal(stepCount, gymVisits, swimsByDate, dateStr) {
     const raw = stepsToPoints(stepCount)
               + visitPoints(gymVisits, dateStr)
-              + swimPoints(swims, dateStr);
+              + swimPoints(swimsByDate, dateStr);
     return Math.min(raw, 8);
   }
 
@@ -396,11 +386,22 @@
     return days;
   }
 
+  // ===== DATE SHIFT HELPER =====
+  // Steps/swims logged on day N+1 actually represent activity from day N.
+  // Subtract one day from the sheet date to get the actual activity date.
+  function shiftDateBackOne(dateStr) {
+    if (!dateStr) return null;
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    date.setDate(date.getDate() - 1);
+    return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+  }
+
   async function loadData() {
     if (APPS_SCRIPT_URL === "PASTE_YOUR_URL_HERE") {
       showError(
         "Setup incomplete",
-        "The Apps Script URL hasn't been pasted in yet. Open index.html in a text editor, find APPS_SCRIPT_URL near the top, and replace the placeholder with your /exec URL.",
+        "The Apps Script URL hasn't been pasted in yet. Open index.html in a text editor, find APPS_SCRIPT_URL near the top, and replace the placeholder.",
         null
       );
       return;
@@ -418,7 +419,7 @@
     } catch (err) {
       showError(
         "Couldn't reach your data",
-        "Either the URL is wrong, the deployment access isn't 'Anyone', or you're offline. Double-check the URL ends in /exec, and that the deployment access is Anyone.",
+        "Either the URL is wrong, the deployment access isn't 'Anyone', or you're offline.",
         err.message
       );
       updateSync('error', 'Sync failed');
@@ -445,13 +446,28 @@
 
   function render(data) {
     const weekDays = getWeekDays();
+
+    // SHIFT: steps logged today are yesterday's data, so subtract one day from each sheet date
     const stepsByDate = {};
-    (data.steps || []).forEach(s => { stepsByDate[s.date] = s.count; });
+    (data.steps || []).forEach(s => {
+      const actualDate = shiftDateBackOne(s.date);
+      if (actualDate) stepsByDate[actualDate] = s.count;
+    });
+
+    // SHIFT: same logic for swims
+    const swimsByDate = {};
+    (data.swims || []).forEach(s => {
+      const actualDate = shiftDateBackOne(s.date);
+      if (actualDate) swimsByDate[actualDate] = s.distance;
+    });
+
+    // NO SHIFT: gym visits are logged in real time (via geofence trigger)
+    const gymVisits = data.gymVisits || [];
 
     const dayResults = weekDays.map(day => {
       if (day.isFuture) return { ...day, steps: null, points: null };
       const steps = stepsByDate[day.key] || 0;
-      const points = dailyTotal(steps, data.gymVisits || [], data.swims || [], day.key);
+      const points = dailyTotal(steps, gymVisits, swimsByDate, day.key);
       return { ...day, steps, points };
     });
 
@@ -459,12 +475,14 @@
 
     const weekStart = weekDays[0].key;
     const weekEnd = weekDays[6].key;
-    const recentVisits = (data.gymVisits || []).filter(v =>
+    const recentVisits = gymVisits.filter(v =>
       v.date >= weekStart && v.date <= weekEnd && v.event === 'entry'
     );
-    const recentSwims = (data.swims || []).filter(s =>
-      s.date >= weekStart && s.date <= weekEnd && s.distance > 0
-    );
+
+    // For swims display, we want to show by actual swim date (not sheet date)
+    const recentSwims = Object.entries(swimsByDate)
+      .filter(([date, distance]) => date >= weekStart && date <= weekEnd && distance > 0)
+      .map(([date, distance]) => ({ date, distance }));
 
     document.getElementById('content').innerHTML = `
       <div class="week-card">
@@ -498,7 +516,7 @@
           <div class="activity-row">
             <div>
               <div class="activity-label">Swim</div>
-              <div class="activity-meta">${formatActivityDate(s.date)} · ${s.distance}m</div>
+              <div class="activity-meta">${formatActivityDate(s.date)} · ${Math.round(s.distance)}m</div>
             </div>
             <div class="activity-value">+5</div>
           </div>
