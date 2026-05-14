@@ -39,13 +39,35 @@
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
     min-height: 100vh;
     min-height: 100dvh;
+    overflow-x: hidden;
   }
 
-  body {
+  /* PAGE CONTAINER — supports horizontal slide between Home & Statement */
+  .pages {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+  .page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
     padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
+  .page.home { transform: translateX(0); }
+  .page.statement { transform: translateX(100%); }
+  .pages.show-statement .page.home { transform: translateX(-30%); opacity: 0.4; }
+  .pages.show-statement .page.statement { transform: translateX(0); }
 
-  /* TOP HEADER */
+  /* ============================================
+     SHARED: HEADER
+     ============================================ */
   .top-header {
     display: flex;
     justify-content: space-between;
@@ -62,7 +84,7 @@
     font-weight: 700;
     letter-spacing: -0.01em;
   }
-  .refresh-btn {
+  .refresh-btn, .back-btn {
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -76,8 +98,9 @@
     font-size: 18px;
     font-family: inherit;
     transition: all 0.2s;
+    flex-shrink: 0;
   }
-  .refresh-btn:active {
+  .refresh-btn:active, .back-btn:active {
     transform: scale(0.92);
     background: var(--surface-2);
   }
@@ -87,7 +110,9 @@
     to { transform: rotate(360deg); }
   }
 
-  /* STATUS BADGE */
+  /* ============================================
+     STATUS BADGE
+     ============================================ */
   .status-strip {
     display: flex;
     align-items: center;
@@ -121,7 +146,9 @@
     margin-left: auto;
   }
 
-  /* LOADING / ERROR */
+  /* ============================================
+     LOADING / ERROR
+     ============================================ */
   .loading {
     display: flex;
     align-items: center;
@@ -168,13 +195,21 @@
     word-break: break-all;
   }
 
-  /* WEEK CARD */
+  /* ============================================
+     HOME PAGE — WEEK CARD
+     ============================================ */
   .week-card {
     background: var(--surface);
     border-radius: 22px;
     padding: 22px 18px;
     margin-bottom: 14px;
     border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .week-card:active {
+    background: var(--surface-2);
+    transform: translateY(-1px);
   }
   .week-card-header {
     display: flex;
@@ -195,7 +230,6 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    opacity: 0.5;
   }
 
   /* HERO RING */
@@ -326,7 +360,6 @@
     border-radius: 50%;
   }
 
-  /* WEEK FOOTER */
   .week-footer {
     text-align: center;
     font-size: 11px;
@@ -489,35 +522,456 @@
     text-transform: uppercase;
     margin-top: 16px;
   }
+
+  /* ============================================
+     STATEMENT PAGE
+     ============================================ */
+  .statement-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0 20px;
+  }
+  .statement-title-wrap {
+    flex: 1;
+  }
+  .statement-title {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .statement-subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .status-card-full {
+    background: linear-gradient(135deg, rgba(184, 115, 51, 0.08), rgba(184, 115, 51, 0.02));
+    border: 1px solid rgba(184, 115, 51, 0.2);
+    border-radius: 20px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .status-card-full .status-badge-strip {
+    margin-bottom: 12px;
+  }
+  .status-progress-text {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    line-height: 1.2;
+  }
+  .status-progress-text .big {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent-bright);
+  }
+  .status-meta-text {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+  .status-bar-track {
+    height: 6px;
+    background: var(--surface-3);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .status-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--ring-fill));
+    border-radius: 3px;
+  }
+  .status-milestones {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 9px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .status-milestone {
+    text-align: center;
+    flex: 1;
+    min-width: 0;
+  }
+  .status-milestone.current {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .trends-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .trend-pill {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px;
+    text-align: center;
+    min-width: 0;
+  }
+  .trend-label {
+    font-size: 9px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+  .trend-value {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .trend-meta {
+    font-size: 9px;
+    color: var(--text-faint);
+    margin-top: 2px;
+  }
+  .trend-value.up { color: #6dbe7b; }
+  .trend-value.down { color: #e8746d; }
+
+  /* CALENDAR */
+  .calendar-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 20px 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    width: 100%;
+  }
+  .month-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding: 0 4px;
+  }
+  .month-arrow {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    border: none;
+    color: var(--text-dim);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .month-arrow:active { background: var(--surface-3); color: var(--text); }
+  .month-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+  .month-label {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .month-label .year {
+    color: var(--text-dim);
+    font-weight: 500;
+    margin-left: 6px;
+  }
+
+  .cal-table {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    column-gap: 4px;
+    row-gap: 4px;
+    width: 100%;
+  }
+  .dow-cell {
+    font-size: 10px;
+    color: var(--text-faint);
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    padding-bottom: 6px;
+    min-width: 0;
+  }
+
+  .day-cell {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 3px;
+    border-radius: 8px;
+    position: relative;
+    transition: background 0.15s;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .day-cell.other-month { opacity: 0.25; cursor: default; }
+  .day-cell.future { cursor: default; }
+  .day-cell:not(.other-month):not(.future):active { background: var(--surface-2); }
+  .day-cell.today .day-num { color: var(--accent-bright); font-weight: 700; }
+  .day-num {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-weight: 500;
+    margin-bottom: 2px;
+    line-height: 1;
+  }
+  .day-cell.other-month .day-num { color: var(--text-faint); }
+
+  .ring-wrap-cal {
+    width: 28px;
+    height: 28px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .ring-wrap-cal svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+    display: block;
+  }
+  .ring-wrap-cal .ring-track {
+    fill: none;
+    stroke: var(--ring-track);
+    stroke-width: 2.5;
+  }
+  .ring-wrap-cal .ring-fill {
+    fill: none;
+    stroke: var(--ring-fill);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+  }
+  .day-cell.max .ring-wrap-cal {
+    filter: drop-shadow(0 0 4px var(--ring-fill-glow));
+  }
+  .ring-text-cal {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ring-fill);
+  }
+  .day-cell.zero .ring-text-cal { color: var(--text-faint); font-weight: 500; }
+  .day-cell.future .ring-track { stroke: var(--surface-3); stroke-dasharray: 2 3; }
+  .day-cell.future .ring-text-cal { color: transparent; }
+
+  .legend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+  .legend-ring {
+    width: 18px;
+    height: 18px;
+    position: relative;
+  }
+  .legend-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
+  .legend-ring .ring-track { fill: none; stroke: var(--ring-track); stroke-width: 2; }
+  .legend-ring .ring-fill { fill: none; stroke: var(--ring-fill); stroke-width: 2; stroke-linecap: round; }
+
+  /* ============================================
+     DAY DETAIL SHEET
+     ============================================ */
+  .detail-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    padding: 24px 24px max(24px, env(safe-area-inset-bottom));
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 -20px 60px rgba(0,0,0,0.5);
+    z-index: 100;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .detail-sheet.open { transform: translateY(0); }
+  .detail-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--text-faint);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+  .detail-date {
+    font-size: 12px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .detail-day { font-size: 22px; font-weight: 700; margin-bottom: 16px; }
+  .detail-hero { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+  .detail-ring { width: 80px; height: 80px; flex-shrink: 0; position: relative; }
+  .detail-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .detail-ring .ring-track { fill: none; stroke: var(--ring-track); stroke-width: 6; }
+  .detail-ring .ring-fill { fill: none; stroke: var(--ring-fill); stroke-width: 6; stroke-linecap: round; }
+  .detail-ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--ring-fill);
+  }
+  .detail-hero-text .label {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .detail-hero-text .value { font-size: 16px; font-weight: 500; line-height: 1.3; }
+  .detail-max-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--ring-fill);
+    color: var(--bg);
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+  .detail-rows { border-top: 1px solid var(--border); }
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-row-left { display: flex; flex-direction: column; gap: 2px; }
+  .detail-row-label { font-size: 14px; font-weight: 500; }
+  .detail-row-meta { font-size: 12px; color: var(--text-dim); }
+  .detail-row-points { font-size: 16px; font-weight: 600; color: var(--ring-fill); }
+  .detail-row.no-points .detail-row-points { color: var(--text-faint); }
+  .detail-totals {
+    margin-top: 16px;
+    padding: 12px 14px;
+    background: var(--surface-2);
+    border-radius: 12px;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .detail-totals strong { color: var(--text); }
+  .detail-close {
+    margin-top: 20px;
+    width: 100%;
+    background: var(--surface-3);
+    color: var(--text);
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 99;
+  }
+  .overlay.active { opacity: 1; pointer-events: all; }
 </style>
 </head>
 <body>
 
-<div class="top-header">
-  <div>
-    <div class="header-greeting" id="greeting">Hello, Rob</div>
-    <div class="header-day" id="dayname">Today</div>
+<div class="pages" id="pages">
+
+  <!-- ============================================
+       HOME PAGE
+       ============================================ -->
+  <div class="page home">
+    <div class="top-header">
+      <div>
+        <div class="header-greeting" id="greeting">Hello, Rob</div>
+        <div class="header-day" id="dayname">Today</div>
+      </div>
+      <button class="refresh-btn" id="refreshBtn" onclick="loadData()">↻</button>
+    </div>
+
+    <div class="status-strip">
+      <div class="status-badge-strip">Bronze · 2026</div>
+      <div class="status-strip-meta">16 weeks to Silver</div>
+    </div>
+
+    <div id="content">
+      <div class="loading">Fetching your data</div>
+    </div>
+
+    <div class="sync-footer" id="syncFooter">
+      <span class="sync-dot" id="syncDot"></span>
+      <span id="syncText">Waiting</span>
+    </div>
+
+    <div class="v-tag">Reward Tracker · v0.4</div>
   </div>
-  <button class="refresh-btn" id="refreshBtn" onclick="loadData()">↻</button>
+
+  <!-- ============================================
+       STATEMENT PAGE
+       ============================================ -->
+  <div class="page statement">
+    <div class="statement-header">
+      <button class="back-btn" onclick="goHome()">‹</button>
+      <div class="statement-title-wrap">
+        <div class="statement-title">Statement</div>
+        <div class="statement-subtitle">Your daily points</div>
+      </div>
+    </div>
+
+    <div id="statementContent">
+      <div class="loading">Loading</div>
+    </div>
+  </div>
+
 </div>
 
-<div class="status-strip">
-  <div class="status-badge-strip">Bronze · 2026</div>
-  <div class="status-strip-meta" id="statusMeta">16 weeks to Silver</div>
-</div>
-
-<div id="content">
-  <div class="loading">Fetching your data</div>
-</div>
-
-<div class="sync-footer" id="syncFooter">
-  <span class="sync-dot" id="syncDot"></span>
-  <span id="syncText">Waiting</span>
-</div>
-
-<div class="v-tag">Reward Tracker · v0.3</div>
+<div class="overlay" id="overlay" onclick="closeDay()"></div>
+<div class="detail-sheet" id="detail-sheet"></div>
 
 <script>
+  // ===== GLOBAL DATA =====
+  let cachedData = null;
+  let currentMonth, currentYear;
+
   // ===== GREETING =====
   function setGreeting() {
     const hour = new Date().getHours();
@@ -560,6 +1014,10 @@
   }
 
   // ===== DATES =====
+  function keyFor(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
   function getWeekDays() {
     const today = new Date();
     today.setHours(0,0,0,0);
@@ -567,17 +1025,14 @@
     const monday = new Date(today);
     monday.setDate(today.getDate() - todayDow);
     const letters = ['M','T','W','T','F','S','S'];
-    const fullNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const days = [];
     for (let i = 0; i < 7; i++) {
       const d = new Date(monday);
       d.setDate(monday.getDate() + i);
-      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
       days.push({
-        key,
+        key: keyFor(d),
         date: d,
         letter: letters[i],
-        fullName: fullNames[i],
         isFuture: d > today,
         isToday: d.getTime() === today.getTime()
       });
@@ -590,7 +1045,7 @@
     const [y, m, d] = dateStr.split('-').map(Number);
     const date = new Date(y, m - 1, d);
     date.setDate(date.getDate() - 1);
-    return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+    return keyFor(date);
   }
 
   function formatActivityDate(dateStr) {
@@ -602,6 +1057,38 @@
     if (diff === 0) return 'Today';
     if (diff === 1) return 'Yesterday';
     return date.toLocaleDateString('en-GB', { weekday: 'long' });
+  }
+
+  // ===== INDEXING =====
+  // Returns: { stepsByDate, swimsByDate, gymVisits, scoreByDate }
+  function indexData(data) {
+    const stepsByDate = {};
+    (data.steps || []).forEach(s => {
+      const actualDate = shiftDateBackOne(s.date);
+      if (actualDate) stepsByDate[actualDate] = s.count;
+    });
+
+    const swimsByDate = {};
+    (data.swims || []).forEach(s => {
+      const actualDate = shiftDateBackOne(s.date);
+      if (actualDate) swimsByDate[actualDate] = s.distance;
+    });
+
+    const gymVisits = data.gymVisits || [];
+
+    // Pre-calc scores for any date we have data for
+    const scoreByDate = {};
+    const allDates = new Set([
+      ...Object.keys(stepsByDate),
+      ...Object.keys(swimsByDate),
+      ...gymVisits.map(v => v.date)
+    ]);
+    allDates.forEach(d => {
+      const steps = stepsByDate[d] || 0;
+      scoreByDate[d] = dailyTotal(steps, gymVisits, swimsByDate, d);
+    });
+
+    return { stepsByDate, swimsByDate, gymVisits, scoreByDate };
   }
 
   // ===== RINGS =====
@@ -618,6 +1105,17 @@
         <circle class="ring-fill" cx="${cx}" cy="${cy}" r="${r}"
                 stroke-dasharray="${circumference}"
                 stroke-dashoffset="${dashOffset}"></circle>
+      </svg>
+    `;
+  }
+
+  function emptyRingSvg(size, strokeWidth) {
+    const r = (size - strokeWidth) / 2;
+    const cx = size / 2;
+    const cy = size / 2;
+    return `
+      <svg viewBox="0 0 ${size} ${size}">
+        <circle class="ring-track" cx="${cx}" cy="${cy}" r="${r}"></circle>
       </svg>
     `;
   }
@@ -639,8 +1137,9 @@
     try {
       const response = await fetch(APPS_SCRIPT_URL);
       if (!response.ok) throw new Error('HTTP ' + response.status);
-      const data = await response.json();
-      render(data);
+      cachedData = await response.json();
+      renderHome();
+      renderStatement();
       updateSync('healthy', 'Last sync just now');
     } catch (err) {
       showError(
@@ -670,62 +1169,39 @@
     document.getElementById('syncText').textContent = text;
   }
 
-  // ===== RENDER =====
-  function render(data) {
+  // ===== RENDER HOME =====
+  function renderHome() {
+    if (!cachedData) return;
+    const indexed = indexData(cachedData);
     const weekDays = getWeekDays();
 
-    // Shift step dates back one day (logged the morning after)
-    const stepsByDate = {};
-    (data.steps || []).forEach(s => {
-      const actualDate = shiftDateBackOne(s.date);
-      if (actualDate) stepsByDate[actualDate] = s.count;
-    });
-
-    // Shift swim dates back one day
-    const swimsByDate = {};
-    (data.swims || []).forEach(s => {
-      const actualDate = shiftDateBackOne(s.date);
-      if (actualDate) swimsByDate[actualDate] = s.distance;
-    });
-
-    // Gym visits — no shift, logged real-time
-    const gymVisits = data.gymVisits || [];
-
     const dayResults = weekDays.map(day => {
-      if (day.isFuture) return { ...day, steps: null, points: null };
-      const steps = stepsByDate[day.key] || 0;
-      const points = dailyTotal(steps, gymVisits, swimsByDate, day.key);
-      return { ...day, steps, points };
+      if (day.isFuture) return { ...day, points: null };
+      const points = indexed.scoreByDate[day.key] || 0;
+      return { ...day, points };
     });
 
     const weekTotal = dayResults.reduce((sum, d) => sum + (d.points || 0), 0);
 
-    // Last activity
     let lastActivity = 'no activity yet';
     for (let i = dayResults.length - 1; i >= 0; i--) {
       const d = dayResults[i];
       if (d.points && d.points > 0) {
         if (d.isToday) lastActivity = 'today';
-        else {
-          const diff = Math.round((new Date(weekDays[6].date) - d.date) / 86400000);
-          if (diff === 0) lastActivity = 'today';
-          else lastActivity = formatActivityDate(d.key).toLowerCase();
-        }
+        else lastActivity = formatActivityDate(d.key).toLowerCase();
         break;
       }
     }
 
-    // Activity for this week
     const weekStart = weekDays[0].key;
     const weekEnd = weekDays[6].key;
-    const recentVisits = gymVisits.filter(v =>
+    const recentVisits = indexed.gymVisits.filter(v =>
       v.date >= weekStart && v.date <= weekEnd && v.event === 'entry'
     );
-    const recentSwims = Object.entries(swimsByDate)
+    const recentSwims = Object.entries(indexed.swimsByDate)
       .filter(([date, distance]) => date >= weekStart && date <= weekEnd && distance > 0)
       .map(([date, distance]) => ({ date, distance }));
 
-    // Reward strip
     let rewardStrip = '';
     if (weekTotal >= 50) {
       rewardStrip = `
@@ -752,7 +1228,7 @@
     }
 
     document.getElementById('content').innerHTML = `
-      <div class="week-card">
+      <div class="week-card" onclick="goStatement()">
         <div class="week-card-header">
           <div class="week-card-title">Points this week</div>
           <div class="week-card-link">View statement ›</div>
@@ -783,10 +1259,7 @@
           <div class="small-card-label">Cluster</div>
           <div class="small-card-value">0 / 4</div>
           <div class="cluster-dots">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
           </div>
         </div>
         <div class="small-card">
@@ -828,11 +1301,7 @@
     return `
       <div class="day-mini ${d.isToday ? 'today' : ''}">
         <div class="day-mini-ring ${d.isFuture ? 'future' : ''}">
-          ${d.isFuture ? `
-            <svg viewBox="0 0 30 30">
-              <circle class="ring-track" cx="15" cy="15" r="13.75"></circle>
-            </svg>
-          ` : ringSvg(d.points, 30, 2.5, 8)}
+          ${d.isFuture ? emptyRingSvg(30, 2.5) : ringSvg(d.points, 30, 2.5, 8)}
           <div class="day-mini-num ${d.points === 0 ? 'zero' : ''} ${d.isFuture ? 'future' : ''}">${d.isFuture ? '' : d.points}</div>
         </div>
         <div class="day-mini-letter">${d.letter}</div>
@@ -840,6 +1309,280 @@
     `;
   }
 
+  // ===== RENDER STATEMENT =====
+  function renderStatement() {
+    if (!cachedData) return;
+
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    if (currentMonth === undefined) {
+      currentMonth = today.getMonth();
+      currentYear = today.getFullYear();
+    }
+
+    const indexed = indexData(cachedData);
+
+    // Calculate weekly totals for last 12 weeks
+    const completedWeeks = [];
+    const todayDow = (today.getDay() + 6) % 7;
+    const lastSunday = new Date(today);
+    lastSunday.setDate(today.getDate() - todayDow - 1);
+
+    for (let w = 0; w < 12; w++) {
+      const sun = new Date(lastSunday);
+      sun.setDate(lastSunday.getDate() - w * 7);
+      const mon = new Date(sun);
+      mon.setDate(sun.getDate() - 6);
+      let total = 0;
+      for (let dd = 0; dd < 7; dd++) {
+        const day = new Date(mon);
+        day.setDate(mon.getDate() + dd);
+        total += indexed.scoreByDate[keyFor(day)] || 0;
+      }
+      completedWeeks.unshift(total);
+    }
+
+    const recent4 = completedWeeks.slice(-4);
+    const earlier4 = completedWeeks.slice(-8, -4);
+    const recentAvg = recent4.length ? recent4.reduce((s,v)=>s+v,0) / recent4.length : 0;
+    const earlierAvg = earlier4.length ? earlier4.reduce((s,v)=>s+v,0) / earlier4.length : 0;
+    const trend = recentAvg - earlierAvg;
+    const typical = completedWeeks.length ? Math.round(completedWeeks.reduce((s,v)=>s+v,0) / completedWeeks.length) : 0;
+    const best = completedWeeks.length ? Math.max(...completedWeeks) : 0;
+    const annualCount = completedWeeks.filter(t => t >= 50).length;
+    const remaining = Math.max(0, 16 - annualCount);
+
+    document.getElementById('statementContent').innerHTML = `
+      <div class="status-card-full">
+        <div class="status-badge-strip">Bronze · 2026</div>
+        <div class="status-progress-text"><span class="big">${remaining}</span> weeks to Silver</div>
+        <div class="status-meta-text">${annualCount} weeks at 50+ points this year</div>
+        <div class="status-bar-track">
+          <div class="status-bar-fill" style="width: ${Math.min(100, (annualCount/16)*100)}%"></div>
+        </div>
+        <div class="status-milestones">
+          <div class="status-milestone current">Bronze<br><span style="opacity:0.5">0</span></div>
+          <div class="status-milestone">Silver<br><span style="opacity:0.5">16</span></div>
+          <div class="status-milestone">Gold<br><span style="opacity:0.5">32</span></div>
+          <div class="status-milestone">Platinum<br><span style="opacity:0.5">48</span></div>
+        </div>
+      </div>
+
+      <div class="trends-row">
+        <div class="trend-pill">
+          <div class="trend-label">Trend</div>
+          <div class="trend-value ${trend >= 0 ? 'up' : 'down'}">${trend >= 0 ? '↑' : '↓'} ${Math.abs(Math.round(trend))}</div>
+          <div class="trend-meta">vs prior 4 wks</div>
+        </div>
+        <div class="trend-pill">
+          <div class="trend-label">Typical</div>
+          <div class="trend-value">${typical}</div>
+          <div class="trend-meta">avg / week</div>
+        </div>
+        <div class="trend-pill">
+          <div class="trend-label">Best</div>
+          <div class="trend-value">${best}</div>
+          <div class="trend-meta">single week</div>
+        </div>
+      </div>
+
+      <div class="calendar-card">
+        ${renderCalendar(indexed)}
+      </div>
+    `;
+  }
+
+  function renderCalendar(indexed) {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const monthName = new Date(currentYear, currentMonth, 1).toLocaleDateString('en-GB', { month: 'long' });
+
+    // Build 6-week grid starting from Monday before the 1st
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    const lastDay = new Date(currentYear, currentMonth + 1, 0);
+    const startDow = (firstDay.getDay() + 6) % 7;
+    const gridStart = new Date(firstDay);
+    gridStart.setDate(firstDay.getDate() - startDow);
+
+    const days = [];
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(gridStart);
+      d.setDate(gridStart.getDate() + i);
+      days.push({
+        date: d,
+        score: indexed.scoreByDate[keyFor(d)] ?? null,
+        isOtherMonth: d.getMonth() !== currentMonth,
+        isFuture: d > today,
+        isToday: d.getTime() === today.getTime()
+      });
+      if (i >= 27 && d.getMonth() !== currentMonth && d > lastDay) break;
+    }
+    while (days.length > 35 && days.slice(-7).every(d => d.isOtherMonth)) {
+      days.length -= 7;
+    }
+
+    const isCurrentMonth = currentYear === today.getFullYear() && currentMonth === today.getMonth();
+
+    return `
+      <div class="month-nav">
+        <button class="month-arrow" onclick="prevMonth()">‹</button>
+        <div class="month-label">${monthName} <span class="year">${currentYear}</span></div>
+        <button class="month-arrow" onclick="nextMonth()" ${isCurrentMonth ? 'disabled' : ''}>›</button>
+      </div>
+
+      <div class="cal-table">
+        <div class="dow-cell">M</div>
+        <div class="dow-cell">T</div>
+        <div class="dow-cell">W</div>
+        <div class="dow-cell">T</div>
+        <div class="dow-cell">F</div>
+        <div class="dow-cell">S</div>
+        <div class="dow-cell">S</div>
+        ${days.map(d => renderDayCell(d)).join('')}
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><div class="legend-ring">${ringSvg(3, 18, 2)}</div><span>3 pts</span></div>
+        <div class="legend-item"><div class="legend-ring">${ringSvg(5, 18, 2)}</div><span>5 pts</span></div>
+        <div class="legend-item"><div class="legend-ring">${ringSvg(8, 18, 2)}</div><span>8 max</span></div>
+      </div>
+    `;
+  }
+
+  function renderDayCell(day) {
+    let cls = 'day-cell';
+    if (day.isOtherMonth) cls += ' other-month';
+    if (day.isFuture) cls += ' future';
+    if (day.isToday) cls += ' today';
+    if (day.score === 0) cls += ' zero';
+    if (day.score === 8) cls += ' max';
+
+    const onclick = (day.isOtherMonth || day.isFuture || day.score === null) ? '' : `onclick="openDay('${keyFor(day.date)}')"`;
+    const dayNum = day.date.getDate();
+
+    let ringHtml = '';
+    let displayText = '';
+    if (day.score !== null && !day.isFuture) {
+      ringHtml = ringSvg(day.score, 28, 2.5);
+      displayText = day.score;
+    } else if (day.isFuture) {
+      ringHtml = emptyRingSvg(28, 2.5);
+    } else {
+      // Other month or no data
+      ringHtml = emptyRingSvg(28, 2.5);
+    }
+
+    return `
+      <div class="${cls}" ${onclick}>
+        <div class="day-num">${dayNum}</div>
+        <div class="ring-wrap-cal">
+          ${ringHtml}
+          <div class="ring-text-cal">${displayText}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ===== NAVIGATION =====
+  function goStatement() {
+    document.getElementById('pages').classList.add('show-statement');
+    window.scrollTo(0, 0);
+  }
+  function goHome() {
+    document.getElementById('pages').classList.remove('show-statement');
+    window.scrollTo(0, 0);
+  }
+  function prevMonth() {
+    currentMonth--;
+    if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+    renderStatement();
+  }
+  function nextMonth() {
+    const today = new Date();
+    if (currentYear === today.getFullYear() && currentMonth === today.getMonth()) return;
+    currentMonth++;
+    if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+    renderStatement();
+  }
+
+  // ===== DAY DETAIL =====
+  function openDay(dateKey) {
+    if (!cachedData) return;
+    const indexed = indexData(cachedData);
+    const [y, m, d] = dateKey.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+
+    const stepCount = indexed.stepsByDate[dateKey] || 0;
+    const stepPoints = stepsToPoints(stepCount);
+    const visitsOnDay = indexed.gymVisits.filter(v => v.date === dateKey && v.event === 'entry');
+    const visitOnDay = visitsOnDay.length > 0;
+    const vPoints = visitOnDay ? 5 : 0;
+    const swimDistance = indexed.swimsByDate[dateKey] || 0;
+    const swimP = swimDistance > 0 ? 5 : 0;
+
+    const rawTotal = stepPoints + vPoints + swimP;
+    const cappedTotal = Math.min(rawTotal, 8);
+    const isMax = cappedTotal === 8;
+
+    document.getElementById('detail-sheet').innerHTML = `
+      <div class="detail-handle"></div>
+      <div class="detail-date">${date.toLocaleDateString('en-GB', { weekday: 'long' })}</div>
+      <div class="detail-day">${date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+
+      ${isMax ? '<div class="detail-max-badge">Max day</div>' : ''}
+
+      <div class="detail-hero">
+        <div class="detail-ring">
+          ${ringSvg(cappedTotal, 80, 6)}
+          <div class="detail-ring-text">${cappedTotal}</div>
+        </div>
+        <div class="detail-hero-text">
+          <div class="label">Points scored</div>
+          <div class="value">${cappedTotal} of 8 max</div>
+        </div>
+      </div>
+
+      <div class="detail-rows">
+        <div class="detail-row ${stepPoints === 0 ? 'no-points' : ''}">
+          <div class="detail-row-left">
+            <div class="detail-row-label">Steps</div>
+            <div class="detail-row-meta">${stepCount.toLocaleString()} steps</div>
+          </div>
+          <div class="detail-row-points">+${stepPoints}</div>
+        </div>
+        <div class="detail-row ${vPoints === 0 ? 'no-points' : ''}">
+          <div class="detail-row-left">
+            <div class="detail-row-label">Gym visit</div>
+            <div class="detail-row-meta">${visitOnDay ? 'Nuffield Bolton' + (visitsOnDay[0].time ? ' · ' + visitsOnDay[0].time : '') : 'No visit'}</div>
+          </div>
+          <div class="detail-row-points">+${vPoints}</div>
+        </div>
+        <div class="detail-row ${swimP === 0 ? 'no-points' : ''}">
+          <div class="detail-row-left">
+            <div class="detail-row-label">Swim</div>
+            <div class="detail-row-meta">${swimDistance > 0 ? Math.round(swimDistance) + 'm' : 'No swim'}</div>
+          </div>
+          <div class="detail-row-points">+${swimP}</div>
+        </div>
+      </div>
+
+      <div class="detail-totals">
+        Raw total: <strong>${rawTotal}</strong> · Daily total: <strong>${cappedTotal}</strong>
+        ${rawTotal > 8 ? '<br>Daily cap of 8 applied.' : ''}
+      </div>
+
+      <button class="detail-close" onclick="closeDay()">Close</button>
+    `;
+    document.getElementById('detail-sheet').classList.add('open');
+    document.getElementById('overlay').classList.add('active');
+  }
+
+  function closeDay() {
+    document.getElementById('detail-sheet').classList.remove('open');
+    document.getElementById('overlay').classList.remove('active');
+  }
+
+  // ===== BOOT =====
   loadData();
   setInterval(loadData, 5 * 60 * 1000);
 </script>
