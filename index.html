@@ -42,27 +42,33 @@
     overflow-x: hidden;
   }
 
-  /* PAGE CONTAINER — supports horizontal slide between Home & Statement */
+  /* ============================================
+     PAGE CONTAINER — clipped so nothing escapes
+     ============================================ */
   .pages {
     position: relative;
-    width: 100%;
+    width: 100vw;
     min-height: 100vh;
     min-height: 100dvh;
-    overflow-x: hidden;
+    overflow: hidden;          /* hard clip — pages can't show outside */
   }
   .page {
     position: absolute;
     top: 0;
     left: 0;
-    right: 0;
+    width: 100%;
     min-height: 100vh;
     min-height: 100dvh;
     padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
+    background: var(--bg);     /* opaque — fully covers anything beneath */
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .page.home { transform: translateX(0); }
   .page.statement { transform: translateX(100%); }
-  .pages.show-statement .page.home { transform: translateX(-30%); opacity: 0.4; }
+  .pages.show-statement .page.home {
+    transform: translateX(-20%);
+    /* don't fade — keep opaque so it can't "show through" */
+  }
   .pages.show-statement .page.statement { transform: translateX(0); }
 
   /* ============================================
@@ -84,7 +90,11 @@
     font-weight: 700;
     letter-spacing: -0.01em;
   }
-  .refresh-btn, .back-btn {
+
+  /* ============================================
+     REFRESH BUTTON with circular progress + fill
+     ============================================ */
+  .refresh-btn {
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -97,17 +107,118 @@
     justify-content: center;
     font-size: 18px;
     font-family: inherit;
-    transition: all 0.2s;
     flex-shrink: 0;
+    position: relative;
+    overflow: visible;
+    transition: background 0.25s, color 0.25s, border-color 0.25s, transform 0.25s;
   }
-  .refresh-btn:active, .back-btn:active {
+  .refresh-btn:active {
     transform: scale(0.92);
     background: var(--surface-2);
   }
-  .refresh-btn.spinning { animation: spin 0.8s linear infinite; }
-  @keyframes spin {
+
+  .refresh-icon {
+    position: relative;
+    z-index: 2;
+    transition: opacity 0.2s, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    line-height: 1;
+  }
+
+  .refresh-progress {
+    position: absolute;
+    inset: -1px;       /* sit on top of the border */
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .refresh-progress svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+    overflow: visible;
+  }
+  .refresh-progress .progress-track {
+    fill: none;
+    stroke: var(--surface-3);
+    stroke-width: 2;
+    opacity: 0;
+  }
+  .refresh-progress .progress-fill {
+    fill: none;
+    stroke: var(--accent-bright);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-dasharray: 132;     /* circumference of r=21 */
+    stroke-dashoffset: 132;
+    transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Loading state: progress arc visible + spinning */
+  .refresh-btn.loading .refresh-icon {
+    opacity: 0.4;
+  }
+  .refresh-btn.loading .refresh-progress {
+    opacity: 1;
+    animation: progress-spin 1.2s linear infinite;
+  }
+  .refresh-btn.loading .refresh-progress .progress-fill {
+    stroke-dasharray: 32 100;  /* arc length / gap */
+    stroke-dashoffset: 0;
+  }
+  @keyframes progress-spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
+  }
+
+  /* Success state: button fills with accent, icon turns to check, brief pop */
+  .refresh-btn.success {
+    background: var(--accent-bright);
+    border-color: var(--accent-bright);
+    color: var(--bg);
+    animation: pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 0 20px var(--ring-fill-glow);
+  }
+  .refresh-btn.success .refresh-icon {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .refresh-btn.success .refresh-progress {
+    opacity: 0;
+  }
+  @keyframes pop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.18); }
+    70%  { transform: scale(0.96); }
+    100% { transform: scale(1); }
+  }
+
+  /* Error state */
+  .refresh-btn.error {
+    background: rgba(232, 116, 109, 0.15);
+    border-color: rgba(232, 116, 109, 0.4);
+    color: #e8746d;
+  }
+  .refresh-btn.error .refresh-progress { opacity: 0; }
+
+  .back-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-family: inherit;
+    flex-shrink: 0;
+  }
+  .back-btn:active {
+    transform: scale(0.92);
+    background: var(--surface-2);
   }
 
   /* ============================================
@@ -147,29 +258,153 @@
   }
 
   /* ============================================
-     LOADING / ERROR
+     SKELETON LOADING STATE
      ============================================ */
-  .loading {
+  .skeleton {
+    pointer-events: none;
+  }
+  .skeleton-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 22px 18px;
+    margin-bottom: 14px;
+  }
+  .skeleton-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .skeleton-bar {
+    background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2));
+    background-size: 200% 100%;
+    border-radius: 4px;
+    animation: shimmer 1.8s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .skeleton-bar-sm { height: 10px; width: 80px; }
+  .skeleton-bar-tiny { height: 8px; width: 60px; }
+
+  .skeleton-ring-wrap {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 60px 0;
+    margin: 0 auto 22px;
+  }
+  .skeleton-ring {
+    width: 200px;
+    height: 200px;
+    position: relative;
+  }
+  .skeleton-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+  .skeleton-ring .track {
+    fill: none;
+    stroke: var(--surface-3);
+    stroke-width: 13;
+    opacity: 0.6;
+  }
+  .skeleton-ring .pulse {
+    fill: none;
+    stroke: var(--accent-bright);
+    stroke-width: 13;
+    stroke-linecap: round;
+    stroke-dasharray: 60 580;
+    animation: ring-rotate 2.4s linear infinite;
+    opacity: 0.6;
+    filter: drop-shadow(0 0 8px var(--ring-fill-glow));
+  }
+  @keyframes ring-rotate {
+    from { stroke-dashoffset: 0; }
+    to { stroke-dashoffset: -640; }
+  }
+  .skeleton-ring-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .skeleton-circle {
+    background: var(--surface-3);
+    border-radius: 50%;
+    width: 50px;
+    height: 18px;
+    animation: shimmer 1.8s ease-in-out infinite;
+    background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2));
+    background-size: 200% 100%;
+  }
+
+  .skeleton-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0;
+    margin-bottom: 12px;
+  }
+  .skeleton-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .skeleton-day-ring {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2));
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+  }
+  .skeleton-day-ring.s1 { animation-delay: 0.1s; }
+  .skeleton-day-ring.s2 { animation-delay: 0.2s; }
+  .skeleton-day-ring.s3 { animation-delay: 0.3s; }
+  .skeleton-day-ring.s4 { animation-delay: 0.4s; }
+  .skeleton-day-ring.s5 { animation-delay: 0.5s; }
+  .skeleton-day-ring.s6 { animation-delay: 0.6s; }
+
+  .skeleton-loading-text {
+    text-align: center;
     color: var(--text-faint);
-    font-size: 14px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 24px;
+    opacity: 0.7;
+    animation: gentle-pulse 1.6s ease-in-out infinite;
   }
-  .loading::after {
-    content: '...';
-    animation: dots 1.5s steps(4) infinite;
-    width: 24px;
-    display: inline-block;
-    text-align: left;
+  @keyframes gentle-pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.9; }
   }
-  @keyframes dots {
-    0%, 25% { content: ''; }
-    50% { content: '.'; }
-    75% { content: '..'; }
-    100% { content: '...'; }
+
+  /* Fade-in for content once loaded */
+  .content-loaded {
+    animation: content-rise 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
+  @keyframes content-rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* ============================================
+     ERROR
+     ============================================ */
   .error-card {
     background: rgba(232, 116, 109, 0.1);
     border: 1px solid rgba(232, 116, 109, 0.3);
@@ -232,7 +467,6 @@
     letter-spacing: 0.08em;
   }
 
-  /* HERO RING */
   .week-ring-wrap {
     display: flex;
     align-items: center;
@@ -488,12 +722,6 @@
   .activity-value {
     color: var(--accent-bright);
     font-weight: 600;
-  }
-  .activity-empty {
-    text-align: center;
-    color: var(--text-faint);
-    font-size: 12px;
-    padding: 8px 0;
   }
 
   /* SYNC */
@@ -916,16 +1144,22 @@
 
 <div class="pages" id="pages">
 
-  <!-- ============================================
-       HOME PAGE
-       ============================================ -->
+  <!-- HOME PAGE -->
   <div class="page home">
     <div class="top-header">
       <div>
         <div class="header-greeting" id="greeting">Hello, Rob</div>
         <div class="header-day" id="dayname">Today</div>
       </div>
-      <button class="refresh-btn" id="refreshBtn" onclick="loadData()">↻</button>
+      <button class="refresh-btn" id="refreshBtn" onclick="loadData(true)" aria-label="Refresh">
+        <span class="refresh-icon" id="refreshIcon">↻</span>
+        <span class="refresh-progress">
+          <svg viewBox="0 0 42 42">
+            <circle class="progress-track" cx="21" cy="21" r="20"></circle>
+            <circle class="progress-fill" cx="21" cy="21" r="20"></circle>
+          </svg>
+        </span>
+      </button>
     </div>
 
     <div class="status-strip">
@@ -934,20 +1168,18 @@
     </div>
 
     <div id="content">
-      <div class="loading">Fetching your data</div>
+      <!-- Initial skeleton injected by JS -->
     </div>
 
     <div class="sync-footer" id="syncFooter">
       <span class="sync-dot" id="syncDot"></span>
-      <span id="syncText">Waiting</span>
+      <span id="syncText">Loading</span>
     </div>
 
-    <div class="v-tag">Reward Tracker · v0.4</div>
+    <div class="v-tag">Reward Tracker · v0.4.1</div>
   </div>
 
-  <!-- ============================================
-       STATEMENT PAGE
-       ============================================ -->
+  <!-- STATEMENT PAGE -->
   <div class="page statement">
     <div class="statement-header">
       <button class="back-btn" onclick="goHome()">‹</button>
@@ -958,7 +1190,7 @@
     </div>
 
     <div id="statementContent">
-      <div class="loading">Loading</div>
+      <!-- Filled when data arrives -->
     </div>
   </div>
 
@@ -968,7 +1200,7 @@
 <div class="detail-sheet" id="detail-sheet"></div>
 
 <script>
-  // ===== GLOBAL DATA =====
+  // ===== GLOBAL STATE =====
   let cachedData = null;
   let currentMonth, currentYear;
 
@@ -988,6 +1220,43 @@
   }
   setGreeting();
 
+  // ===== SKELETON =====
+  function showSkeleton() {
+    document.getElementById('content').innerHTML = `
+      <div class="skeleton">
+        <div class="skeleton-card">
+          <div class="skeleton-header">
+            <div class="skeleton-bar skeleton-bar-sm"></div>
+            <div class="skeleton-bar skeleton-bar-tiny"></div>
+          </div>
+          <div class="skeleton-ring-wrap">
+            <div class="skeleton-ring">
+              <svg viewBox="0 0 200 200">
+                <circle class="track" cx="100" cy="100" r="93.5"></circle>
+                <circle class="pulse" cx="100" cy="100" r="93.5"></circle>
+              </svg>
+              <div class="skeleton-ring-center">
+                <div class="skeleton-circle" style="width:40px;height:10px"></div>
+                <div class="skeleton-circle" style="width:70px;height:34px"></div>
+                <div class="skeleton-circle" style="width:30px;height:8px"></div>
+              </div>
+            </div>
+          </div>
+          <div class="skeleton-days">
+            <div class="skeleton-day"><div class="skeleton-day-ring"></div></div>
+            <div class="skeleton-day"><div class="skeleton-day-ring s1"></div></div>
+            <div class="skeleton-day"><div class="skeleton-day-ring s2"></div></div>
+            <div class="skeleton-day"><div class="skeleton-day-ring s3"></div></div>
+            <div class="skeleton-day"><div class="skeleton-day-ring s4"></div></div>
+            <div class="skeleton-day"><div class="skeleton-day-ring s5"></div></div>
+            <div class="skeleton-day"><div class="skeleton-day-ring s6"></div></div>
+          </div>
+        </div>
+        <div class="skeleton-loading-text">Fetching the latest</div>
+      </div>
+    `;
+  }
+
   // ===== SCORING =====
   function stepsToPoints(stepCount) {
     if (stepCount >= 12500) return 8;
@@ -995,29 +1264,23 @@
     if (stepCount >= 5000) return 3;
     return 0;
   }
-
   function visitPoints(visits, dateStr) {
-    const onDate = visits.filter(v => v.date === dateStr && v.event === 'entry');
-    return onDate.length > 0 ? 5 : 0;
+    return visits.some(v => v.date === dateStr && v.event === 'entry') ? 5 : 0;
   }
-
   function swimPoints(swimsByDate, dateStr) {
-    const distance = swimsByDate[dateStr] || 0;
-    return distance > 0 ? 5 : 0;
+    return (swimsByDate[dateStr] || 0) > 0 ? 5 : 0;
   }
-
   function dailyTotal(stepCount, gymVisits, swimsByDate, dateStr) {
-    const raw = stepsToPoints(stepCount)
-              + visitPoints(gymVisits, dateStr)
-              + swimPoints(swimsByDate, dateStr);
-    return Math.min(raw, 8);
+    return Math.min(
+      stepsToPoints(stepCount) + visitPoints(gymVisits, dateStr) + swimPoints(swimsByDate, dateStr),
+      8
+    );
   }
 
   // ===== DATES =====
   function keyFor(d) {
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   }
-
   function getWeekDays() {
     const today = new Date();
     today.setHours(0,0,0,0);
@@ -1039,7 +1302,6 @@
     }
     return days;
   }
-
   function shiftDateBackOne(dateStr) {
     if (!dateStr) return null;
     const [y, m, d] = dateStr.split('-').map(Number);
@@ -1047,7 +1309,6 @@
     date.setDate(date.getDate() - 1);
     return keyFor(date);
   }
-
   function formatActivityDate(dateStr) {
     const [y, m, d] = dateStr.split('-').map(Number);
     const date = new Date(y, m - 1, d);
@@ -1060,23 +1321,18 @@
   }
 
   // ===== INDEXING =====
-  // Returns: { stepsByDate, swimsByDate, gymVisits, scoreByDate }
   function indexData(data) {
     const stepsByDate = {};
     (data.steps || []).forEach(s => {
       const actualDate = shiftDateBackOne(s.date);
       if (actualDate) stepsByDate[actualDate] = s.count;
     });
-
     const swimsByDate = {};
     (data.swims || []).forEach(s => {
       const actualDate = shiftDateBackOne(s.date);
       if (actualDate) swimsByDate[actualDate] = s.distance;
     });
-
     const gymVisits = data.gymVisits || [];
-
-    // Pre-calc scores for any date we have data for
     const scoreByDate = {};
     const allDates = new Set([
       ...Object.keys(stepsByDate),
@@ -1087,7 +1343,6 @@
       const steps = stepsByDate[d] || 0;
       scoreByDate[d] = dailyTotal(steps, gymVisits, swimsByDate, d);
     });
-
     return { stepsByDate, swimsByDate, gymVisits, scoreByDate };
   }
 
@@ -1108,20 +1363,13 @@
       </svg>
     `;
   }
-
   function emptyRingSvg(size, strokeWidth) {
     const r = (size - strokeWidth) / 2;
-    const cx = size / 2;
-    const cy = size / 2;
-    return `
-      <svg viewBox="0 0 ${size} ${size}">
-        <circle class="ring-track" cx="${cx}" cy="${cy}" r="${r}"></circle>
-      </svg>
-    `;
+    return `<svg viewBox="0 0 ${size} ${size}"><circle class="ring-track" cx="${size/2}" cy="${size/2}" r="${r}"></circle></svg>`;
   }
 
   // ===== LOAD =====
-  async function loadData() {
+  async function loadData(showSkelOnLoad = true) {
     if (APPS_SCRIPT_URL === "PASTE_YOUR_URL_HERE") {
       showError(
         "Setup incomplete",
@@ -1131,16 +1379,37 @@
       return;
     }
 
-    const refreshBtn = document.getElementById('refreshBtn');
-    refreshBtn.classList.add('spinning');
+    const btn = document.getElementById('refreshBtn');
+    btn.classList.remove('success', 'error');
+    btn.classList.add('loading');
+
+    // Show skeleton on initial load, or if forced
+    if (showSkelOnLoad && !cachedData) showSkeleton();
+
+    // Minimum loading time so button animation reads — even if response is instant
+    const loadStart = Date.now();
 
     try {
       const response = await fetch(APPS_SCRIPT_URL);
       if (!response.ok) throw new Error('HTTP ' + response.status);
       cachedData = await response.json();
+
+      // Wait minimum animation time
+      const elapsed = Date.now() - loadStart;
+      const minTime = 700;
+      if (elapsed < minTime) {
+        await new Promise(r => setTimeout(r, minTime - elapsed));
+      }
+
       renderHome();
       renderStatement();
       updateSync('healthy', 'Last sync just now');
+
+      // Success state on button
+      btn.classList.remove('loading');
+      btn.classList.add('success');
+      setTimeout(() => btn.classList.remove('success'), 1500);
+
     } catch (err) {
       showError(
         "Couldn't reach your data",
@@ -1148,8 +1417,9 @@
         err.message
       );
       updateSync('error', 'Sync failed');
-    } finally {
-      setTimeout(() => refreshBtn.classList.remove('spinning'), 400);
+      btn.classList.remove('loading');
+      btn.classList.add('error');
+      setTimeout(() => btn.classList.remove('error'), 2000);
     }
   }
 
@@ -1228,72 +1498,74 @@
     }
 
     document.getElementById('content').innerHTML = `
-      <div class="week-card" onclick="goStatement()">
-        <div class="week-card-header">
-          <div class="week-card-title">Points this week</div>
-          <div class="week-card-link">View statement ›</div>
-        </div>
+      <div class="content-loaded">
+        <div class="week-card" onclick="goStatement()">
+          <div class="week-card-header">
+            <div class="week-card-title">Points this week</div>
+            <div class="week-card-link">View statement ›</div>
+          </div>
 
-        <div class="week-ring-wrap">
-          <div class="week-ring">
-            ${ringSvg(weekTotal, 200, 13, 50)}
-            <div class="week-ring-center">
-              <div class="week-ring-label">This week</div>
-              <div class="week-ring-number">${weekTotal}</div>
-              <div class="week-ring-target">/ 50</div>
+          <div class="week-ring-wrap">
+            <div class="week-ring">
+              ${ringSvg(weekTotal, 200, 13, 50)}
+              <div class="week-ring-center">
+                <div class="week-ring-label">This week</div>
+                <div class="week-ring-number">${weekTotal}</div>
+                <div class="week-ring-target">/ 50</div>
+              </div>
             </div>
+          </div>
+
+          <div class="days-row">
+            ${dayResults.map(d => renderDayMini(d)).join('')}
+          </div>
+
+          <div class="week-footer">
+            Last points earned <strong>${lastActivity}</strong>
           </div>
         </div>
 
-        <div class="days-row">
-          ${dayResults.map(d => renderDayMini(d)).join('')}
-        </div>
-
-        <div class="week-footer">
-          Last points earned <strong>${lastActivity}</strong>
-        </div>
-      </div>
-
-      <div class="secondary-row">
-        <div class="small-card">
-          <div class="small-card-label">Cluster</div>
-          <div class="small-card-value">0 / 4</div>
-          <div class="cluster-dots">
-            <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <div class="secondary-row">
+          <div class="small-card">
+            <div class="small-card-label">Cluster</div>
+            <div class="small-card-value">0 / 4</div>
+            <div class="cluster-dots">
+              <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+          </div>
+          <div class="small-card">
+            <div class="small-card-label">To Silver</div>
+            <div class="small-card-value">16 wks</div>
+            <div class="small-card-meta">0 / 16 done</div>
           </div>
         </div>
-        <div class="small-card">
-          <div class="small-card-label">To Silver</div>
-          <div class="small-card-value">16 wks</div>
-          <div class="small-card-meta">0 / 16 done</div>
-        </div>
+
+        ${rewardStrip}
+
+        ${(recentVisits.length > 0 || recentSwims.length > 0) ? `
+          <div class="activity-card">
+            <div class="activity-card-title">This week's activity</div>
+            ${recentVisits.map(v => `
+              <div class="activity-row">
+                <div>
+                  <div class="activity-label">Gym visit</div>
+                  <div class="activity-meta">${formatActivityDate(v.date)}${v.time ? ' · ' + v.time : ''}</div>
+                </div>
+                <div class="activity-value">+5</div>
+              </div>
+            `).join('')}
+            ${recentSwims.map(s => `
+              <div class="activity-row">
+                <div>
+                  <div class="activity-label">Swim</div>
+                  <div class="activity-meta">${formatActivityDate(s.date)} · ${Math.round(s.distance)}m</div>
+                </div>
+                <div class="activity-value">+5</div>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
       </div>
-
-      ${rewardStrip}
-
-      ${(recentVisits.length > 0 || recentSwims.length > 0) ? `
-        <div class="activity-card">
-          <div class="activity-card-title">This week's activity</div>
-          ${recentVisits.map(v => `
-            <div class="activity-row">
-              <div>
-                <div class="activity-label">Gym visit</div>
-                <div class="activity-meta">${formatActivityDate(v.date)}${v.time ? ' · ' + v.time : ''}</div>
-              </div>
-              <div class="activity-value">+5</div>
-            </div>
-          `).join('')}
-          ${recentSwims.map(s => `
-            <div class="activity-row">
-              <div>
-                <div class="activity-label">Swim</div>
-                <div class="activity-meta">${formatActivityDate(s.date)} · ${Math.round(s.distance)}m</div>
-              </div>
-              <div class="activity-value">+5</div>
-            </div>
-          `).join('')}
-        </div>
-      ` : ''}
     `;
   }
 
@@ -1312,22 +1584,18 @@
   // ===== RENDER STATEMENT =====
   function renderStatement() {
     if (!cachedData) return;
-
     const today = new Date();
     today.setHours(0,0,0,0);
     if (currentMonth === undefined) {
       currentMonth = today.getMonth();
       currentYear = today.getFullYear();
     }
-
     const indexed = indexData(cachedData);
 
-    // Calculate weekly totals for last 12 weeks
     const completedWeeks = [];
     const todayDow = (today.getDay() + 6) % 7;
     const lastSunday = new Date(today);
     lastSunday.setDate(today.getDate() - todayDow - 1);
-
     for (let w = 0; w < 12; w++) {
       const sun = new Date(lastSunday);
       sun.setDate(lastSunday.getDate() - w * 7);
@@ -1397,7 +1665,6 @@
     today.setHours(0,0,0,0);
     const monthName = new Date(currentYear, currentMonth, 1).toLocaleDateString('en-GB', { month: 'long' });
 
-    // Build 6-week grid starting from Monday before the 1st
     const firstDay = new Date(currentYear, currentMonth, 1);
     const lastDay = new Date(currentYear, currentMonth + 1, 0);
     const startDow = (firstDay.getDay() + 6) % 7;
@@ -1465,10 +1732,7 @@
     if (day.score !== null && !day.isFuture) {
       ringHtml = ringSvg(day.score, 28, 2.5);
       displayText = day.score;
-    } else if (day.isFuture) {
-      ringHtml = emptyRingSvg(28, 2.5);
     } else {
-      // Other month or no data
       ringHtml = emptyRingSvg(28, 2.5);
     }
 
@@ -1583,8 +1847,9 @@
   }
 
   // ===== BOOT =====
-  loadData();
-  setInterval(loadData, 5 * 60 * 1000);
+  showSkeleton();
+  loadData(false);  // skeleton's already shown, don't double-show
+  setInterval(() => loadData(false), 5 * 60 * 1000);
 </script>
 
 </body>
