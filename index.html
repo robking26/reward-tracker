@@ -45,8 +45,8 @@
   .pages {
     position: relative;
     width: 100vw;
-    min-height: 100vh;
-    min-height: 100dvh;
+    height: 100vh;
+    height: 100dvh;
     overflow: hidden;
   }
   .page {
@@ -54,11 +54,13 @@
     top: 0;
     left: 0;
     width: 100%;
-    min-height: 100vh;
-    min-height: 100dvh;
+    height: 100%;
     padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
     background: var(--bg);
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
   }
   .page.home { transform: translateX(0); }
   .page.statement { transform: translateX(100%); }
@@ -1881,11 +1883,13 @@
   // NAV
   function goStatement() {
     document.getElementById('pages').classList.add('show-statement');
-    window.scrollTo(0, 0);
+    const statementPage = document.querySelector('.page.statement');
+    if (statementPage) statementPage.scrollTop = 0;
   }
   function goHome() {
     document.getElementById('pages').classList.remove('show-statement');
-    window.scrollTo(0, 0);
+    const homePage = document.querySelector('.page.home');
+    if (homePage) homePage.scrollTop = 0;
   }
   function prevMonth() {
     currentMonth--;
