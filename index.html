@@ -31,6 +31,7 @@
     --accent-border: rgba(184, 115, 51, 0.25);
     --ring-fill: #c8843d;
     --ring-fill-glow: rgba(200, 132, 61, 0.4);
+    --lose: #e8746d;
   }
 
   html, body {
@@ -62,10 +63,14 @@
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
   }
-  .page.home { transform: translateX(0); }
-  .page.statement { transform: translateX(100%); }
+  /* Three pages stacked horizontally: Home (0), Statement (right), Wallet (right) */
+  .page.home { transform: translateX(0); z-index: 1; }
+  .page.statement { transform: translateX(100%); z-index: 2; }
+  .page.wallet { transform: translateX(100%); z-index: 2; }
   .pages.show-statement .page.home { transform: translateX(-20%); }
   .pages.show-statement .page.statement { transform: translateX(0); }
+  .pages.show-wallet .page.home { transform: translateX(-20%); }
+  .pages.show-wallet .page.wallet { transform: translateX(0); }
 
   /* HEADER */
   .top-header {
@@ -74,16 +79,8 @@
     align-items: center;
     margin: 8px 0 20px;
   }
-  .header-greeting {
-    font-size: 13px;
-    color: var(--text-dim);
-    margin-bottom: 2px;
-  }
-  .header-day {
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-  }
+  .header-greeting { font-size: 13px; color: var(--text-dim); margin-bottom: 2px; }
+  .header-day { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
   .refresh-btn, .back-btn {
     width: 40px;
     height: 40px;
@@ -102,10 +99,7 @@
     overflow: visible;
     transition: background 0.25s, color 0.25s, border-color 0.25s, transform 0.25s;
   }
-  .refresh-btn:active, .back-btn:active {
-    transform: scale(0.92);
-    background: var(--surface-2);
-  }
+  .refresh-btn:active, .back-btn:active { transform: scale(0.92); background: var(--surface-2); }
   .refresh-icon {
     position: relative;
     z-index: 2;
@@ -120,12 +114,7 @@
     opacity: 0;
     transition: opacity 0.2s;
   }
-  .refresh-progress svg {
-    width: 100%;
-    height: 100%;
-    transform: rotate(-90deg);
-    overflow: visible;
-  }
+  .refresh-progress svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
   .refresh-progress .progress-fill {
     fill: none;
     stroke: var(--accent-bright);
@@ -153,9 +142,9 @@
     box-shadow: 0 0 20px var(--ring-fill-glow);
   }
   @keyframes pop {
-    0%   { transform: scale(1); }
-    40%  { transform: scale(1.18); }
-    70%  { transform: scale(0.96); }
+    0% { transform: scale(1); }
+    40% { transform: scale(1.18); }
+    70% { transform: scale(0.96); }
     100% { transform: scale(1); }
   }
   .refresh-btn.error {
@@ -192,13 +181,9 @@
     border-radius: 50%;
     background: var(--accent-bright);
   }
-  .status-strip-meta {
-    font-size: 11px;
-    color: var(--text-dim);
-    margin-left: auto;
-  }
+  .status-strip-meta { font-size: 11px; color: var(--text-dim); margin-left: auto; }
 
-  /* SKELETON LOADING */
+  /* SKELETON */
   .skeleton { pointer-events: none; }
   .skeleton-card {
     background: var(--surface);
@@ -225,22 +210,9 @@
     justify-content: center;
     margin: 0 auto 22px;
   }
-  .skeleton-ring {
-    width: 200px;
-    height: 200px;
-    position: relative;
-  }
-  .skeleton-ring svg {
-    width: 100%;
-    height: 100%;
-    transform: rotate(-90deg);
-  }
-  .skeleton-ring .track {
-    fill: none;
-    stroke: var(--surface-3);
-    stroke-width: 13;
-    opacity: 0.6;
-  }
+  .skeleton-ring { width: 200px; height: 200px; position: relative; }
+  .skeleton-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .skeleton-ring .track { fill: none; stroke: var(--surface-3); stroke-width: 13; opacity: 0.6; }
   .skeleton-ring .pulse {
     fill: none;
     stroke: var(--accent-bright);
@@ -269,9 +241,7 @@
     0%, 100% { opacity: 0.4; }
     50% { opacity: 0.9; }
   }
-  .content-loaded {
-    animation: content-rise 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  }
+  .content-loaded { animation: content-rise 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
   @keyframes content-rise {
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
@@ -309,10 +279,7 @@
     cursor: pointer;
     transition: all 0.2s;
   }
-  .week-card:active {
-    background: var(--surface-2);
-    transform: translateY(-1px);
-  }
+  .week-card:active { background: var(--surface-2); transform: translateY(-1px); }
   .week-card-header {
     display: flex;
     justify-content: space-between;
@@ -339,21 +306,9 @@
     justify-content: center;
     margin: 0 auto 22px;
   }
-  .week-ring {
-    width: 200px;
-    height: 200px;
-    position: relative;
-  }
-  .week-ring svg {
-    width: 100%;
-    height: 100%;
-    transform: rotate(-90deg);
-  }
-  .week-ring .ring-track {
-    fill: none;
-    stroke: var(--ring-track);
-    stroke-width: 13;
-  }
+  .week-ring { width: 200px; height: 200px; position: relative; }
+  .week-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .week-ring .ring-track { fill: none; stroke: var(--ring-track); stroke-width: 13; }
   .week-ring .ring-fill {
     fill: none;
     stroke: var(--ring-fill);
@@ -385,12 +340,7 @@
     line-height: 1;
     color: var(--text);
   }
-  .week-ring-target {
-    font-size: 16px;
-    color: var(--text-faint);
-    margin-top: 2px;
-    font-weight: 500;
-  }
+  .week-ring-target { font-size: 16px; color: var(--text-faint); margin-top: 2px; font-weight: 500; }
 
   /* DAYS ROW */
   .days-row {
@@ -406,31 +356,16 @@
     gap: 4px;
     min-width: 0;
   }
-  .day-mini-ring {
-    width: 30px;
-    height: 30px;
-    position: relative;
-  }
-  .day-mini-ring svg {
-    width: 100%;
-    height: 100%;
-    transform: rotate(-90deg);
-  }
-  .day-mini-ring .ring-track {
-    fill: none;
-    stroke: var(--ring-track);
-    stroke-width: 2.5;
-  }
+  .day-mini-ring { width: 30px; height: 30px; position: relative; }
+  .day-mini-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .day-mini-ring .ring-track { fill: none; stroke: var(--ring-track); stroke-width: 2.5; }
   .day-mini-ring .ring-fill {
     fill: none;
     stroke: var(--ring-fill);
     stroke-width: 2.5;
     stroke-linecap: round;
   }
-  .day-mini-ring.future .ring-track {
-    stroke: var(--ring-track);
-    stroke-dasharray: 2 3;
-  }
+  .day-mini-ring.future .ring-track { stroke: var(--ring-track); stroke-dasharray: 2 3; }
   .day-mini-num {
     position: absolute;
     inset: 0;
@@ -450,16 +385,12 @@
     letter-spacing: 0.06em;
     font-weight: 600;
   }
-  .day-mini.today .day-mini-letter {
-    color: var(--accent-bright);
-    font-weight: 700;
-  }
+  .day-mini.today .day-mini-letter { color: var(--accent-bright); font-weight: 700; }
   .day-mini.today .day-mini-ring {
     outline: 1.5px solid var(--text);
     outline-offset: 2px;
     border-radius: 50%;
   }
-
   .week-footer {
     text-align: center;
     font-size: 11px;
@@ -470,7 +401,7 @@
   }
   .week-footer strong { color: var(--text); font-weight: 600; }
 
-  /* SECONDARY CARDS */
+  /* SECONDARY */
   .secondary-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -497,15 +428,8 @@
     margin-bottom: 4px;
     color: var(--text);
   }
-  .small-card-meta {
-    font-size: 10px;
-    color: var(--text-faint);
-  }
-  .cluster-dots {
-    display: flex;
-    gap: 5px;
-    margin-top: 4px;
-  }
+  .small-card-meta { font-size: 10px; color: var(--text-faint); }
+  .cluster-dots { display: flex; gap: 5px; margin-top: 4px; }
   .cluster-dot {
     width: 11px;
     height: 11px;
@@ -513,10 +437,7 @@
     background: var(--surface-3);
     border: 1px solid var(--border);
   }
-  .cluster-dot.filled {
-    background: var(--accent-bright);
-    border-color: var(--accent-bright);
-  }
+  .cluster-dot.filled { background: var(--accent-bright); border-color: var(--accent-bright); }
 
   /* ACTIVITY */
   .activity-card {
@@ -547,7 +468,7 @@
   .activity-meta { color: var(--text-dim); font-size: 11px; }
   .activity-value { color: var(--accent-bright); font-weight: 600; }
 
-  /* BALANCE CARD ON HOME */
+  /* BALANCE CARD */
   .balance-home-card {
     background: linear-gradient(135deg, var(--accent-soft), var(--accent-tint));
     border: 1px solid var(--accent-border);
@@ -556,10 +477,10 @@
     margin-bottom: 14px;
     position: relative;
     overflow: hidden;
-    cursor: not-allowed;
+    cursor: pointer;
     transition: all 0.2s;
   }
-  /* In Round 1 the card is not yet tappable — wallet doesn't exist yet */
+  .balance-home-card:active { transform: scale(0.99); }
   .balance-home-card::before {
     content: '';
     position: absolute;
@@ -590,8 +511,8 @@
     white-space: nowrap;
   }
   .balance-home-link {
-    font-size: 10px;
-    color: var(--text-faint);
+    font-size: 11px;
+    color: var(--accent-bright);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -620,21 +541,26 @@
     color: var(--text-dim);
     font-weight: 500;
   }
-  .balance-home-breakdown {
+  .balance-home-coupons {
     margin-top: 12px;
     padding-top: 12px;
     border-top: 1px dashed var(--accent-border);
     display: flex;
-    gap: 12px;
-    font-size: 11px;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
     color: var(--text-dim);
     position: relative;
     z-index: 1;
-    flex-wrap: wrap;
   }
-  .balance-home-breakdown strong {
-    color: var(--text);
-    font-weight: 600;
+  .coupon-badge {
+    background: var(--accent-bright);
+    color: var(--bg);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 100px;
+    line-height: 1.4;
   }
 
   /* SYNC */
@@ -647,14 +573,8 @@
     color: var(--text-faint);
     margin: 14px 0 6px;
   }
-  .sync-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #6dbe7b;
-  }
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: #6dbe7b; }
   .sync-dot.error { background: #e8746d; }
-
   .v-tag {
     text-align: center;
     color: #333;
@@ -665,7 +585,560 @@
   }
 
   /* ============================================
-     STATEMENT PAGE (unchanged from v0.4.1)
+     WALLET PAGE
+     ============================================ */
+  .wallet-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0 18px;
+  }
+  .wallet-title-wrap { flex: 1; }
+  .wallet-title {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .wallet-subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .balance-mini {
+    background: linear-gradient(135deg, var(--accent-soft), var(--accent-tint));
+    border: 1px solid var(--accent-border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .balance-mini-label {
+    font-size: 10px;
+    color: var(--accent-bright);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .balance-mini-val {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .balance-mini-val .unit {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-weight: 500;
+    margin-left: 3px;
+  }
+  .balance-mini-meta {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-align: right;
+    max-width: 130px;
+    line-height: 1.3;
+  }
+
+  .seg-control {
+    display: flex;
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 3px;
+    margin-bottom: 18px;
+    border: 1px solid var(--border);
+  }
+  .seg-tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    padding: 9px 0;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+  .seg-tab.active {
+    background: var(--accent-soft);
+    color: var(--accent-bright);
+  }
+  .seg-badge {
+    display: inline-block;
+    background: var(--accent-bright);
+    color: var(--bg);
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 100px;
+    margin-left: 4px;
+    font-weight: 700;
+    vertical-align: 1px;
+  }
+  .seg-tab:not(.active) .seg-badge {
+    background: var(--surface-3);
+    color: var(--text-dim);
+  }
+
+  .section-title {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    margin: 16px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title:first-of-type { margin-top: 4px; }
+  .section-title .right-meta {
+    margin-left: auto;
+    font-weight: 500;
+    color: var(--text-faint);
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-size: 10px;
+  }
+
+  /* REWARD CARDS */
+  .reward-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .reward-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .reward-card.full-width {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    min-height: auto;
+    padding: 14px 16px;
+  }
+  .reward-card:not(.unaffordable):not(.locked):active {
+    transform: scale(0.98);
+    background: var(--surface-2);
+  }
+  .reward-card.affordable { border-color: var(--accent-border); }
+  .reward-card.unaffordable { opacity: 0.45; cursor: not-allowed; }
+  .reward-card.locked { opacity: 0.6; cursor: not-allowed; }
+  .reward-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent-bright);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+  .reward-card.full-width .reward-icon { margin-bottom: 0; margin-right: 12px; }
+  .reward-card.affordable .reward-icon {
+    background: var(--accent-bright);
+    color: var(--bg);
+    box-shadow: 0 0 16px var(--ring-fill-glow);
+  }
+  .reward-card.locked .reward-icon {
+    background: var(--surface-3);
+    color: var(--text-faint);
+  }
+  .reward-body { flex: 1; min-width: 0; }
+  .reward-name {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.25;
+    margin-bottom: 4px;
+  }
+  .reward-card.full-width .reward-name { font-size: 14px; }
+  .reward-meta { font-size: 10px; color: var(--text-dim); line-height: 1.3; }
+  .reward-price {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    margin-top: 8px;
+    font-weight: 700;
+    color: var(--accent-bright);
+    font-size: 16px;
+  }
+  .reward-card.full-width .reward-price { margin-top: 0; margin-left: auto; flex-shrink: 0; }
+  .reward-price .unit {
+    font-size: 9px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+  .reward-card.unaffordable .reward-price,
+  .reward-card.locked .reward-price { color: var(--text-faint); }
+  .reward-card.unaffordable .reward-price .unit,
+  .reward-card.locked .reward-price .unit { color: var(--text-faint); }
+  .reward-card.supercharge {
+    background: linear-gradient(135deg, var(--surface), var(--surface-2));
+  }
+  .reward-card.supercharge .reward-icon { border-radius: 8px; font-weight: 700; }
+
+  /* COUPONS */
+  .wallet-empty {
+    text-align: center;
+    padding: 50px 20px 30px;
+    color: var(--text-faint);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .wallet-empty .icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+  .wallet-empty-btn {
+    margin-top: 16px;
+    display: inline-block;
+    background: var(--accent-bright);
+    color: var(--bg);
+    padding: 10px 18px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+  }
+  .coupon-card {
+    background: var(--surface);
+    border: 1.5px dashed var(--accent-border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .coupon-card::before, .coupon-card::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 20px;
+    height: 20px;
+    background: var(--bg);
+    border: 1.5px dashed var(--accent-border);
+    border-radius: 50%;
+    transform: translateY(-50%);
+  }
+  .coupon-card::before { left: -10px; }
+  .coupon-card::after { right: -10px; }
+  .coupon-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .coupon-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--accent-bright);
+    color: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+  .coupon-info { flex: 1; min-width: 0; }
+  .coupon-name {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .coupon-meta { font-size: 11px; color: var(--text-dim); }
+  .coupon-expiry {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    color: var(--text-dim);
+    background: var(--surface-2);
+    padding: 4px 8px;
+    border-radius: 100px;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .coupon-expiry.urgent { color: var(--lose); background: rgba(232,116,109,0.1); }
+  .coupon-redeem-full {
+    width: 100%;
+    background: var(--accent-bright);
+    color: var(--bg);
+    padding: 11px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    margin-top: 4px;
+    transition: transform 0.15s, opacity 0.2s;
+  }
+  .coupon-redeem-full:active { transform: scale(0.98); }
+  .coupon-redeem-full:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* STAMP CARD */
+  .stamp-card {
+    background: linear-gradient(135deg, var(--surface), var(--surface-2));
+    border: 1.5px dashed var(--accent-border);
+    border-radius: 18px;
+    padding: 16px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stamp-card::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 1.5px dashed var(--accent-border);
+    transform: translateY(-50%);
+  }
+  .stamp-card::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -10px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 1.5px dashed var(--accent-border);
+    transform: translateY(-50%);
+  }
+  .stamp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    gap: 12px;
+  }
+  .stamp-title-block { flex: 1; min-width: 0; }
+  .stamp-label {
+    font-size: 9px;
+    color: var(--accent-bright);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .stamp-title {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--text);
+  }
+  .stamp-progress-num {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent-bright);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .stamp-progress-num .total {
+    font-size: 14px;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+  .stamp-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 5px;
+    margin-bottom: 10px;
+  }
+  .stamp-dot {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 1.5px solid var(--surface-3);
+    background: var(--surface-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: var(--text-faint);
+    font-weight: 700;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .stamp-dot.filled {
+    background: var(--accent-bright);
+    border-color: var(--accent-bright);
+    color: var(--bg);
+    box-shadow: 0 0 8px var(--ring-fill-glow);
+  }
+  .stamp-dot.filled::before { content: '★'; }
+  .stamp-dot.next { border-color: var(--accent-bright); border-style: dashed; }
+  .stamp-footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-dim);
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+  }
+  .stamp-footer strong { color: var(--accent-bright); font-weight: 700; }
+
+  /* CONFIRM SHEET */
+  .sheet-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 99;
+  }
+  .sheet-overlay.active { opacity: 1; pointer-events: all; }
+  .sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    padding: 24px 24px max(32px, env(safe-area-inset-bottom));
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 100;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .sheet.open { transform: translateY(0); }
+  .sheet-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--text-faint);
+    border-radius: 2px;
+    margin: 0 auto 18px;
+  }
+  .sheet-title {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    text-align: center;
+    margin-bottom: 16px;
+    font-weight: 700;
+  }
+  .sheet-hero { text-align: center; margin-bottom: 24px; }
+  .sheet-icon-big {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--accent-bright);
+    color: var(--bg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    margin-bottom: 12px;
+    box-shadow: 0 0 24px var(--ring-fill-glow);
+  }
+  .sheet-reward-name {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  .sheet-reward-meta { font-size: 13px; color: var(--text-dim); }
+  .sheet-summary {
+    background: var(--surface-2);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .sheet-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 14px;
+  }
+  .sheet-row .label { color: var(--text-dim); }
+  .sheet-row .value { font-weight: 600; }
+  .sheet-row.total {
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    margin-top: 4px;
+    font-size: 16px;
+  }
+  .sheet-row.total .value { color: var(--accent-bright); font-weight: 700; font-size: 18px; }
+  .sheet-actions { display: flex; gap: 8px; }
+  .sheet-btn {
+    flex: 1;
+    padding: 16px;
+    border-radius: 12px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.2s;
+  }
+  .sheet-btn.primary { background: var(--accent-bright); color: var(--bg); }
+  .sheet-btn.primary:active { transform: scale(0.98); }
+  .sheet-btn.primary:disabled { opacity: 0.6; cursor: wait; }
+  .sheet-btn.secondary { background: var(--surface-3); color: var(--text); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    top: max(60px, env(safe-area-inset-top));
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: var(--accent-bright);
+    color: var(--bg);
+    padding: 12px 20px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 8px 24px var(--ring-fill-glow);
+    z-index: 200;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-width: 90%;
+    text-align: center;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .toast.error {
+    background: #e8746d;
+  }
+
+  /* ============================================
+     STATEMENT PAGE (kept from R1)
      ============================================ */
   .statement-header {
     display: flex;
@@ -703,11 +1176,7 @@
     font-weight: 700;
     color: var(--accent-bright);
   }
-  .status-meta-text {
-    font-size: 12px;
-    color: var(--text-dim);
-    margin-bottom: 14px;
-  }
+  .status-meta-text { font-size: 12px; color: var(--text-dim); margin-bottom: 14px; }
   .status-bar-track {
     height: 6px;
     background: var(--surface-3);
@@ -730,11 +1199,7 @@
   }
   .status-milestone { text-align: center; flex: 1; min-width: 0; }
   .status-milestone.current { color: var(--text); font-weight: 600; }
-  .trends-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 18px;
-  }
+  .trends-row { display: flex; gap: 8px; margin-bottom: 18px; }
   .trend-pill {
     flex: 1;
     background: var(--surface);
@@ -756,11 +1221,7 @@
     font-weight: 700;
     letter-spacing: -0.02em;
   }
-  .trend-meta {
-    font-size: 9px;
-    color: var(--text-faint);
-    margin-top: 2px;
-  }
+  .trend-meta { font-size: 9px; color: var(--text-faint); margin-top: 2px; }
   .trend-value.up { color: #6dbe7b; }
   .trend-value.down { color: #e8746d; }
   .calendar-card {
@@ -799,11 +1260,7 @@
     font-weight: 600;
     letter-spacing: 0.02em;
   }
-  .month-label .year {
-    color: var(--text-dim);
-    font-weight: 500;
-    margin-left: 6px;
-  }
+  .month-label .year { color: var(--text-dim); font-weight: 500; margin-left: 6px; }
   .cal-table {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -844,32 +1301,20 @@
     margin-bottom: 2px;
     line-height: 1;
   }
-  .ring-wrap-cal {
-    width: 28px;
-    height: 28px;
-    position: relative;
-    flex-shrink: 0;
-  }
+  .ring-wrap-cal { width: 28px; height: 28px; position: relative; flex-shrink: 0; }
   .ring-wrap-cal svg {
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     transform: rotate(-90deg);
     display: block;
   }
-  .ring-wrap-cal .ring-track {
-    fill: none;
-    stroke: var(--ring-track);
-    stroke-width: 2.5;
-  }
+  .ring-wrap-cal .ring-track { fill: none; stroke: var(--ring-track); stroke-width: 2.5; }
   .ring-wrap-cal .ring-fill {
     fill: none;
     stroke: var(--ring-fill);
     stroke-width: 2.5;
     stroke-linecap: round;
   }
-  .day-cell.max .ring-wrap-cal {
-    filter: drop-shadow(0 0 4px var(--ring-fill-glow));
-  }
+  .day-cell.max .ring-wrap-cal { filter: drop-shadow(0 0 4px var(--ring-fill-glow)); }
   .ring-text-cal {
     position: absolute;
     inset: 0;
@@ -900,16 +1345,17 @@
     font-size: 10px;
     color: var(--text-dim);
   }
-  .legend-ring {
-    width: 18px;
-    height: 18px;
-    position: relative;
-  }
+  .legend-ring { width: 18px; height: 18px; position: relative; }
   .legend-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
   .legend-ring .ring-track { fill: none; stroke: var(--ring-track); stroke-width: 2; }
-  .legend-ring .ring-fill { fill: none; stroke: var(--ring-fill); stroke-width: 2; stroke-linecap: round; }
+  .legend-ring .ring-fill {
+    fill: none;
+    stroke: var(--ring-fill);
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
 
-  /* DAY DETAIL SHEET */
+  /* DAY DETAIL */
   .detail-sheet {
     position: fixed;
     bottom: 0;
@@ -945,7 +1391,12 @@
   .detail-ring { width: 80px; height: 80px; flex-shrink: 0; position: relative; }
   .detail-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
   .detail-ring .ring-track { fill: none; stroke: var(--ring-track); stroke-width: 6; }
-  .detail-ring .ring-fill { fill: none; stroke: var(--ring-fill); stroke-width: 6; stroke-linecap: round; }
+  .detail-ring .ring-fill {
+    fill: none;
+    stroke: var(--ring-fill);
+    stroke-width: 6;
+    stroke-linecap: round;
+  }
   .detail-ring-text {
     position: absolute;
     inset: 0;
@@ -1031,14 +1482,14 @@
 <div class="pages" id="pages">
 
   <!-- HOME -->
-  <div class="page home">
+  <div class="page home" id="homePage">
     <div class="top-header">
       <div>
         <div class="header-greeting" id="greeting">Hello, Rob</div>
         <div class="header-day" id="dayname">Today</div>
       </div>
       <button class="refresh-btn" id="refreshBtn" onclick="loadData(true)" aria-label="Refresh">
-        <span class="refresh-icon" id="refreshIcon">↻</span>
+        <span class="refresh-icon">↻</span>
         <span class="refresh-progress">
           <svg viewBox="0 0 42 42">
             <circle class="progress-fill" cx="21" cy="21" r="20"></circle>
@@ -1059,11 +1510,11 @@
       <span id="syncText">Loading</span>
     </div>
 
-    <div class="v-tag">Reward Tracker · v0.5.1 (R1)</div>
+    <div class="v-tag">Reward Tracker · v0.5.2 (R2)</div>
   </div>
 
   <!-- STATEMENT -->
-  <div class="page statement">
+  <div class="page statement" id="statementPage">
     <div class="statement-header">
       <button class="back-btn" onclick="goHome()">‹</button>
       <div class="statement-title-wrap">
@@ -1074,17 +1525,39 @@
     <div id="statementContent"></div>
   </div>
 
+  <!-- WALLET -->
+  <div class="page wallet" id="walletPage">
+    <div class="wallet-header">
+      <button class="back-btn" onclick="goHome()">‹</button>
+      <div class="wallet-title-wrap">
+        <div class="wallet-title">Wallet</div>
+        <div class="wallet-subtitle" id="walletSubtitle">Your coupons and shop</div>
+      </div>
+    </div>
+    <div id="walletContent"></div>
+  </div>
+
 </div>
 
 <div class="overlay" id="overlay" onclick="closeDay()"></div>
 <div class="detail-sheet" id="detail-sheet"></div>
 
+<div class="sheet-overlay" id="sheetOverlay" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet"></div>
+
+<div class="toast" id="toast"></div>
+
 <script>
+  // ============================================
+  // GLOBAL STATE
+  // ============================================
   let cachedData = null;
   let currentMonth, currentYear;
+  let activeWalletTab = 'coupons'; // 'coupons' or 'shop'
+  let pendingPurchase = false; // for optimistic locking
 
   // ============================================
-  // CONFIG — all your rules in one place
+  // CONFIG
   // ============================================
   const RULES = {
     dailyCap: 8,
@@ -1092,7 +1565,7 @@
     perfectWeekThreshold: 50,
     perfectWeekBonus: 5,
     gymVisits4Bonus: 5,
-    gymVisits5Bonus: 10,    // cumulative (5 visits = +10 total)
+    gymVisits5Bonus: 10,
     swims2Bonus: 5,
     everyDay12500Bonus: 10,
     clusterSize: 4,
@@ -1105,7 +1578,28 @@
     }
   };
 
+  const REWARDS = [
+    { id: 'small-sweet', name: 'Small sweet treat', meta: '200 kcal', price: 30, icon: '🍫', cat: 'treats' },
+    { id: 'big-sweet', name: 'Big sweet treat', meta: '500 kcal', price: 70, icon: '🍰', cat: 'treats' },
+
+    { id: 'flat-white', name: 'Flat white', meta: 'A proper one', price: 30, icon: '☕', cat: 'drinks' },
+    { id: 'pint-1', name: '1 pint beer', meta: 'or 2 shandies / zeros', price: 30, icon: '🍺', cat: 'drinks' },
+    { id: 'pint-2', name: '2 pints beer', meta: 'or 4 shandies / zeros', price: 50, icon: '🍻', cat: 'drinks' },
+    { id: 'pint-4', name: '4 pints beer', meta: 'or 8 shandies / zeros', price: 90, icon: '🍻', cat: 'drinks' },
+
+    { id: 'night-shorts', name: 'Guilt-free night on shorts', meta: 'No limits', price: 150, icon: '🥃', cat: 'nights', fullWidth: true },
+    { id: 'night-beers', name: 'Guilt-free night on beers', meta: 'No limits', price: 200, icon: '🍻', cat: 'nights', fullWidth: true },
+
+    { id: 'cheat-meal', name: 'Cheat meal', meta: 'One free meal', price: 150, icon: '🍔', cat: 'cheats', fullWidth: true },
+    { id: 'cheat-day', name: 'Cheat day', meta: 'A full day of food and drinks, no rules', price: 500, icon: '🍕', cat: 'cheats', fullWidth: true },
+    { id: 'cheat-weekend', name: 'Cheat weekend', meta: 'Friday to Sunday. Food and drinks.', price: 1000, icon: '🎉', cat: 'cheats', fullWidth: true },
+  ];
+
+  function rewardById(id) { return REWARDS.find(r => r.id === id); }
+
+  // ============================================
   // GREETING
+  // ============================================
   function setGreeting() {
     const hour = new Date().getHours();
     let greeting;
@@ -1115,13 +1609,14 @@
     else if (hour < 21) greeting = "Good evening, Rob";
     else greeting = "Evening, Rob";
     document.getElementById('greeting').textContent = greeting;
-
     const today = new Date();
     document.getElementById('dayname').textContent = today.toLocaleDateString('en-GB', { weekday: 'long' });
   }
   setGreeting();
 
+  // ============================================
   // SKELETON
+  // ============================================
   function showSkeleton() {
     document.getElementById('content').innerHTML = `
       <div class="skeleton">
@@ -1145,7 +1640,7 @@
   }
 
   // ============================================
-  // SCORING — daily
+  // SCORING
   // ============================================
   function stepsToPoints(stepCount) {
     if (stepCount >= 12500) return 8;
@@ -1161,7 +1656,7 @@
   }
 
   // ============================================
-  // DATE HELPERS
+  // DATES
   // ============================================
   function keyFor(d) {
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -1204,6 +1699,16 @@
     if (diff === 1) return 'Yesterday';
     return date.toLocaleDateString('en-GB', { weekday: 'long' });
   }
+  function daysUntilExpiry(expiresAtIso) {
+    if (!expiresAtIso) return null;
+    try {
+      const expires = new Date(expiresAtIso);
+      if (isNaN(expires.getTime())) return null;
+      const now = new Date();
+      const diff = Math.ceil((expires - now) / 86400000);
+      return diff;
+    } catch { return null; }
+  }
 
   // ============================================
   // INDEX DATA
@@ -1214,28 +1719,22 @@
       const actualDate = shiftDateBackOne(s.date);
       if (actualDate) stepsByDate[actualDate] = s.count;
     });
-
     const swimsByDate = {};
     (data.swims || []).forEach(s => {
       const actualDate = shiftDateBackOne(s.date);
       if (actualDate) swimsByDate[actualDate] = s.distance;
     });
-
     const gymVisits = data.gymVisits || [];
     const gymVisitsByDate = {};
     gymVisits.forEach(v => {
-      if (v.event === 'entry') {
-        gymVisitsByDate[v.date] = true;
-      }
+      if (v.event === 'entry') gymVisitsByDate[v.date] = true;
     });
-
-    return { stepsByDate, swimsByDate, gymVisitsByDate, gymVisits };
+    return { stepsByDate, swimsByDate, gymVisitsByDate, gymVisits, wallet: data.wallet || [] };
   }
 
   // ============================================
   // WEEK COMPUTATION
   // ============================================
-  // Compute the score and bonuses for a single Mon-Sun week
   function computeWeek(weekStart, weekEnd, indexed) {
     let dailyTotal_ = 0;
     let gymVisits = 0;
@@ -1249,27 +1748,21 @@
       const steps = indexed.stepsByDate[key] || 0;
       const hasGym = !!indexed.gymVisitsByDate[key];
       const hasSwim = (indexed.swimsByDate[key] || 0) > 0;
-
       const dp = dailyTotal(steps, hasGym, hasSwim);
       dailyTotal_ += dp;
-
       if (hasGym) gymVisits++;
       if (hasSwim) swims++;
       if (steps >= 12500) all12500Days++;
       countableDays++;
-
       current.setDate(current.getDate() + 1);
     }
 
-    // Weekly bonuses
     const bonuses = [];
     let bonusTotal = 0;
-
     if (dailyTotal_ >= RULES.perfectWeekThreshold) {
       bonuses.push({ label: 'Perfect week', points: RULES.perfectWeekBonus });
       bonusTotal += RULES.perfectWeekBonus;
     }
-
     if (gymVisits >= 5) {
       bonuses.push({ label: '5 gym visits', points: RULES.gymVisits5Bonus });
       bonusTotal += RULES.gymVisits5Bonus;
@@ -1277,17 +1770,14 @@
       bonuses.push({ label: '4 gym visits', points: RULES.gymVisits4Bonus });
       bonusTotal += RULES.gymVisits4Bonus;
     }
-
     if (swims >= 2) {
       bonuses.push({ label: '2+ swims', points: RULES.swims2Bonus });
       bonusTotal += RULES.swims2Bonus;
     }
-
     if (countableDays === 7 && all12500Days === 7) {
       bonuses.push({ label: 'Every day 12,500+', points: RULES.everyDay12500Bonus });
       bonusTotal += RULES.everyDay12500Bonus;
     }
-
     return {
       dailyTotal: dailyTotal_,
       total: dailyTotal_ + bonusTotal,
@@ -1298,8 +1788,6 @@
       isPerfect: dailyTotal_ >= RULES.perfectWeekThreshold
     };
   }
-
-  // Year-of-Sunday rule: assign a week to the year of its Sunday
   function getYearOfSunday(weekStart) {
     const sunday = new Date(weekStart);
     sunday.setDate(sunday.getDate() + 6);
@@ -1307,124 +1795,104 @@
   }
 
   // ============================================
-  // FULL ECONOMY COMPUTATION
+  // ECONOMY
   // ============================================
   function computeEconomy(indexed) {
     const today = new Date();
     today.setHours(0,0,0,0);
     const todayDow = (today.getDay() + 6) % 7;
-
-    // Start of THIS week (Monday)
     const thisMonday = new Date(today);
     thisMonday.setDate(today.getDate() - todayDow);
 
-    // Find the earliest data date
     const allDates = new Set([
       ...Object.keys(indexed.stepsByDate),
       ...Object.keys(indexed.swimsByDate),
       ...indexed.gymVisits.map(v => v.date)
     ]);
-    if (allDates.size === 0) {
-      return {
-        thisWeek: { total: 0, dailyTotal: 0, bonuses: [], bonusTotal: 0, gymVisits: 0, swims: 0, isPerfect: false },
-        completedWeeks: [],
-        balance: 0,
-        clusterCount: 0,
-        annualCount: 0,
-        currentYear: today.getFullYear(),
-        stampsEarned: 0,
-        statusTier: 'Bronze',
-        lifetimeBreakdown: { daily: 0, weeklyBonuses: 0, clusterBonuses: 0, statusBonuses: 0, stampClaims: 0, purchases: 0, gambleNet: 0 }
-      };
-    }
-    const sortedDates = [...allDates].sort();
-    const earliestDate = new Date(sortedDates[0]);
 
-    // Earliest Monday on or before earliestDate
-    const earliestDow = (earliestDate.getDay() + 6) % 7;
-    const firstMonday = new Date(earliestDate);
-    firstMonday.setDate(earliestDate.getDate() - earliestDow);
+    let earned = 0;
+    let completedWeeks = [];
 
-    // Iterate week by week from firstMonday up to (but not including) thisMonday
-    const completedWeeks = [];
-    let cursor = new Date(firstMonday);
+    if (allDates.size > 0) {
+      const sortedDates = [...allDates].sort();
+      const earliestDate = new Date(sortedDates[0]);
+      const earliestDow = (earliestDate.getDay() + 6) % 7;
+      const firstMonday = new Date(earliestDate);
+      firstMonday.setDate(earliestDate.getDate() - earliestDow);
 
-    while (cursor < thisMonday) {
-      const weekEnd = new Date(cursor);
-      weekEnd.setDate(cursor.getDate() + 6);
-
-      const wk = computeWeek(cursor, weekEnd, indexed);
-      completedWeeks.push({
-        start: keyFor(cursor),
-        end: keyFor(weekEnd),
-        year: getYearOfSunday(cursor),
-        ...wk
-      });
-
-      cursor.setDate(cursor.getDate() + 7);
+      let cursor = new Date(firstMonday);
+      while (cursor < thisMonday) {
+        const weekEnd = new Date(cursor);
+        weekEnd.setDate(cursor.getDate() + 6);
+        const wk = computeWeek(cursor, weekEnd, indexed);
+        completedWeeks.push({
+          start: keyFor(cursor),
+          end: keyFor(weekEnd),
+          year: getYearOfSunday(cursor),
+          ...wk
+        });
+        cursor.setDate(cursor.getDate() + 7);
+      }
     }
 
-    // This week (partial)
     const thisWeekEnd = new Date(thisMonday);
     thisWeekEnd.setDate(thisMonday.getDate() + 6);
     const thisWeek = computeWeek(thisMonday, thisWeekEnd, indexed);
 
     const currentYear = today.getFullYear();
-
-    // Annual count: completed perfect weeks where year-of-Sunday === currentYear
     const annualCount = completedWeeks.filter(w => w.year === currentYear && w.isPerfect).length;
 
-    // Cluster: walk backwards through completed weeks, counting consecutive perfect weeks
-    // resetting when broken. Then award cluster bonuses every 4.
-    let clusterCount = 0;
-    let clusterBonusesEarned = 0;
+    // Cluster + stamp
     let runningCluster = 0;
+    let clusterBonusesEarned = 0;
     for (const w of completedWeeks) {
       if (w.isPerfect) {
         runningCluster++;
         if (runningCluster === RULES.clusterSize) {
           clusterBonusesEarned++;
-          runningCluster = 0; // reset after each 4-cluster
+          runningCluster = 0;
         }
       } else {
         runningCluster = 0;
       }
     }
-    clusterCount = runningCluster; // current progress toward next cluster
+    const clusterCount = runningCluster;
+    const stampsEarned = annualCount % RULES.stampCardTarget;
+    const stampClaimsEarned = Math.floor(annualCount / RULES.stampCardTarget);
 
-    // Stamp card: perfect weeks accumulate to 10, then reset.
-    // Reset annually too. We'll count perfect weeks in current year only.
-    const perfectThisYear = annualCount;
-    const stampClaimsEarned = Math.floor(perfectThisYear / RULES.stampCardTarget);
-    const stampsEarned = perfectThisYear % RULES.stampCardTarget;
-
-    // Status tier from annual count
+    // Status
     let statusTier = 'Bronze';
     if (annualCount >= RULES.statusMilestones.platinum.weeks) statusTier = 'Platinum';
     else if (annualCount >= RULES.statusMilestones.gold.weeks) statusTier = 'Gold';
     else if (annualCount >= RULES.statusMilestones.silver.weeks) statusTier = 'Silver';
 
-    // Status milestone bonuses earned this year
     let statusBonusesEarned = 0;
     if (annualCount >= RULES.statusMilestones.silver.weeks) statusBonusesEarned += RULES.statusMilestones.silver.bonus;
     if (annualCount >= RULES.statusMilestones.gold.weeks) statusBonusesEarned += RULES.statusMilestones.gold.bonus;
     if (annualCount >= RULES.statusMilestones.platinum.weeks) statusBonusesEarned += RULES.statusMilestones.platinum.bonus;
 
-    // Lifetime totals (sum across all completed weeks)
     let dailyLifetime = 0;
     let weeklyBonusLifetime = 0;
     for (const w of completedWeeks) {
       dailyLifetime += w.dailyTotal;
       weeklyBonusLifetime += w.bonusTotal;
     }
-    // Add this week's earnings so far
     dailyLifetime += thisWeek.dailyTotal;
-    weeklyBonusLifetime += 0; // this week's bonuses aren't locked in yet
 
     const clusterBonusPoints = clusterBonusesEarned * RULES.clusterBonus;
 
-    // Round 1: no purchases/gambles yet, just earnings
-    const balance = dailyLifetime + weeklyBonusLifetime + clusterBonusPoints + statusBonusesEarned;
+    earned = dailyLifetime + weeklyBonusLifetime + clusterBonusPoints + statusBonusesEarned;
+
+    // Subtract spends from wallet (purchase rows have negative points already)
+    let walletNet = 0;
+    (indexed.wallet || []).forEach(w => {
+      if (w.type === 'purchase') {
+        walletNet += w.points; // already negative
+      }
+      // Round 3: gamble wins / losses, stamp claims (will affect balance)
+    });
+
+    const balance = earned + walletNet;
 
     return {
       thisWeek,
@@ -1435,16 +1903,7 @@
       currentYear,
       stampsEarned,
       stampClaimsEarned,
-      statusTier,
-      lifetimeBreakdown: {
-        daily: dailyLifetime,
-        weeklyBonuses: weeklyBonusLifetime,
-        clusterBonuses: clusterBonusPoints,
-        statusBonuses: statusBonusesEarned,
-        stampClaims: 0,
-        purchases: 0,
-        gambleNet: 0
-      }
+      statusTier
     };
   }
 
@@ -1477,50 +1936,39 @@
   // ============================================
   async function loadData(showSkelOnLoad = true) {
     if (APPS_SCRIPT_URL === "PASTE_YOUR_URL_HERE") {
-      showError(
-        "Setup incomplete",
-        "The Apps Script URL hasn't been pasted in yet. Open index.html in a text editor, find APPS_SCRIPT_URL near the top, and replace the placeholder.",
-        null
-      );
+      showError("Setup incomplete", "Apps Script URL not set.", null);
       return;
     }
-
     const btn = document.getElementById('refreshBtn');
     btn.classList.remove('success', 'error');
     btn.classList.add('loading');
-
     if (showSkelOnLoad && !cachedData) showSkeleton();
-
     const loadStart = Date.now();
-
     try {
       const response = await fetch(APPS_SCRIPT_URL);
       if (!response.ok) throw new Error('HTTP ' + response.status);
       cachedData = await response.json();
-
       const elapsed = Date.now() - loadStart;
       const minTime = 700;
       if (elapsed < minTime) await new Promise(r => setTimeout(r, minTime - elapsed));
-
-      renderHome();
-      renderStatement();
+      renderAll();
       updateSync('healthy', 'Last sync just now');
-
       btn.classList.remove('loading');
       btn.classList.add('success');
       setTimeout(() => btn.classList.remove('success'), 1500);
-
     } catch (err) {
-      showError(
-        "Couldn't reach your data",
-        "Either the URL is wrong, the deployment access isn't 'Anyone', or you're offline.",
-        err.message
-      );
+      showError("Couldn't reach your data", "Check URL and deployment access.", err.message);
       updateSync('error', 'Sync failed');
       btn.classList.remove('loading');
       btn.classList.add('error');
       setTimeout(() => btn.classList.remove('error'), 2000);
     }
+  }
+
+  function renderAll() {
+    renderHome();
+    renderStatement();
+    renderWallet();
   }
 
   function showError(title, message, detail) {
@@ -1532,7 +1980,6 @@
       </div>
     `;
   }
-
   function updateSync(state, text) {
     const dot = document.getElementById('syncDot');
     dot.className = 'sync-dot' + (state === 'healthy' ? '' : ' ' + state);
@@ -1547,24 +1994,15 @@
     const indexed = indexData(cachedData);
     const econ = computeEconomy(indexed);
 
-    // Update status badge with real tier
     document.getElementById('statusBadge').textContent = `${econ.statusTier} · ${econ.currentYear}`;
-
-    // Status meta — countdown to next tier
     const ms = RULES.statusMilestones;
     let metaText;
-    if (econ.statusTier === 'Bronze') {
-      metaText = `${Math.max(0, ms.silver.weeks - econ.annualCount)} weeks to Silver`;
-    } else if (econ.statusTier === 'Silver') {
-      metaText = `${Math.max(0, ms.gold.weeks - econ.annualCount)} weeks to Gold`;
-    } else if (econ.statusTier === 'Gold') {
-      metaText = `${Math.max(0, ms.platinum.weeks - econ.annualCount)} weeks to Platinum`;
-    } else {
-      metaText = 'Platinum reached';
-    }
+    if (econ.statusTier === 'Bronze') metaText = `${Math.max(0, ms.silver.weeks - econ.annualCount)} weeks to Silver`;
+    else if (econ.statusTier === 'Silver') metaText = `${Math.max(0, ms.gold.weeks - econ.annualCount)} weeks to Gold`;
+    else if (econ.statusTier === 'Gold') metaText = `${Math.max(0, ms.platinum.weeks - econ.annualCount)} weeks to Platinum`;
+    else metaText = 'Platinum reached';
     document.getElementById('statusMeta').textContent = metaText;
 
-    // Week ring + days
     const weekDays = getWeekDays();
     const dayResults = weekDays.map(day => {
       if (day.isFuture) return { ...day, points: null };
@@ -1573,7 +2011,6 @@
       const hasSwim = (indexed.swimsByDate[day.key] || 0) > 0;
       return { ...day, points: dailyTotal(steps, hasGym, hasSwim) };
     });
-
     let lastActivity = 'no activity yet';
     for (let i = dayResults.length - 1; i >= 0; i--) {
       const d = dayResults[i];
@@ -1584,41 +2021,30 @@
       }
     }
 
-    // This week's activity for the activity card
     const weekStart = weekDays[0].key;
     const weekEnd = weekDays[6].key;
-    const recentVisits = indexed.gymVisits.filter(v =>
-      v.date >= weekStart && v.date <= weekEnd && v.event === 'entry'
-    );
+    const recentVisits = indexed.gymVisits.filter(v => v.date >= weekStart && v.date <= weekEnd && v.event === 'entry');
     const recentSwims = Object.entries(indexed.swimsByDate)
       .filter(([date, distance]) => date >= weekStart && date <= weekEnd && distance > 0)
       .map(([date, distance]) => ({ date, distance }));
 
-    // Cluster dots
     const clusterDots = Array.from({ length: RULES.clusterSize }, (_, i) =>
       `<div class="cluster-dot ${i < econ.clusterCount ? 'filled' : ''}"></div>`
     ).join('');
 
-    // Status meta for the small card
-    let toNextTier;
-    if (econ.statusTier === 'Bronze') {
-      toNextTier = `${econ.annualCount} / ${ms.silver.weeks} done`;
-    } else if (econ.statusTier === 'Silver') {
-      toNextTier = `${econ.annualCount} / ${ms.gold.weeks} done`;
-    } else if (econ.statusTier === 'Gold') {
-      toNextTier = `${econ.annualCount} / ${ms.platinum.weeks} done`;
-    } else {
-      toNextTier = 'Max tier!';
-    }
-
     let toNextLabel = econ.statusTier === 'Bronze' ? 'To Silver'
       : econ.statusTier === 'Silver' ? 'To Gold'
-      : econ.statusTier === 'Gold' ? 'To Platinum'
-      : 'Status';
+      : econ.statusTier === 'Gold' ? 'To Platinum' : 'Status';
     let toNextValue = econ.statusTier === 'Platinum' ? 'Max'
       : econ.statusTier === 'Bronze' ? `${Math.max(0, ms.silver.weeks - econ.annualCount)} wks`
       : econ.statusTier === 'Silver' ? `${Math.max(0, ms.gold.weeks - econ.annualCount)} wks`
       : `${Math.max(0, ms.platinum.weeks - econ.annualCount)} wks`;
+    let toNextMeta = econ.statusTier === 'Platinum' ? 'Max tier!'
+      : `${econ.annualCount} / ${econ.statusTier === 'Bronze' ? ms.silver.weeks : econ.statusTier === 'Silver' ? ms.gold.weeks : ms.platinum.weeks} done`;
+
+    // Count active (non-redeemed, non-expired) coupons
+    const activeCoupons = indexed.wallet.filter(w => isActiveCoupon(w));
+    const couponCount = activeCoupons.length;
 
     document.getElementById('content').innerHTML = `
       <div class="content-loaded">
@@ -1627,7 +2053,6 @@
             <div class="week-card-title">Points this week</div>
             <div class="week-card-link">View statement ›</div>
           </div>
-
           <div class="week-ring-wrap">
             <div class="week-ring">
               ${ringSvg(econ.thisWeek.dailyTotal, 200, 13, 50)}
@@ -1638,11 +2063,9 @@
               </div>
             </div>
           </div>
-
           <div class="days-row">
             ${dayResults.map(d => renderDayMini(d)).join('')}
           </div>
-
           <div class="week-footer">
             Last points earned <strong>${lastActivity}</strong>
           </div>
@@ -1657,7 +2080,7 @@
           <div class="small-card">
             <div class="small-card-label">${toNextLabel}</div>
             <div class="small-card-value">${toNextValue}</div>
-            <div class="small-card-meta">${toNextTier}</div>
+            <div class="small-card-meta">${toNextMeta}</div>
           </div>
         </div>
 
@@ -1685,24 +2108,25 @@
           </div>
         ` : ''}
 
-        <div class="balance-home-card">
+        <div class="balance-home-card" onclick="goWallet()">
           <div class="balance-home-header">
             <div class="balance-home-label">Your balance</div>
-            <div class="balance-home-link">Shop coming soon</div>
+            <div class="balance-home-link">${couponCount > 0 ? 'Wallet ›' : 'Spend ›'}</div>
           </div>
           <div class="balance-home-value">
             <span class="balance-home-num">${econ.balance.toLocaleString()}</span>
             <span class="balance-home-suffix">pts</span>
           </div>
-          <div class="balance-home-breakdown">
-            <span>Daily: <strong>${econ.lifetimeBreakdown.daily}</strong></span>
-            <span>Bonuses: <strong>${econ.lifetimeBreakdown.weeklyBonuses + econ.lifetimeBreakdown.clusterBonuses + econ.lifetimeBreakdown.statusBonuses}</strong></span>
-          </div>
+          ${couponCount > 0 ? `
+            <div class="balance-home-coupons">
+              <span class="coupon-badge">${couponCount}</span>
+              <span>active coupon${couponCount === 1 ? '' : 's'} in wallet</span>
+            </div>
+          ` : ''}
         </div>
       </div>
     `;
   }
-
   function renderDayMini(d) {
     return `
       <div class="day-mini ${d.isToday ? 'today' : ''}">
@@ -1715,8 +2139,411 @@
     `;
   }
 
+  function isActiveCoupon(w) {
+    if (w.type !== 'purchase') return false;
+    if (w.status !== 'active') return false;
+    const daysLeft = daysUntilExpiry(w.expiresAt);
+    if (daysLeft !== null && daysLeft < 0) return false;
+    return true;
+  }
+
   // ============================================
-  // STATEMENT (unchanged from v0.4.1, with real status numbers)
+  // RENDER WALLET
+  // ============================================
+  function renderWallet() {
+    if (!cachedData) return;
+    const indexed = indexData(cachedData);
+    const econ = computeEconomy(indexed);
+    const activeCoupons = indexed.wallet.filter(w => isActiveCoupon(w));
+
+    document.getElementById('walletSubtitle').textContent = activeWalletTab === 'shop'
+      ? 'Spend your points'
+      : (activeCoupons.length === 0 ? 'Your coupons and stamp card' : `${activeCoupons.length} active coupon${activeCoupons.length === 1 ? '' : 's'} + stamp card`);
+
+    document.getElementById('walletContent').innerHTML = `
+      <div class="balance-mini">
+        <div>
+          <div class="balance-mini-label">Balance</div>
+          <div class="balance-mini-val">${econ.balance.toLocaleString()}<span class="unit">pts</span></div>
+        </div>
+        <div class="balance-mini-meta">
+          ${econ.balance >= RULES.softCap ? 'Soft cap on — earning at half rate' :
+            econ.balance >= 1000 ? 'Approaching cap at 1,500' :
+            'Year resets 1 Jan'}
+        </div>
+      </div>
+
+      <div class="seg-control">
+        <button class="seg-tab ${activeWalletTab === 'coupons' ? 'active' : ''}" onclick="setWalletTab('coupons')">
+          Coupons${activeCoupons.length > 0 ? ` <span class="seg-badge">${activeCoupons.length}</span>` : ''}
+        </button>
+        <button class="seg-tab ${activeWalletTab === 'shop' ? 'active' : ''}" onclick="setWalletTab('shop')">
+          Shop
+        </button>
+      </div>
+
+      ${activeWalletTab === 'shop' ? renderShopContent(econ) : renderCouponsContent(econ, activeCoupons)}
+    `;
+  }
+
+  function renderShopContent(econ) {
+    const balance = econ.balance;
+    const treats = REWARDS.filter(r => r.cat === 'treats');
+    const drinks = REWARDS.filter(r => r.cat === 'drinks');
+    const nights = REWARDS.filter(r => r.cat === 'nights');
+    const cheats = REWARDS.filter(r => r.cat === 'cheats');
+
+    return `
+      <div class="section-title">Sweet treats</div>
+      <div class="reward-grid">${treats.map(r => renderRewardCard(r, balance)).join('')}</div>
+      <div class="section-title">Drinks</div>
+      <div class="reward-grid">${drinks.map(r => renderRewardCard(r, balance)).join('')}</div>
+      <div class="section-title">Big nights</div>
+      <div class="reward-grid">${nights.map(r => renderRewardCard(r, balance)).join('')}</div>
+      <div class="section-title">Cheats</div>
+      <div class="reward-grid">${cheats.map(r => renderRewardCard(r, balance)).join('')}</div>
+      <div class="section-title">
+        Supercharge
+        <span class="right-meta">Coming soon</span>
+      </div>
+      <div class="reward-grid">
+        <div class="reward-card supercharge full-width locked">
+          <div class="reward-icon">⚄</div>
+          <div class="reward-body">
+            <div class="reward-name">Take your chance</div>
+            <div class="reward-meta">Once-per-week gamble. Coming in next update.</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderRewardCard(r, balance) {
+    const affordable = balance >= r.price;
+    return `
+      <div class="reward-card ${affordable ? 'affordable' : 'unaffordable'} ${r.fullWidth ? 'full-width' : ''}"
+           onclick="${affordable ? `openBuy('${r.id}')` : ''}">
+        <div class="reward-icon">${r.icon}</div>
+        <div class="reward-body">
+          <div class="reward-name">${r.name}</div>
+          <div class="reward-meta">${r.meta}</div>
+          ${!r.fullWidth ? `<div class="reward-price">${r.price}<span class="unit">pts</span></div>` : ''}
+        </div>
+        ${r.fullWidth ? `<div class="reward-price">${r.price}<span class="unit">pts</span></div>` : ''}
+      </div>
+    `;
+  }
+
+  function renderCouponsContent(econ, activeCoupons) {
+    let html = renderStampCard(econ);
+    if (activeCoupons.length === 0) {
+      html += `
+        <div class="wallet-empty">
+          <div class="icon">▣</div>
+          <div>No purchased coupons.<br>Buy something from the shop and it'll appear here.</div>
+          <button class="wallet-empty-btn" onclick="setWalletTab('shop')">Browse the shop</button>
+        </div>
+      `;
+    } else {
+      // Sort by expiry (urgent first)
+      const sorted = [...activeCoupons].sort((a, b) => {
+        const ad = daysUntilExpiry(a.expiresAt);
+        const bd = daysUntilExpiry(b.expiresAt);
+        if (ad === null && bd === null) return 0;
+        if (ad === null) return 1;
+        if (bd === null) return -1;
+        return ad - bd;
+      });
+      html += sorted.map(c => renderCouponCard(c)).join('');
+    }
+    return html;
+  }
+
+  function renderStampCard(econ) {
+    // Round 2: just shows progress. Celebration state added in Round 3.
+    return `
+      <div class="stamp-card">
+        <div class="stamp-header">
+          <div class="stamp-title-block">
+            <div class="stamp-label">Stamp card</div>
+            <div class="stamp-title">10 perfect weeks → free reward</div>
+          </div>
+          <div class="stamp-progress-num">${econ.stampsEarned}<span class="total"> / 10</span></div>
+        </div>
+        <div class="stamp-grid">
+          ${Array.from({length: 10}, (_, i) => {
+            if (i < econ.stampsEarned) return `<div class="stamp-dot filled"></div>`;
+            if (i === econ.stampsEarned) return `<div class="stamp-dot next"></div>`;
+            return `<div class="stamp-dot"></div>`;
+          }).join('')}
+        </div>
+        <div class="stamp-footer">
+          ${econ.stampsEarned >= 10
+            ? `<strong>Free coupon ready!</strong> Reward claiming coming in next update.`
+            : `${10 - econ.stampsEarned} more 50+ weeks for a <strong>free reward</strong>`
+          }
+        </div>
+      </div>
+    `;
+  }
+
+  function renderCouponCard(c) {
+    const daysLeft = daysUntilExpiry(c.expiresAt);
+    const urgent = daysLeft !== null && daysLeft <= 1;
+    const expiryLabel = daysLeft === null ? 'No expiry'
+      : daysLeft <= 0 ? 'Expires today'
+      : daysLeft === 1 ? 'Expires tomorrow'
+      : `${daysLeft} days left`;
+
+    // Icon — match by itemId
+    const r = rewardById(c.itemId);
+    const icon = r ? r.icon : '🎟️';
+
+    return `
+      <div class="coupon-card">
+        <div class="coupon-header">
+          <div class="coupon-icon">${icon}</div>
+          <div class="coupon-info">
+            <div class="coupon-name">${c.itemName}</div>
+            <div class="coupon-meta">Purchased ${formatPurchasedDate(c.timestamp)}</div>
+          </div>
+          <div class="coupon-expiry ${urgent ? 'urgent' : ''}">${expiryLabel}</div>
+        </div>
+        <button class="coupon-redeem-full" onclick="redeemCoupon('${c.rowId}')">Redeem</button>
+      </div>
+    `;
+  }
+
+  function formatPurchasedDate(iso) {
+    if (!iso) return '';
+    try {
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const dDay = new Date(d);
+      dDay.setHours(0,0,0,0);
+      const diff = Math.round((today - dDay) / 86400000);
+      if (diff === 0) return 'today';
+      if (diff === 1) return 'yesterday';
+      if (diff < 7) return diff + ' days ago';
+      return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    } catch { return ''; }
+  }
+
+  // ============================================
+  // BUY FLOW
+  // ============================================
+  function openBuy(rewardId) {
+    const r = rewardById(rewardId);
+    if (!r) return;
+    const indexed = indexData(cachedData);
+    const econ = computeEconomy(indexed);
+    if (econ.balance < r.price) return;
+    const newBalance = econ.balance - r.price;
+
+    document.getElementById('sheet').innerHTML = `
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">Confirm purchase</div>
+      <div class="sheet-hero">
+        <div class="sheet-icon-big">${r.icon}</div>
+        <div class="sheet-reward-name">${r.name}</div>
+        <div class="sheet-reward-meta">${r.meta}</div>
+      </div>
+      <div class="sheet-summary">
+        <div class="sheet-row">
+          <span class="label">Current balance</span>
+          <span class="value">${econ.balance.toLocaleString()} pts</span>
+        </div>
+        <div class="sheet-row">
+          <span class="label">Cost</span>
+          <span class="value" style="color: var(--lose)">−${r.price} pts</span>
+        </div>
+        <div class="sheet-row total">
+          <span class="label">After purchase</span>
+          <span class="value">${newBalance.toLocaleString()} pts</span>
+        </div>
+      </div>
+      <div style="font-size: 11px; color: var(--text-dim); text-align: center; margin-bottom: 18px; line-height: 1.5;">
+        Coupon expires in 7 days. Points forfeited if not redeemed.
+      </div>
+      <div class="sheet-actions">
+        <button class="sheet-btn secondary" onclick="closeSheet()" id="cancelBtn">Cancel</button>
+        <button class="sheet-btn primary" onclick="confirmBuy('${r.id}')" id="buyBtn">Buy now</button>
+      </div>
+    `;
+    openSheet();
+  }
+
+  async function confirmBuy(rewardId) {
+    if (pendingPurchase) return;
+    const r = rewardById(rewardId);
+    if (!r) return;
+
+    pendingPurchase = true;
+    const buyBtn = document.getElementById('buyBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    if (buyBtn) { buyBtn.disabled = true; buyBtn.textContent = 'Buying…'; }
+    if (cancelBtn) cancelBtn.disabled = true;
+
+    // Build the purchase row optimistically
+    const now = new Date();
+    const expiresAt = new Date(now);
+    expiresAt.setDate(expiresAt.getDate() + 7);
+    const timestamp = now.toISOString();
+
+    const optimisticRow = {
+      rowId: timestamp,
+      timestamp: timestamp,
+      type: 'purchase',
+      itemId: r.id,
+      itemName: r.name,
+      points: -r.price,
+      meta: '',
+      status: 'active',
+      expiresAt: expiresAt.toISOString(),
+      redeemedAt: ''
+    };
+
+    // Update local cache immediately so the UI reflects the purchase
+    if (!cachedData.wallet) cachedData.wallet = [];
+    cachedData.wallet.push(optimisticRow);
+    renderAll();
+    closeSheet();
+    toast(`Bought ${r.name}`);
+
+    // Send the write to Apps Script
+    try {
+      const response = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          sheet: 'Wallet',
+          action: 'purchase',
+          itemId: r.id,
+          itemName: r.name,
+          points: r.price,
+          expiresAt: expiresAt.toISOString(),
+          meta: ''
+        }),
+        headers: { 'Content-Type': 'text/plain' } // text/plain to avoid CORS preflight
+      });
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      const result = await response.json();
+      if (!result.success) throw new Error('Write failed');
+
+      // Update the optimistic row's rowId with the real server timestamp
+      if (result.loggedAt) {
+        const idx = cachedData.wallet.findIndex(w => w.rowId === timestamp);
+        if (idx >= 0) {
+          cachedData.wallet[idx].rowId = result.loggedAt;
+          cachedData.wallet[idx].timestamp = result.loggedAt;
+          renderAll();
+        }
+      }
+    } catch (err) {
+      // Roll back optimistic update
+      const idx = cachedData.wallet.findIndex(w => w.rowId === timestamp);
+      if (idx >= 0) cachedData.wallet.splice(idx, 1);
+      renderAll();
+      toast(`Purchase failed. Try again.`, true);
+    } finally {
+      pendingPurchase = false;
+    }
+  }
+
+  // ============================================
+  // REDEEM FLOW
+  // ============================================
+  async function redeemCoupon(rowId) {
+    if (pendingPurchase) return;
+    const coupon = cachedData.wallet.find(w => w.rowId === rowId);
+    if (!coupon) return;
+
+    // Optimistic update
+    pendingPurchase = true;
+    coupon.status = 'redeemed';
+    coupon.redeemedAt = new Date().toISOString();
+    renderAll();
+    toast(`Redeemed ${coupon.itemName}. Enjoy.`);
+
+    try {
+      const response = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          sheet: 'Wallet',
+          action: 'redeem',
+          rowId: rowId
+        }),
+        headers: { 'Content-Type': 'text/plain' }
+      });
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      const result = await response.json();
+      if (!result.success) throw new Error('Redeem failed');
+    } catch (err) {
+      // Roll back
+      coupon.status = 'active';
+      coupon.redeemedAt = '';
+      renderAll();
+      toast(`Redeem failed. Try again.`, true);
+    } finally {
+      pendingPurchase = false;
+    }
+  }
+
+  // ============================================
+  // NAV
+  // ============================================
+  function goStatement() {
+    document.getElementById('pages').classList.remove('show-wallet');
+    document.getElementById('pages').classList.add('show-statement');
+    const p = document.getElementById('statementPage');
+    if (p) p.scrollTop = 0;
+  }
+  function goWallet() {
+    // Choose the right default tab based on whether there are active coupons
+    const indexed = indexData(cachedData || { wallet: [] });
+    const activeCoupons = indexed.wallet.filter(w => isActiveCoupon(w));
+    activeWalletTab = activeCoupons.length > 0 ? 'coupons' : 'shop';
+    document.getElementById('pages').classList.remove('show-statement');
+    document.getElementById('pages').classList.add('show-wallet');
+    const p = document.getElementById('walletPage');
+    if (p) p.scrollTop = 0;
+    renderWallet();
+  }
+  function goHome() {
+    document.getElementById('pages').classList.remove('show-statement', 'show-wallet');
+    const p = document.getElementById('homePage');
+    if (p) p.scrollTop = 0;
+  }
+  function setWalletTab(tab) {
+    activeWalletTab = tab;
+    renderWallet();
+    const p = document.getElementById('walletPage');
+    if (p) p.scrollTop = 0;
+  }
+
+  // ============================================
+  // SHEET / TOAST
+  // ============================================
+  function openSheet() {
+    document.getElementById('sheetOverlay').classList.add('active');
+    setTimeout(() => document.getElementById('sheet').classList.add('open'), 10);
+  }
+  function closeSheet() {
+    if (pendingPurchase) return;
+    document.getElementById('sheetOverlay').classList.remove('active');
+    document.getElementById('sheet').classList.remove('open');
+  }
+  function toast(message, isError = false) {
+    const t = document.getElementById('toast');
+    t.textContent = message;
+    t.classList.toggle('error', isError);
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  // ============================================
+  // STATEMENT (unchanged)
   // ============================================
   function renderStatement() {
     if (!cachedData) return;
@@ -1741,25 +2568,18 @@
     const ms = RULES.statusMilestones;
     const remaining = econ.statusTier === 'Bronze' ? Math.max(0, ms.silver.weeks - econ.annualCount)
       : econ.statusTier === 'Silver' ? Math.max(0, ms.gold.weeks - econ.annualCount)
-      : econ.statusTier === 'Gold' ? Math.max(0, ms.platinum.weeks - econ.annualCount)
-      : 0;
-    const nextTier = econ.statusTier === 'Bronze' ? 'Silver'
-      : econ.statusTier === 'Silver' ? 'Gold'
-      : econ.statusTier === 'Gold' ? 'Platinum'
-      : 'Platinum';
+      : econ.statusTier === 'Gold' ? Math.max(0, ms.platinum.weeks - econ.annualCount) : 0;
+    const nextTier = econ.statusTier === 'Bronze' ? 'Silver' : econ.statusTier === 'Silver' ? 'Gold' : 'Platinum';
     const progressPct = econ.statusTier === 'Bronze' ? Math.min(100, (econ.annualCount/ms.silver.weeks)*100)
       : econ.statusTier === 'Silver' ? Math.min(100, (econ.annualCount/ms.gold.weeks)*100)
-      : econ.statusTier === 'Gold' ? Math.min(100, (econ.annualCount/ms.platinum.weeks)*100)
-      : 100;
+      : econ.statusTier === 'Gold' ? Math.min(100, (econ.annualCount/ms.platinum.weeks)*100) : 100;
 
     document.getElementById('statementContent').innerHTML = `
       <div class="status-card-full">
         <div class="status-badge-strip">${econ.statusTier} · ${econ.currentYear}</div>
         <div class="status-progress-text"><span class="big">${econ.statusTier === 'Platinum' ? '★' : remaining}</span> ${econ.statusTier === 'Platinum' ? 'top tier' : 'weeks to ' + nextTier}</div>
         <div class="status-meta-text">${econ.annualCount} weeks at 50+ points this year</div>
-        <div class="status-bar-track">
-          <div class="status-bar-fill" style="width: ${progressPct}%"></div>
-        </div>
+        <div class="status-bar-track"><div class="status-bar-fill" style="width: ${progressPct}%"></div></div>
         <div class="status-milestones">
           <div class="status-milestone ${econ.statusTier === 'Bronze' ? 'current' : ''}">Bronze<br><span style="opacity:0.5">0</span></div>
           <div class="status-milestone ${econ.statusTier === 'Silver' ? 'current' : ''}">Silver<br><span style="opacity:0.5">16</span></div>
@@ -1767,7 +2587,6 @@
           <div class="status-milestone ${econ.statusTier === 'Platinum' ? 'current' : ''}">Platinum<br><span style="opacity:0.5">48</span></div>
         </div>
       </div>
-
       <div class="trends-row">
         <div class="trend-pill">
           <div class="trend-label">Trend</div>
@@ -1785,24 +2604,18 @@
           <div class="trend-meta">single week</div>
         </div>
       </div>
-
-      <div class="calendar-card">
-        ${renderCalendar(indexed)}
-      </div>
+      <div class="calendar-card">${renderCalendar(indexed)}</div>
     `;
   }
-
   function renderCalendar(indexed) {
     const today = new Date();
     today.setHours(0,0,0,0);
     const monthName = new Date(currentYear, currentMonth, 1).toLocaleDateString('en-GB', { month: 'long' });
-
     const firstDay = new Date(currentYear, currentMonth, 1);
     const lastDay = new Date(currentYear, currentMonth + 1, 0);
     const startDow = (firstDay.getDay() + 6) % 7;
     const gridStart = new Date(firstDay);
     gridStart.setDate(firstDay.getDate() - startDow);
-
     const days = [];
     for (let i = 0; i < 42; i++) {
       const d = new Date(gridStart);
@@ -1813,7 +2626,6 @@
       const hasSwim = (indexed.swimsByDate[key] || 0) > 0;
       const dataExists = (key in indexed.stepsByDate) || hasGym || hasSwim;
       const score = dataExists ? dailyTotal(steps, hasGym, hasSwim) : null;
-
       days.push({
         date: d,
         score,
@@ -1823,12 +2635,8 @@
       });
       if (i >= 27 && d.getMonth() !== currentMonth && d > lastDay) break;
     }
-    while (days.length > 35 && days.slice(-7).every(d => d.isOtherMonth)) {
-      days.length -= 7;
-    }
-
+    while (days.length > 35 && days.slice(-7).every(d => d.isOtherMonth)) days.length -= 7;
     const isCurrentMonth = currentYear === today.getFullYear() && currentMonth === today.getMonth();
-
     return `
       <div class="month-nav">
         <button class="month-arrow" onclick="prevMonth()">‹</button>
@@ -1836,12 +2644,8 @@
         <button class="month-arrow" onclick="nextMonth()" ${isCurrentMonth ? 'disabled' : ''}>›</button>
       </div>
       <div class="cal-table">
-        <div class="dow-cell">M</div>
-        <div class="dow-cell">T</div>
-        <div class="dow-cell">W</div>
-        <div class="dow-cell">T</div>
-        <div class="dow-cell">F</div>
-        <div class="dow-cell">S</div>
+        <div class="dow-cell">M</div><div class="dow-cell">T</div><div class="dow-cell">W</div>
+        <div class="dow-cell">T</div><div class="dow-cell">F</div><div class="dow-cell">S</div>
         <div class="dow-cell">S</div>
         ${days.map(d => renderDayCell(d)).join('')}
       </div>
@@ -1852,7 +2656,6 @@
       </div>
     `;
   }
-
   function renderDayCell(day) {
     let cls = 'day-cell';
     if (day.isOtherMonth) cls += ' other-month';
@@ -1872,24 +2675,9 @@
     return `
       <div class="${cls}" ${onclick}>
         <div class="day-num">${dayNum}</div>
-        <div class="ring-wrap-cal">
-          ${ringHtml}
-          <div class="ring-text-cal">${displayText}</div>
-        </div>
+        <div class="ring-wrap-cal">${ringHtml}<div class="ring-text-cal">${displayText}</div></div>
       </div>
     `;
-  }
-
-  // NAV
-  function goStatement() {
-    document.getElementById('pages').classList.add('show-statement');
-    const statementPage = document.querySelector('.page.statement');
-    if (statementPage) statementPage.scrollTop = 0;
-  }
-  function goHome() {
-    document.getElementById('pages').classList.remove('show-statement');
-    const homePage = document.querySelector('.page.home');
-    if (homePage) homePage.scrollTop = 0;
   }
   function prevMonth() {
     currentMonth--;
@@ -1903,8 +2691,6 @@
     if (currentMonth > 11) { currentMonth = 0; currentYear++; }
     renderStatement();
   }
-
-  // DAY DETAIL
   function openDay(dateKey) {
     if (!cachedData) return;
     const indexed = indexData(cachedData);
@@ -1920,7 +2706,6 @@
     const rawTotal = stepPoints + vPoints + swimP;
     const cappedTotal = Math.min(rawTotal, 8);
     const isMax = cappedTotal === 8;
-
     document.getElementById('detail-sheet').innerHTML = `
       <div class="detail-handle"></div>
       <div class="detail-date">${date.toLocaleDateString('en-GB', { weekday: 'long' })}</div>
@@ -1973,7 +2758,9 @@
     document.getElementById('overlay').classList.remove('active');
   }
 
+  // ============================================
   // BOOT
+  // ============================================
   showSkeleton();
   loadData(false);
   setInterval(() => loadData(false), 5 * 60 * 1000);
