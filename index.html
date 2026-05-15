@@ -573,9 +573,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
     margin-bottom: 10px;
     position: relative;
     z-index: 1;
+    flex-wrap: wrap;
   }
   .balance-home-label {
     font-size: 11px;
@@ -583,13 +585,15 @@
     text-transform: uppercase;
     letter-spacing: 0.12em;
     font-weight: 700;
+    white-space: nowrap;
   }
   .balance-home-link {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--text-faint);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
+    white-space: nowrap;
   }
   .balance-home-value {
     display: flex;
@@ -597,6 +601,9 @@
     gap: 4px;
     position: relative;
     z-index: 1;
+    flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
   }
   .balance-home-num {
     font-size: 42px;
@@ -604,6 +611,7 @@
     color: var(--text);
     letter-spacing: -0.03em;
     line-height: 1;
+    overflow-wrap: anywhere;
   }
   .balance-home-suffix {
     font-size: 14px;
