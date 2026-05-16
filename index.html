@@ -1879,137 +1879,242 @@
   }
 
 
+
   /* ============================================
-     SPLASH SCREEN
+     TIER TRANSITION OVERLAY
      ============================================ */
-  .splash {
+  .tier-overlay {
     position: fixed;
     inset: 0;
     background: var(--bg);
-    z-index: 10000;
+    z-index: 9500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    padding: max(40px, env(safe-area-inset-top)) 24px max(30px, env(safe-area-inset-bottom));
+    overflow: hidden;
+  }
+  .tier-overlay.active {
     opacity: 1;
-    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     pointer-events: all;
   }
-  .splash.hide {
-    opacity: 0;
-    pointer-events: none;
+  .tier-overlay.theme-silver {
+    background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
   }
-  .splash-ring {
-    width: 88px;
-    height: 88px;
-    position: relative;
-    animation: splash-breathe 2s ease-in-out infinite;
+  .tier-overlay.theme-gold {
+    background: radial-gradient(circle at 50% 30%, #2a1f0a 0%, #0a0a0a 70%);
   }
-  .splash-ring svg {
-    width: 100%;
-    height: 100%;
-    transform: rotate(-90deg);
-  }
-  .splash-ring .ring-base {
-    fill: none;
-    stroke: var(--surface-3);
-    stroke-width: 7;
-  }
-  .splash-ring .ring-accent {
-    fill: none;
-    stroke: var(--accent-bright);
-    stroke-width: 7;
-    stroke-linecap: round;
-    filter: drop-shadow(0 0 16px var(--ring-fill-glow));
-    stroke-dasharray: 250;
-    stroke-dashoffset: 250;
-    animation: splash-fill 1.8s ease-out forwards;
-  }
-  @keyframes splash-breathe {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.04); }
-  }
-  @keyframes splash-fill {
-    to { stroke-dashoffset: 0; }
+  .tier-overlay.theme-platinum {
+    background: radial-gradient(circle at 50% 30%, #2a2418 0%, #0a0a0a 80%);
   }
 
-  /* ============================================
-     PULL TO REFRESH
-     ============================================ */
-  .ptr-indicator {
+  /* Particle field for big moment */
+  .tier-particles {
     position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translate(-50%, -60px);
-    width: 36px;
-    height: 36px;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .tier-particle {
+    position: absolute;
+    bottom: -20px;
+    width: 4px;
+    height: 4px;
     border-radius: 50%;
-    background: var(--surface);
-    border: 1px solid var(--border);
+    opacity: 0;
+    animation: tier-particle-rise 4s linear infinite;
+  }
+  .theme-silver .tier-particle { background: var(--accent-bright); }
+  .theme-gold .tier-particle { background: #e6c757; box-shadow: 0 0 6px rgba(230, 199, 87, 0.6); }
+  .theme-platinum .tier-particle { background: #f0e8d4; box-shadow: 0 0 8px rgba(240, 232, 212, 0.7); }
+  @keyframes tier-particle-rise {
+    0% { opacity: 0; transform: translateY(0) scale(1); }
+    20% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-110vh) scale(0.5); }
+  }
+
+  .tier-eyebrow {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    margin-bottom: 16px;
+    opacity: 0;
+    transform: translateY(8px);
+    animation: tier-rise 0.8s 0.4s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+  }
+  .theme-silver .tier-eyebrow { color: var(--accent-bright); }
+  .theme-gold .tier-eyebrow { color: #e6c757; }
+  .theme-platinum .tier-eyebrow { color: #f0e8d4; }
+
+  .tier-badge {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 50;
-    pointer-events: none;
+    margin-bottom: 24px;
     opacity: 0;
-    transition: opacity 0.2s;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transform: scale(0.4);
+    animation: tier-badge-rise 1s 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    position: relative;
   }
-  .ptr-indicator svg {
-    width: 22px;
-    height: 22px;
-    transform: rotate(-90deg);
+  .theme-silver .tier-badge {
+    background: linear-gradient(135deg, #d4d4d4, var(--accent-bright));
+    box-shadow: 0 0 60px rgba(184, 115, 51, 0.4), inset 0 -8px 16px rgba(0,0,0,0.3);
   }
-  .ptr-indicator .ptr-track {
-    fill: none;
-    stroke: var(--surface-3);
-    stroke-width: 2.5;
+  .theme-gold .tier-badge {
+    background: linear-gradient(135deg, #f5d77a, #d4a93a);
+    box-shadow: 0 0 80px rgba(230, 199, 87, 0.6), inset 0 -8px 16px rgba(0,0,0,0.3);
   }
-  .ptr-indicator .ptr-fill {
-    fill: none;
-    stroke: var(--accent-bright);
-    stroke-width: 2.5;
-    stroke-linecap: round;
-    stroke-dasharray: 56;
-    stroke-dashoffset: 56;
-    transition: stroke-dashoffset 0.1s linear;
+  .theme-platinum .tier-badge {
+    background: linear-gradient(135deg, #ffffff, #f0e8d4, #e6c757);
+    box-shadow: 0 0 100px rgba(240, 232, 212, 0.8), inset 0 -8px 20px rgba(0,0,0,0.3);
   }
-  .ptr-indicator.active {
-    opacity: 1;
+  .tier-badge-symbol {
+    font-size: 64px;
+    line-height: 1;
+    color: #1a1a1a;
+    font-weight: 800;
+    letter-spacing: -0.05em;
   }
-  .ptr-indicator.ready .ptr-fill {
-    filter: drop-shadow(0 0 6px var(--ring-fill-glow));
+  @keyframes tier-badge-rise {
+    0% { opacity: 0; transform: scale(0.4); }
+    60% { opacity: 1; transform: scale(1.15); }
+    100% { opacity: 1; transform: scale(1); }
   }
-  .ptr-indicator.refreshing svg {
-    animation: ptr-spin 0.9s linear infinite;
+
+  .tier-title {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+    text-align: center;
+    margin-bottom: 10px;
+    opacity: 0;
+    transform: translateY(12px);
+    animation: tier-rise 0.7s 1.4s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
   }
-  .ptr-indicator.refreshing .ptr-fill {
-    stroke-dashoffset: 28 !important;
+  .theme-silver .tier-title { color: var(--text); }
+  .theme-gold .tier-title {
+    background: linear-gradient(135deg, #f5d77a, #e6c757);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
-  @keyframes ptr-spin {
-    from { transform: rotate(-90deg); }
-    to { transform: rotate(270deg); }
+  .theme-platinum .tier-title {
+    background: linear-gradient(135deg, #ffffff, #f0e8d4);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .tier-subtitle {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    text-align: center;
+    max-width: 300px;
+    margin-bottom: 28px;
+    opacity: 0;
+    transform: translateY(8px);
+    animation: tier-rise 0.6s 1.8s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+  }
+  .tier-subtitle strong { color: var(--text); font-weight: 600; }
+
+  .tier-bonus-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 22px;
+    text-align: center;
+    margin-bottom: 28px;
+    opacity: 0;
+    transform: translateY(12px);
+    animation: tier-rise 0.7s 2.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  .theme-silver .tier-bonus-card {
+    border-color: var(--accent-border);
+    background: linear-gradient(135deg, var(--accent-soft), var(--accent-tint));
+  }
+  .theme-gold .tier-bonus-card {
+    border-color: rgba(230, 199, 87, 0.3);
+    background: linear-gradient(135deg, rgba(230, 199, 87, 0.1), rgba(212, 169, 58, 0.04));
+  }
+  .theme-platinum .tier-bonus-card {
+    border-color: rgba(240, 232, 212, 0.3);
+    background: linear-gradient(135deg, rgba(240, 232, 212, 0.1), rgba(230, 199, 87, 0.04));
+  }
+  .tier-bonus-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .tier-bonus-value {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .theme-silver .tier-bonus-value { color: var(--accent-bright); }
+  .theme-gold .tier-bonus-value { color: #e6c757; }
+  .theme-platinum .tier-bonus-value {
+    background: linear-gradient(135deg, #ffffff, #f0e8d4);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .tier-bonus-value .unit {
+    font-size: 14px;
+    color: var(--text-dim);
+    font-weight: 500;
+    margin-left: 4px;
+    -webkit-text-fill-color: var(--text-dim);
+  }
+
+  .tier-cta {
+    background: var(--accent-bright);
+    color: var(--bg);
+    border: none;
+    padding: 14px 36px;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: transform 0.15s, opacity 0.2s;
+    animation: tier-rise 0.6s 2.7s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+  }
+  .theme-gold .tier-cta {
+    background: #e6c757;
+    color: #1a1a1a;
+  }
+  .theme-platinum .tier-cta {
+    background: linear-gradient(135deg, #f0e8d4, #e6c757);
+    color: #1a1a1a;
+  }
+  .tier-cta:active { transform: scale(0.96) translateY(0); }
+  .tier-cta:disabled { opacity: 0.6; cursor: wait; }
+
+  @keyframes tier-rise {
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
 
 </style>
 </head>
 <body>
-<div class="splash" id="splash">
-  <div class="splash-ring">
-    <svg viewBox="0 0 100 100">
-      <circle class="ring-base" cx="50" cy="50" r="40"></circle>
-      <circle class="ring-accent" cx="50" cy="50" r="40"></circle>
-    </svg>
-  </div>
-</div>
-
-<!-- Pull-to-refresh indicator (positioned relative to each scrolling page) -->
-<div class="ptr-indicator" id="ptrIndicator">
-  <svg viewBox="0 0 24 24">
-    <circle class="ptr-track" cx="12" cy="12" r="9"></circle>
-    <circle class="ptr-fill" cx="12" cy="12" r="9"></circle>
-  </svg>
-</div>
-
 
 <div class="pages" id="pages">
 
@@ -2430,12 +2535,14 @@
     // Adjust balance from wallet rows
     //   purchase: negative points (already stored as negative)
     //   supercharge_bonus: positive points (multiplier reward)
-    //   (future: gamble wins/losses, stamp claims)
+    //   tier_bonus: positive points (status unlock bonus)
     let walletNet = 0;
     (indexed.wallet || []).forEach(w => {
       if (w.type === 'purchase') {
         walletNet += w.points; // already negative
       } else if (w.type === 'supercharge_bonus') {
+        walletNet += w.points; // positive
+      } else if (w.type === 'tier_bonus') {
         walletNet += w.points; // positive
       }
     });
@@ -2540,6 +2647,8 @@
     renderWallet();
     // Check if we should show the Supercharge wheel (only does anything if eligible)
     maybeShowSupercharge();
+    // Check if we should show a tier transition (only does anything if a new tier was reached)
+    maybeShowTier();
   }
 
   function showError(title, message, detail) {
@@ -3746,142 +3855,180 @@
     }, 300);
   }
 
-  // ============================================
-  // PULL TO REFRESH
-  // ============================================
-  let ptrTracking = false;
-  let ptrStartY = 0;
-  let ptrCurrentY = 0;
-  let ptrRefreshing = false;
-  const PTR_THRESHOLD = 70;  // pixels to drag before refresh triggers
-  const PTR_MAX = 110;       // visual cap
 
-  function getActivePageEl() {
-    const pages = document.getElementById('pages');
-    if (pages.classList.contains('show-wallet')) return document.getElementById('walletPage');
-    if (pages.classList.contains('show-statement')) return document.getElementById('statementPage');
-    return document.getElementById('homePage');
+  // ============================================
+  // TIER TRANSITIONS
+  // ============================================
+  // Tiers, ordered. Each has its perfect-week threshold and one-time bonus.
+  const TIERS = [
+    { name: 'silver',   label: 'Silver',   threshold: 16, bonus: 200, theme: 'theme-silver',   symbol: 'S' },
+    { name: 'gold',     label: 'Gold',     threshold: 32, bonus: 300, theme: 'theme-gold',     symbol: 'G' },
+    { name: 'platinum', label: 'Platinum', threshold: 48, bonus: 500, theme: 'theme-platinum', symbol: 'P' }
+  ];
+
+  let tierCurrentTier = null;
+  let tierQueue = [];
+
+  // Check which tiers we've earned but haven't been celebrated yet (no tier_unlocked row).
+  // Returns an array of TIER objects in unlock order.
+  function checkTierUnlocks(indexed, annualCount) {
+    const unlocked = (indexed.wallet || [])
+      .filter(w => w.type === 'tier_unlocked')
+      .map(w => w.meta);  // meta holds the tier name
+
+    return TIERS.filter(t => annualCount >= t.threshold && !unlocked.includes(t.name));
   }
 
-  function onPtrStart(e) {
-    if (ptrRefreshing) return;
-    const pageEl = getActivePageEl();
-    if (!pageEl) return;
-    // Only track if scrolled to the very top
-    if (pageEl.scrollTop > 0) return;
-    ptrTracking = true;
-    ptrStartY = (e.touches ? e.touches[0].clientY : e.clientY);
-    ptrCurrentY = ptrStartY;
+  function maybeShowTier() {
+    if (!cachedData) return;
+    if (document.getElementById('tierOverlay').classList.contains('active')) return;
+    // Don't fire on top of Supercharge — let that finish first
+    if (document.getElementById('superchargeOverlay').classList.contains('active')) return;
+    // Don't fire if tier celebration is already queued
+    if (tierQueue.length > 0) return;
+
+    const indexed = indexData(cachedData);
+    const econ = computeEconomy(indexed);
+    const pending = checkTierUnlocks(indexed, econ.annualCount);
+    if (pending.length === 0) return;
+
+    tierQueue = pending;
+    showNextTier();
   }
 
-  function onPtrMove(e) {
-    if (!ptrTracking || ptrRefreshing) return;
-    const pageEl = getActivePageEl();
-    if (pageEl && pageEl.scrollTop > 0) {
-      ptrTracking = false;
-      updatePtrVisual(0);
+  function showNextTier() {
+    if (tierQueue.length === 0) {
+      tierCurrentTier = null;
       return;
     }
-    ptrCurrentY = (e.touches ? e.touches[0].clientY : e.clientY);
-    const delta = Math.max(0, ptrCurrentY - ptrStartY);
-    if (delta > 0) {
-      // Prevent default scroll bounce while pulling
-      if (e.cancelable) e.preventDefault();
-    }
-    updatePtrVisual(delta);
-  }
+    const tier = tierQueue[0];
+    tierCurrentTier = tier;
 
-  function onPtrEnd() {
-    if (!ptrTracking || ptrRefreshing) return;
-    ptrTracking = false;
-    const delta = Math.max(0, ptrCurrentY - ptrStartY);
-    if (delta >= PTR_THRESHOLD) {
-      // Trigger refresh
-      ptrRefreshing = true;
-      const ind = document.getElementById('ptrIndicator');
-      ind.classList.remove('ready');
-      ind.classList.add('refreshing');
-      ind.style.transform = 'translate(-50%, 20px)';
-      loadData(false).finally(() => {
-        // Hide indicator with a small delay so it doesn't feel abrupt
-        setTimeout(() => {
-          ind.classList.remove('refreshing', 'active');
-          ind.style.transform = '';
-          ptrRefreshing = false;
-        }, 400);
+    const overlay = document.getElementById('tierOverlay');
+    overlay.className = 'tier-overlay ' + tier.theme;
+
+    document.getElementById('tierBadgeSymbol').textContent = tier.symbol;
+    document.getElementById('tierTitle').textContent = `You're ${tier.label}.`;
+    document.getElementById('tierBonusAmount').textContent = `+${tier.bonus}`;
+
+    // Subtitle varies by tier — frame the achievement
+    let subtitle;
+    if (tier.name === 'silver') {
+      subtitle = `16 perfect weeks this year. You've earned it.`;
+    } else if (tier.name === 'gold') {
+      subtitle = `32 perfect weeks. Properly into your stride now.`;
+    } else if (tier.name === 'platinum') {
+      subtitle = `48 perfect weeks. Almost the full year. Extraordinary.`;
+    }
+    document.getElementById('tierSubtitle').textContent = subtitle;
+
+    // Particles
+    const particles = document.getElementById('tierParticles');
+    particles.innerHTML = '';
+    const particleCount = tier.name === 'platinum' ? 40 : tier.name === 'gold' ? 28 : 16;
+    for (let i = 0; i < particleCount; i++) {
+      const p = document.createElement('div');
+      p.className = 'tier-particle';
+      p.style.left = (Math.random() * 100) + '%';
+      p.style.animationDelay = (Math.random() * 4) + 's';
+      p.style.animationDuration = (3 + Math.random() * 2.5) + 's';
+      particles.appendChild(p);
+    }
+
+    // Reset CTA state
+    const cta = document.getElementById('tierCta');
+    cta.disabled = false;
+    cta.textContent = 'Continue';
+
+    // Reset all animated children so we can replay if there's a queue
+    document.querySelectorAll('#tierOverlay .tier-eyebrow, #tierOverlay .tier-badge, #tierOverlay .tier-title, #tierOverlay .tier-subtitle, #tierOverlay .tier-bonus-card, #tierOverlay .tier-cta')
+      .forEach(el => {
+        // Force animation restart by removing and reapplying
+        el.style.animation = 'none';
+        void el.offsetWidth;
+        el.style.animation = '';
       });
-    } else {
-      // Cancel — hide
-      updatePtrVisual(0);
-    }
+
+    overlay.classList.add('active');
   }
 
-  function updatePtrVisual(delta) {
-    const ind = document.getElementById('ptrIndicator');
-    if (delta <= 0) {
-      ind.classList.remove('active', 'ready');
-      ind.style.transform = '';
-      const fill = ind.querySelector('.ptr-fill');
-      if (fill) fill.style.strokeDashoffset = '56';
-      return;
-    }
-    const capped = Math.min(delta, PTR_MAX);
-    const eased = capped * 0.6;  // light resistance so it feels physical
-    const offset = Math.max(0, 56 - (capped / PTR_THRESHOLD) * 56);
-    ind.classList.add('active');
-    if (capped >= PTR_THRESHOLD) ind.classList.add('ready');
-    else ind.classList.remove('ready');
-    ind.style.transform = `translate(-50%, ${eased - 40}px)`;
-    const fill = ind.querySelector('.ptr-fill');
-    if (fill) fill.style.strokeDashoffset = offset;
-  }
+  async function tierClose() {
+    const cta = document.getElementById('tierCta');
+    if (cta.disabled) return;
+    cta.disabled = true;
+    cta.textContent = 'Saving…';
 
-  // Attach PTR listeners to each page
-  ['homePage', 'statementPage', 'walletPage'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('touchstart', onPtrStart, { passive: true });
-    el.addEventListener('touchmove', onPtrMove, { passive: false });
-    el.addEventListener('touchend', onPtrEnd, { passive: true });
-    el.addEventListener('touchcancel', onPtrEnd, { passive: true });
-  });
+    const tier = tierCurrentTier;
+    if (!tier) return;
 
-  // ============================================
-  // BOOT — splash screen + background data load
-  // ============================================
-  async function bootApp() {
-    const splashStart = Date.now();
-    const MIN_SPLASH_TIME = 900;  // don't flash splash too quickly
-    const MAX_SPLASH_TIME = 4000; // fall back to skeleton if data is slow
+    const unlockId = 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    const bonusId = 'tb_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
 
-    // Kick off data load in the background
-    const loadPromise = loadData(false).catch(err => {
-      console.warn('Initial load failed', err);
+    // Optimistic local writes
+    if (!cachedData.wallet) cachedData.wallet = [];
+    cachedData.wallet.push({
+      id: unlockId,
+      type: 'tier_unlocked',
+      itemId: 'tier_' + tier.name,
+      itemName: tier.label + ' unlocked',
+      points: 0,
+      meta: tier.name,
+      status: 'unlocked',
+      expiresAt: '',
+      redeemedAt: ''
+    });
+    cachedData.wallet.push({
+      id: bonusId,
+      type: 'tier_bonus',
+      itemId: 'tier_bonus_' + tier.name,
+      itemName: tier.label + ' status bonus',
+      points: tier.bonus,
+      meta: tier.name,
+      status: 'credited',
+      expiresAt: '',
+      redeemedAt: ''
     });
 
-    // Wait for either data ready OR max splash time, whichever first
-    const timeoutPromise = new Promise(resolve => setTimeout(resolve, MAX_SPLASH_TIME));
-    await Promise.race([loadPromise, timeoutPromise]);
-
-    // Ensure minimum splash time
-    const elapsed = Date.now() - splashStart;
-    if (elapsed < MIN_SPLASH_TIME) {
-      await new Promise(r => setTimeout(r, MIN_SPLASH_TIME - elapsed));
+    // Fire writes (no-cors)
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify({
+          sheet: 'Wallet',
+          action: 'tier_unlock',
+          tierUnlockId: unlockId,
+          tierBonusId: bonusId,
+          tierName: tier.name,
+          tierLabel: tier.label,
+          bonusPoints: tier.bonus
+        })
+      });
+    } catch (err) {
+      console.warn('Tier unlock write failed', err);
     }
 
-    // If data still isn't here, show skeleton inside the home page now (under the fading splash)
-    if (!cachedData) {
-      showSkeleton();
-    }
+    // Close current tier overlay
+    document.getElementById('tierOverlay').classList.remove('active');
 
-    // Fade out splash
-    const splash = document.getElementById('splash');
-    splash.classList.add('hide');
-    // Remove from DOM after the transition
-    setTimeout(() => splash.remove(), 600);
+    // Pop the queue and show next (or finish)
+    tierQueue.shift();
+    setTimeout(() => {
+      renderAll(); // pick up new balance
+      if (tierQueue.length > 0) {
+        showNextTier();
+      } else {
+        // Resync from server after a moment to pick up real rows
+        setTimeout(() => loadData(false), 2500);
+      }
+    }, 700);
   }
 
-  bootApp();
+  // ============================================
+  // BOOT
+  // ============================================
+  showSkeleton();
+  loadData(false);
   setInterval(() => loadData(false), 5 * 60 * 1000);
 </script>
 
@@ -3914,6 +4061,21 @@
     <div class="super-points-calc" id="superPointsCalc"></div>
     <button class="super-reveal-cta" id="superRevealCta" onclick="superClose()">Continue</button>
   </div>
+</div>
+
+
+<!-- Tier upgrade overlay -->
+<div class="tier-overlay" id="tierOverlay">
+  <div class="tier-particles" id="tierParticles"></div>
+  <div class="tier-eyebrow" id="tierEyebrow">Status upgraded</div>
+  <div class="tier-badge"><span class="tier-badge-symbol" id="tierBadgeSymbol">S</span></div>
+  <div class="tier-title" id="tierTitle">You're Silver.</div>
+  <div class="tier-subtitle" id="tierSubtitle"></div>
+  <div class="tier-bonus-card">
+    <div class="tier-bonus-label">Status bonus</div>
+    <div class="tier-bonus-value"><span id="tierBonusAmount">+200</span><span class="unit">pts</span></div>
+  </div>
+  <button class="tier-cta" id="tierCta" onclick="tierClose()">Continue</button>
 </div>
 
 </body>
