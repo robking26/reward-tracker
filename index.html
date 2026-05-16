@@ -984,6 +984,14 @@
     box-shadow: 0 0 8px var(--ring-fill-glow);
   }
   .stamp-dot.filled::before { content: '★'; }
+  @keyframes stamp-pop {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.25); opacity: 1; box-shadow: 0 0 16px var(--ring-fill-glow); }
+    100% { transform: scale(1); opacity: 1; box-shadow: 0 0 8px var(--ring-fill-glow); }
+  }
+  .stamp-dot.just-stamped {
+    animation: stamp-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
   .stamp-dot.next { border-color: var(--accent-bright); border-style: dashed; }
   .stamp-footer {
     text-align: center;
@@ -1589,6 +1597,7 @@
   let pendingPurchase = false; // for optimistic locking
   let justPurchasedId = null; // id of the most recent purchase, for highlight animation
   let pendingRedeems = new Set(); // ids we've optimistically redeemed but server may not have caught up
+  let lastSeenStampCount = null; // for triggering the stamp-pop animation when a new stamp lands
 
   // ============================================
   // CONFIG
@@ -1890,8 +1899,15 @@
       }
     }
     const clusterCount = runningCluster;
-    const stampsEarned = annualCount % RULES.stampCardTarget;
-    const stampClaimsEarned = Math.floor(annualCount / RULES.stampCardTarget);
+
+    // Live stamp: if this week's daily total already hits 50, count it tentatively
+    // so the stamp card shows progress in real time rather than waiting until Monday.
+    // Year-of-Sunday rule applies so the stamp lands on the correct year's card.
+    const thisWeekYear = getYearOfSunday(thisMonday);
+    const thisWeekCountsLive = thisWeek.isPerfect && thisWeekYear === currentYear;
+    const annualCountIncludingThisWeek = annualCount + (thisWeekCountsLive ? 1 : 0);
+    const stampsEarned = annualCountIncludingThisWeek % RULES.stampCardTarget;
+    const stampClaimsEarned = Math.floor(annualCountIncludingThisWeek / RULES.stampCardTarget);
 
     // Status
     let statusTier = 'Bronze';
@@ -1939,7 +1955,8 @@
       currentYear,
       stampsEarned,
       stampClaimsEarned,
-      statusTier
+      statusTier,
+      thisWeekCountsLive
     };
   }
 
@@ -2329,7 +2346,15 @@
   }
 
   function renderStampCard(econ) {
-    // Round 2: just shows progress. Celebration state added in Round 3.
+    // The "live" stamp is the last filled one if this week is tentatively counting.
+    // We animate it ONLY on the render where stampsEarned has just increased — to avoid
+    // re-popping every time the page re-renders for unrelated reasons.
+    const justCrossedThreshold = (lastSeenStampCount !== null
+      && econ.stampsEarned > lastSeenStampCount
+      && econ.thisWeekCountsLive);
+    lastSeenStampCount = econ.stampsEarned;
+    const liveStampIndex = econ.thisWeekCountsLive ? econ.stampsEarned - 1 : -1;
+
     return `
       <div class="stamp-card">
         <div class="stamp-header">
@@ -2341,7 +2366,10 @@
         </div>
         <div class="stamp-grid">
           ${Array.from({length: 10}, (_, i) => {
-            if (i < econ.stampsEarned) return `<div class="stamp-dot filled"></div>`;
+            if (i < econ.stampsEarned) {
+              const isLiveAndJustCrossed = (i === liveStampIndex && justCrossedThreshold);
+              return `<div class="stamp-dot filled${isLiveAndJustCrossed ? ' just-stamped' : ''}"></div>`;
+            }
             if (i === econ.stampsEarned) return `<div class="stamp-dot next"></div>`;
             return `<div class="stamp-dot"></div>`;
           }).join('')}
