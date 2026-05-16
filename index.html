@@ -2412,10 +2412,13 @@
     closeSheet();
     toast(`Bought ${r.name}`);
 
-    // Send the write to Apps Script
+    // Send the write to Apps Script using no-cors mode.
+    // We can't read the response (browser blocks it), but the write does go through.
+    // We treat "no network error" as success, and the next data refresh confirms.
     try {
-      const response = await fetch(APPS_SCRIPT_URL, {
+      await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
+        mode: 'no-cors',
         body: JSON.stringify({
           sheet: 'Wallet',
           action: 'purchase',
@@ -2424,24 +2427,12 @@
           points: r.price,
           expiresAt: expiresAt.toISOString(),
           meta: ''
-        }),
-        headers: { 'Content-Type': 'text/plain' } // text/plain to avoid CORS preflight
+        })
       });
-      if (!response.ok) throw new Error('HTTP ' + response.status);
-      const result = await response.json();
-      if (!result.success) throw new Error('Write failed');
-
-      // Update the optimistic row's rowId with the real server timestamp
-      if (result.loggedAt) {
-        const idx = cachedData.wallet.findIndex(w => w.rowId === timestamp);
-        if (idx >= 0) {
-          cachedData.wallet[idx].rowId = result.loggedAt;
-          cachedData.wallet[idx].timestamp = result.loggedAt;
-          renderAll();
-        }
-      }
+      // Schedule a background re-sync after a couple of seconds to pick up the real row
+      setTimeout(() => loadData(false), 2500);
     } catch (err) {
-      // Roll back optimistic update
+      // Network truly failed (offline, etc) — roll back
       const idx = cachedData.wallet.findIndex(w => w.rowId === timestamp);
       if (idx >= 0) cachedData.wallet.splice(idx, 1);
       renderAll();
@@ -2467,20 +2458,18 @@
     toast(`Redeemed ${coupon.itemName}. Enjoy.`);
 
     try {
-      const response = await fetch(APPS_SCRIPT_URL, {
+      await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
+        mode: 'no-cors',
         body: JSON.stringify({
           sheet: 'Wallet',
           action: 'redeem',
           rowId: rowId
-        }),
-        headers: { 'Content-Type': 'text/plain' }
+        })
       });
-      if (!response.ok) throw new Error('HTTP ' + response.status);
-      const result = await response.json();
-      if (!result.success) throw new Error('Redeem failed');
+      setTimeout(() => loadData(false), 2500);
     } catch (err) {
-      // Roll back
+      // Network failed entirely — roll back
       coupon.status = 'active';
       coupon.redeemedAt = '';
       renderAll();
@@ -2530,7 +2519,6 @@
     setTimeout(() => document.getElementById('sheet').classList.add('open'), 10);
   }
   function closeSheet() {
-    if (pendingPurchase) return;
     document.getElementById('sheetOverlay').classList.remove('active');
     document.getElementById('sheet').classList.remove('open');
   }
