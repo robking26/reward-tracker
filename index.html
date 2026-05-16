@@ -1515,9 +1515,501 @@
     z-index: 99;
   }
   .overlay.active { opacity: 1; pointer-events: all; }
+
+  /* ============================================
+     SUPERCHARGE OVERLAY
+     ============================================ */
+  .supercharge-overlay {
+    position: fixed;
+    top: max(0px, env(safe-area-inset-top));
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg);
+    z-index: 9000;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 30px 20px max(30px, env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+  }
+  .supercharge-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .super-stage {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    width: 100%;
+  }
+  .super-stage.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .super-stage.gone {
+    display: none;
+  }
+
+  .super-intro {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  .super-eyebrow {
+    font-size: 10px;
+    color: var(--accent-bright);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    margin-bottom: 12px;
+    opacity: 0;
+    animation: super-fade-in 0.6s 0.2s forwards;
+  }
+  .super-title {
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+    margin-bottom: 10px;
+    opacity: 0;
+    animation: super-fade-in 0.6s 0.4s forwards;
+  }
+  .super-detail {
+    font-size: 14px;
+    color: var(--text-dim);
+    max-width: 300px;
+    line-height: 1.5;
+    margin: 0 auto;
+    opacity: 0;
+    animation: super-fade-in 0.6s 0.6s forwards;
+  }
+  @keyframes super-fade-in {
+    to { opacity: 1; }
+  }
+
+  /* Wheel */
+  .super-wheel-wrap {
+    position: relative;
+    width: min(320px, 80vw);
+    aspect-ratio: 1;
+    margin: 0 auto 24px;
+    opacity: 0;
+    animation: super-fade-in 0.6s 0.8s forwards;
+  }
+  .super-pointer {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+  }
+  .super-pointer-shape {
+    width: 0;
+    height: 0;
+    border-left: 14px solid transparent;
+    border-right: 14px solid transparent;
+    border-top: 22px solid var(--text);
+  }
+  .super-wheel {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    position: relative;
+    background: var(--surface);
+    box-shadow:
+      0 0 0 4px var(--surface-3),
+      0 0 0 6px var(--accent-bright),
+      0 0 40px rgba(0,0,0,0.6);
+    overflow: hidden;
+    transition: transform 5s cubic-bezier(0.12, 0.7, 0.05, 1);
+    will-change: transform;
+  }
+  .super-wheel-segment {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 0;
+    height: 50%;
+    transform-origin: bottom center;
+  }
+  .super-wheel-segment-content {
+    position: absolute;
+    left: -50%;
+    top: 0;
+    width: min(320px, 80vw);
+    aspect-ratio: 2 / 1;
+    clip-path: polygon(50% 100%, 41% 0%, 59% 0%);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 24px;
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: -0.02em;
+  }
+  .super-wheel-segment-content.tier-1 { background: var(--surface-3); color: var(--text-dim); font-weight: 600; }
+  .super-wheel-segment-content.tier-1-alt { background: var(--surface-2); color: var(--text-dim); font-weight: 600; }
+  .super-wheel-segment-content.tier-1p1 { background: var(--accent); color: var(--bg); }
+  .super-wheel-segment-content.tier-1p25 { background: var(--accent-bright); color: var(--bg); }
+  .super-wheel-segment-content.tier-1p5 {
+    background: linear-gradient(135deg, #e6c757, #d4a93a);
+    color: var(--bg);
+  }
+  .super-wheel-segment-content.tier-2 {
+    background: linear-gradient(135deg, #f0e8d4, #e6c757);
+    color: var(--bg);
+    font-size: 18px;
+  }
+  .super-wheel-hub {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--accent-bright), var(--accent));
+    z-index: 5;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 -2px 4px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--bg);
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .super-spin-btn {
+    background: var(--accent-bright);
+    color: var(--bg);
+    border: none;
+    padding: 16px 48px;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 8px 24px var(--ring-fill-glow);
+    transition: transform 0.15s, opacity 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0;
+    animation: super-fade-in 0.6s 1s forwards;
+  }
+  .super-spin-btn:active { transform: scale(0.96); }
+  .super-spin-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .super-spin-meta {
+    margin-top: 14px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-dim);
+    max-width: 280px;
+    line-height: 1.4;
+    opacity: 0;
+    animation: super-fade-in 0.6s 1.2s forwards;
+  }
+  .super-spin-meta strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* Reveal */
+  .super-reveal-eyebrow {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-weight: 700;
+    margin-bottom: 16px;
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  .super-reveal-eyebrow.show { animation: super-rise 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+  .super-reveal-eyebrow.tier-1 { color: var(--text-dim); }
+  .super-reveal-eyebrow.tier-bonus { color: var(--accent-bright); }
+  .super-reveal-eyebrow.tier-big { color: #e6c757; }
+  .super-reveal-eyebrow.tier-jackpot { color: #f0e8d4; }
+
+  .super-reveal-multiplier {
+    font-size: clamp(80px, 22vw, 130px);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    margin-bottom: 18px;
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  .super-reveal-multiplier.show { animation: super-mult-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+  .super-reveal-multiplier.tier-1 { color: var(--text-dim); font-size: clamp(60px, 16vw, 90px); }
+  .super-reveal-multiplier.tier-bonus { color: var(--accent-bright); text-shadow: 0 0 40px var(--ring-fill-glow); }
+  .super-reveal-multiplier.tier-big {
+    color: #e6c757;
+    text-shadow: 0 0 60px rgba(230, 199, 87, 0.6);
+  }
+  .super-reveal-multiplier.tier-jackpot {
+    background: linear-gradient(135deg, #f0e8d4, #e6c757, var(--accent-bright));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 80px rgba(240, 232, 212, 0.7);
+  }
+  @keyframes super-mult-pop {
+    0% { transform: scale(0.6); opacity: 0; }
+    60% { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes super-rise { to { opacity: 1; transform: translateY(0); } }
+
+  .super-reveal-message {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    margin-bottom: 22px;
+    text-align: center;
+    max-width: 320px;
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  .super-reveal-message.show { animation: super-rise 0.5s 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+  .super-points-calc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 18px;
+    width: 100%;
+    max-width: 320px;
+    margin-bottom: 22px;
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  .super-points-calc.show { animation: super-rise 0.5s 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+  .super-points-calc.tier-big, .super-points-calc.tier-jackpot {
+    border-color: var(--accent-border);
+    background: linear-gradient(135deg, var(--accent-soft), var(--accent-tint));
+  }
+  .super-points-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    padding: 7px 0;
+  }
+  .super-points-row .label { color: var(--text-dim); }
+  .super-points-row .value { font-weight: 600; }
+  .super-points-row.total {
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    margin-top: 4px;
+    font-size: 16px;
+  }
+  .super-points-row.total .value {
+    color: var(--accent-bright);
+    font-weight: 700;
+    font-size: 22px;
+  }
+  .super-points-row.bonus-row .value { color: var(--accent-bright); }
+  .super-points-row.bonus-row.tier-big .value { color: #e6c757; }
+
+  .super-reveal-cta {
+    background: var(--accent-bright);
+    color: var(--bg);
+    border: none;
+    padding: 14px 36px;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: transform 0.15s, opacity 0.2s;
+  }
+  .super-reveal-cta.show { animation: super-rise 0.5s 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+  .super-reveal-cta:active { transform: scale(0.96) translateY(0); }
+  .super-reveal-cta:disabled { opacity: 0.6; cursor: wait; }
+
+  /* Background glow for big wins */
+  .super-glow-bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 1s;
+  }
+  .super-glow-bg.tier-big {
+    background: radial-gradient(circle at 50% 40%, rgba(230, 199, 87, 0.4), transparent 60%);
+    opacity: 0.5;
+  }
+  .super-glow-bg.tier-jackpot {
+    background: radial-gradient(circle at 50% 40%, rgba(240, 232, 212, 0.5), rgba(230, 199, 87, 0.3), transparent 70%);
+    opacity: 0.7;
+    animation: super-jackpot-pulse 2s ease-in-out infinite;
+  }
+  @keyframes super-jackpot-pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.85; }
+  }
+
+  .super-sparkle {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0;
+  }
+  .super-sparkle.go {
+    animation: super-sparkle-rise 2s ease-out forwards;
+  }
+  @keyframes super-sparkle-rise {
+    0% { opacity: 0; transform: translateY(0) scale(0.3); }
+    20% { opacity: 1; transform: translateY(-30px) scale(1); }
+    100% { opacity: 0; transform: translateY(-200px) scale(0.5); }
+  }
+
+
+  /* ============================================
+     SPLASH SCREEN
+     ============================================ */
+  .splash {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: all;
+  }
+  .splash.hide {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .splash-ring {
+    width: 88px;
+    height: 88px;
+    position: relative;
+    animation: splash-breathe 2s ease-in-out infinite;
+  }
+  .splash-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+  .splash-ring .ring-base {
+    fill: none;
+    stroke: var(--surface-3);
+    stroke-width: 7;
+  }
+  .splash-ring .ring-accent {
+    fill: none;
+    stroke: var(--accent-bright);
+    stroke-width: 7;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 16px var(--ring-fill-glow));
+    stroke-dasharray: 250;
+    stroke-dashoffset: 250;
+    animation: splash-fill 1.8s ease-out forwards;
+  }
+  @keyframes splash-breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+  }
+  @keyframes splash-fill {
+    to { stroke-dashoffset: 0; }
+  }
+
+  /* ============================================
+     PULL TO REFRESH
+     ============================================ */
+  .ptr-indicator {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -60px);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+  .ptr-indicator svg {
+    width: 22px;
+    height: 22px;
+    transform: rotate(-90deg);
+  }
+  .ptr-indicator .ptr-track {
+    fill: none;
+    stroke: var(--surface-3);
+    stroke-width: 2.5;
+  }
+  .ptr-indicator .ptr-fill {
+    fill: none;
+    stroke: var(--accent-bright);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-dasharray: 56;
+    stroke-dashoffset: 56;
+    transition: stroke-dashoffset 0.1s linear;
+  }
+  .ptr-indicator.active {
+    opacity: 1;
+  }
+  .ptr-indicator.ready .ptr-fill {
+    filter: drop-shadow(0 0 6px var(--ring-fill-glow));
+  }
+  .ptr-indicator.refreshing svg {
+    animation: ptr-spin 0.9s linear infinite;
+  }
+  .ptr-indicator.refreshing .ptr-fill {
+    stroke-dashoffset: 28 !important;
+  }
+  @keyframes ptr-spin {
+    from { transform: rotate(-90deg); }
+    to { transform: rotate(270deg); }
+  }
+
 </style>
 </head>
 <body>
+<div class="splash" id="splash">
+  <div class="splash-ring">
+    <svg viewBox="0 0 100 100">
+      <circle class="ring-base" cx="50" cy="50" r="40"></circle>
+      <circle class="ring-accent" cx="50" cy="50" r="40"></circle>
+    </svg>
+  </div>
+</div>
+
+<!-- Pull-to-refresh indicator (positioned relative to each scrolling page) -->
+<div class="ptr-indicator" id="ptrIndicator">
+  <svg viewBox="0 0 24 24">
+    <circle class="ptr-track" cx="12" cy="12" r="9"></circle>
+    <circle class="ptr-fill" cx="12" cy="12" r="9"></circle>
+  </svg>
+</div>
+
 
 <div class="pages" id="pages">
 
@@ -1935,13 +2427,17 @@
 
     earned = dailyLifetime + weeklyBonusLifetime + clusterBonusPoints + statusBonusesEarned;
 
-    // Subtract spends from wallet (purchase rows have negative points already)
+    // Adjust balance from wallet rows
+    //   purchase: negative points (already stored as negative)
+    //   supercharge_bonus: positive points (multiplier reward)
+    //   (future: gamble wins/losses, stamp claims)
     let walletNet = 0;
     (indexed.wallet || []).forEach(w => {
       if (w.type === 'purchase') {
         walletNet += w.points; // already negative
+      } else if (w.type === 'supercharge_bonus') {
+        walletNet += w.points; // positive
       }
-      // Round 3: gamble wins / losses, stamp claims (will affect balance)
     });
 
     const balance = earned + walletNet;
@@ -2042,6 +2538,8 @@
     renderHome();
     renderStatement();
     renderWallet();
+    // Check if we should show the Supercharge wheel (only does anything if eligible)
+    maybeShowSupercharge();
   }
 
   function showError(title, message, detail) {
@@ -2892,13 +3390,531 @@
     document.getElementById('overlay').classList.remove('active');
   }
 
+
   // ============================================
-  // BOOT
+  // SUPERCHARGE
   // ============================================
-  showSkeleton();
-  loadData(false);
+  const SUPER_WHEEL = [
+    1, 1, 1, 1.1, 1, 1, 1, 1.25, 1, 1,
+    1, 1.5, 1, 1, 1, 2, 1, 1, 1, 1.1
+  ];
+
+  let superIsSpinning = false;
+  let superCurrentRotation = 0;
+  let superCurrentMultiplier = null;
+  let superCurrentBonusPoints = 0;
+  let superCurrentLastWeekTotal = 0;
+  let superCurrentLastWeekStart = '';  // 'YYYY-MM-DD' of the Monday of the qualifying week
+  let superBuildDone = false;
+
+  function buildSuperWheel() {
+    if (superBuildDone) return;
+    const segmentAngle = 360 / SUPER_WHEEL.length;
+    const wheelEl = document.getElementById('superWheel');
+    wheelEl.innerHTML = '';
+    SUPER_WHEEL.forEach((mult, i) => {
+      const seg = document.createElement('div');
+      seg.className = 'super-wheel-segment';
+      seg.style.transform = `rotate(${i * segmentAngle}deg)`;
+      const c = document.createElement('div');
+      let tier;
+      if (mult === 1) tier = (i % 2 === 0) ? 'tier-1' : 'tier-1-alt';
+      else if (mult === 1.1) tier = 'tier-1p1';
+      else if (mult === 1.25) tier = 'tier-1p25';
+      else if (mult === 1.5) tier = 'tier-1p5';
+      else if (mult === 2) tier = 'tier-2';
+      c.className = `super-wheel-segment-content ${tier}`;
+      c.textContent = mult + '×';
+      seg.appendChild(c);
+      wheelEl.appendChild(seg);
+    });
+    superBuildDone = true;
+  }
+
+  // Check if the Supercharge wheel should show.
+  // Conditions:
+  //  - Today is Monday or later (relative to last week's Monday)
+  //  - Last week's data is complete (we have Sunday's steps)
+  //  - Every day Mon-Sun of last week scored exactly 8 daily points
+  //  - No supercharge_spin row exists in the Wallet for this week
+  function checkSupercharge(indexed) {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const todayDow = (today.getDay() + 6) % 7; // 0 = Mon
+    const thisMonday = new Date(today);
+    thisMonday.setDate(today.getDate() - todayDow);
+    const lastMonday = new Date(thisMonday);
+    lastMonday.setDate(thisMonday.getDate() - 7);
+    const lastSunday = new Date(lastMonday);
+    lastSunday.setDate(lastMonday.getDate() + 6);
+
+    // Check that we have Sunday's data (sync arrived)
+    const sundayKey = keyFor(lastSunday);
+    if (!(sundayKey in indexed.stepsByDate)) return null;
+
+    // Check every day Mon-Sun of last week scored 8 daily points
+    const cursor = new Date(lastMonday);
+    let totalDaily = 0;
+    let totalAll = 0;
+    let bonusBreakdown = [];
+    while (cursor <= lastSunday) {
+      const key = keyFor(cursor);
+      const steps = indexed.stepsByDate[key] || 0;
+      const hasGym = !!indexed.gymVisitsByDate[key];
+      const hasSwim = (indexed.swimsByDate[key] || 0) > 0;
+      const dp = dailyTotal(steps, hasGym, hasSwim);
+      if (dp < 8) return null; // not a max week
+      totalDaily += dp;
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    // Use computeWeek to get full earnings (daily + bonuses)
+    const wk = computeWeek(lastMonday, lastSunday, indexed);
+    totalAll = wk.dailyTotal + wk.bonusTotal;
+
+    // Check Wallet for existing spin row for this week
+    const lastMondayKey = keyFor(lastMonday);
+    const alreadySpun = (indexed.wallet || []).some(w =>
+      w.type === 'supercharge_spin' && w.meta === lastMondayKey
+    );
+    if (alreadySpun) return null;
+
+    return {
+      lastWeekStart: lastMondayKey,
+      lastWeekEnd: keyFor(lastSunday),
+      lastWeekTotal: totalAll,
+      bonuses: wk.bonuses
+    };
+  }
+
+  function maybeShowSupercharge() {
+    if (!cachedData) return;
+    if (document.getElementById('superchargeOverlay').classList.contains('active')) return;
+    const indexed = indexData(cachedData);
+    const eligible = checkSupercharge(indexed);
+    if (!eligible) return;
+
+    buildSuperWheel();
+    superCurrentLastWeekTotal = eligible.lastWeekTotal;
+    superCurrentLastWeekStart = eligible.lastWeekStart;
+
+    const bonusList = eligible.bonuses.length > 0
+      ? eligible.bonuses.map(b => `+${b.points} ${b.label}`).join(' · ')
+      : '';
+    document.getElementById('superSpinMeta').innerHTML =
+      `<strong>Last week: ${eligible.lastWeekTotal} pts</strong>` +
+      (bonusList ? `<br>${bonusList}` : '') +
+      `<br>Whatever you land on multiplies it.`;
+
+    document.getElementById('superchargeOverlay').classList.add('active');
+  }
+
+  function superSpin() {
+    if (superIsSpinning) return;
+    superIsSpinning = true;
+    document.getElementById('superSpinBtn').disabled = true;
+
+    const N = SUPER_WHEEL.length;
+    const segmentAngle = 360 / N;
+    const targetIndex = Math.floor(Math.random() * N);
+
+    const targetSegmentRotation = ((N - targetIndex) * segmentAngle) % 360;
+    const jitter = (Math.random() - 0.5) * (segmentAngle - 2);
+    const fullSpins = 360 * 6;
+    const fullSpinsCompleted = Math.floor(superCurrentRotation / 360) * 360;
+    const targetRotation = fullSpinsCompleted + fullSpins + targetSegmentRotation + jitter;
+    superCurrentRotation = targetRotation;
+
+    document.getElementById('superWheel').style.transform = `rotate(${targetRotation}deg)`;
+
+    setTimeout(() => {
+      // Source of truth: read landed segment from final rotation
+      const finalRotation = ((targetRotation % 360) + 360) % 360;
+      const landedIndex = ((N - Math.round(finalRotation / segmentAngle)) % N + N) % N;
+      const landedMultiplier = SUPER_WHEEL[landedIndex];
+      superReveal(landedMultiplier);
+    }, 5200);
+  }
+
+  function superGetTier(mult) {
+    if (mult === 1) return 'tier-1';
+    if (mult === 1.1) return 'tier-bonus';
+    if (mult === 1.25 || mult === 1.5) return 'tier-big';
+    if (mult === 2) return 'tier-jackpot';
+    return 'tier-1';
+  }
+  function superGetMessage(mult) {
+    if (mult === 1) return 'Perfect week is its own reward.';
+    if (mult === 1.1) return 'A small bump on top.';
+    if (mult === 1.25) return 'Nice. Bonus points incoming.';
+    if (mult === 1.5) return 'A big one. Brilliant.';
+    if (mult === 2) return 'Jackpot. Double your week.';
+    return '';
+  }
+  function superGetEyebrow(mult) {
+    if (mult === 1) return '· No multiplier ·';
+    if (mult === 1.1) return '★ Bonus unlocked ★';
+    if (mult === 1.25) return '★ Big bonus ★';
+    if (mult === 1.5) return '★★ Massive bonus ★★';
+    if (mult === 2) return '★ ★ ★ JACKPOT ★ ★ ★';
+    return '';
+  }
+
+  function superReveal(mult) {
+    superCurrentMultiplier = mult;
+    const tier = superGetTier(mult);
+    const boosted = Math.ceil(superCurrentLastWeekTotal * mult);
+    const bonusPts = boosted - superCurrentLastWeekTotal;
+    superCurrentBonusPoints = bonusPts;
+
+    // Swap stages
+    document.getElementById('superStageSpin').classList.remove('active');
+    document.getElementById('superStageSpin').classList.add('gone');
+    const revealStage = document.getElementById('superStageReveal');
+    revealStage.classList.remove('gone');
+    setTimeout(() => revealStage.classList.add('active'), 20);
+
+    // Background glow
+    document.getElementById('superGlowBg').className = 'super-glow-bg ' + tier;
+
+    // Eyebrow + multiplier + message + calc
+    const eyebrow = document.getElementById('superRevealEyebrow');
+    eyebrow.textContent = superGetEyebrow(mult);
+    eyebrow.className = 'super-reveal-eyebrow ' + tier;
+
+    const multEl = document.getElementById('superRevealMultiplier');
+    multEl.textContent = mult + '×';
+    multEl.className = 'super-reveal-multiplier ' + tier;
+
+    const msg = document.getElementById('superRevealMessage');
+    msg.textContent = superGetMessage(mult);
+
+    const calc = document.getElementById('superPointsCalc');
+    calc.className = 'super-points-calc ' + tier;
+    if (mult === 1) {
+      calc.innerHTML = `
+        <div class="super-points-row">
+          <span class="label">Last week</span>
+          <span class="value">${superCurrentLastWeekTotal} pts</span>
+        </div>
+        <div class="super-points-row">
+          <span class="label">Multiplier</span>
+          <span class="value">1×</span>
+        </div>
+        <div class="super-points-row total">
+          <span class="label">Total awarded</span>
+          <span class="value">${boosted} pts</span>
+        </div>
+      `;
+    } else {
+      calc.innerHTML = `
+        <div class="super-points-row">
+          <span class="label">Last week</span>
+          <span class="value">${superCurrentLastWeekTotal} pts</span>
+        </div>
+        <div class="super-points-row">
+          <span class="label">Multiplier</span>
+          <span class="value">${mult}×</span>
+        </div>
+        <div class="super-points-row bonus-row ${tier === 'tier-big' ? 'tier-big' : ''}">
+          <span class="label">Bonus</span>
+          <span class="value">+${bonusPts} pts</span>
+        </div>
+        <div class="super-points-row total">
+          <span class="label">Total awarded</span>
+          <span class="value">${boosted} pts</span>
+        </div>
+      `;
+    }
+
+    // Sequenced animations
+    setTimeout(() => eyebrow.classList.add('show'), 50);
+    setTimeout(() => multEl.classList.add('show'), 300);
+    setTimeout(() => msg.classList.add('show'), 800);
+    setTimeout(() => calc.classList.add('show'), 1100);
+    setTimeout(() => document.getElementById('superRevealCta').classList.add('show'), 1400);
+
+    // Sparkles for big wins
+    if (tier === 'tier-big' || tier === 'tier-jackpot') {
+      setTimeout(() => superSparkles(tier === 'tier-jackpot' ? 25 : 12), 600);
+    }
+  }
+
+  function superSparkles(count) {
+    const container = document.getElementById('superStageReveal');
+    for (let i = 0; i < count; i++) {
+      const s = document.createElement('div');
+      s.className = 'super-sparkle';
+      s.textContent = ['★', '✦', '✧'][Math.floor(Math.random() * 3)];
+      s.style.left = (20 + Math.random() * 60) + '%';
+      s.style.top = (40 + Math.random() * 30) + '%';
+      s.style.fontSize = (12 + Math.random() * 14) + 'px';
+      s.style.color = Math.random() > 0.5 ? '#e6c757' : 'var(--accent-bright)';
+      s.style.animationDelay = (Math.random() * 0.5) + 's';
+      container.appendChild(s);
+      setTimeout(() => s.classList.add('go'), 10);
+      setTimeout(() => s.remove(), 2500);
+    }
+  }
+
+  // On close: write supercharge_spin row to Wallet, then close overlay.
+  // If multiplier > 1, also write a supercharge_bonus row crediting the bonus.
+  async function superClose() {
+    const cta = document.getElementById('superRevealCta');
+    if (cta.disabled) return;
+    cta.disabled = true;
+    cta.textContent = 'Saving…';
+
+    const mult = superCurrentMultiplier;
+    const bonusPts = superCurrentBonusPoints;
+    const weekStart = superCurrentLastWeekStart;
+    const spinId = 's_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+
+    // Optimistically add the spin row + bonus row to local cache
+    if (!cachedData.wallet) cachedData.wallet = [];
+    cachedData.wallet.push({
+      id: spinId,
+      type: 'supercharge_spin',
+      itemId: 'supercharge',
+      itemName: `${mult}× supercharge`,
+      points: 0,
+      meta: weekStart,
+      status: 'spun',
+      expiresAt: '',
+      redeemedAt: ''
+    });
+    if (bonusPts > 0) {
+      const bonusId = 'sb_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+      cachedData.wallet.push({
+        id: bonusId,
+        type: 'supercharge_bonus',
+        itemId: 'supercharge_bonus',
+        itemName: `${mult}× bonus`,
+        points: bonusPts,
+        meta: weekStart,
+        status: 'credited',
+        expiresAt: '',
+        redeemedAt: ''
+      });
+    }
+
+    // Fire the writes (no-cors, fire and forget)
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify({
+          sheet: 'Wallet',
+          action: 'supercharge_spin',
+          id: spinId,
+          multiplier: mult,
+          weekStart: weekStart,
+          lastWeekTotal: superCurrentLastWeekTotal,
+          bonusPoints: bonusPts
+        })
+      });
+    } catch (err) {
+      console.warn('Supercharge write failed', err);
+    }
+
+    // Close overlay
+    setTimeout(() => {
+      document.getElementById('superchargeOverlay').classList.remove('active');
+      // After fade-out, reset stages back to initial for next time
+      setTimeout(() => {
+        document.getElementById('superStageReveal').classList.remove('active');
+        document.getElementById('superStageReveal').classList.add('gone');
+        document.getElementById('superStageSpin').classList.remove('gone');
+        document.getElementById('superStageSpin').classList.add('active');
+        document.querySelectorAll('#superStageReveal .show').forEach(el => el.classList.remove('show'));
+        // Reset wheel
+        const wheel = document.getElementById('superWheel');
+        wheel.style.transition = 'none';
+        wheel.style.transform = 'rotate(0deg)';
+        superCurrentRotation = 0;
+        void wheel.offsetWidth;
+        wheel.style.transition = '';
+        document.getElementById('superSpinBtn').disabled = false;
+        cta.disabled = false;
+        cta.textContent = 'Continue';
+        superIsSpinning = false;
+      }, 500);
+      // Re-render with new balance
+      renderAll();
+      // Background sync to pick up the rows from the server
+      setTimeout(() => loadData(false), 2500);
+    }, 300);
+  }
+
+  // ============================================
+  // PULL TO REFRESH
+  // ============================================
+  let ptrTracking = false;
+  let ptrStartY = 0;
+  let ptrCurrentY = 0;
+  let ptrRefreshing = false;
+  const PTR_THRESHOLD = 70;  // pixels to drag before refresh triggers
+  const PTR_MAX = 110;       // visual cap
+
+  function getActivePageEl() {
+    const pages = document.getElementById('pages');
+    if (pages.classList.contains('show-wallet')) return document.getElementById('walletPage');
+    if (pages.classList.contains('show-statement')) return document.getElementById('statementPage');
+    return document.getElementById('homePage');
+  }
+
+  function onPtrStart(e) {
+    if (ptrRefreshing) return;
+    const pageEl = getActivePageEl();
+    if (!pageEl) return;
+    // Only track if scrolled to the very top
+    if (pageEl.scrollTop > 0) return;
+    ptrTracking = true;
+    ptrStartY = (e.touches ? e.touches[0].clientY : e.clientY);
+    ptrCurrentY = ptrStartY;
+  }
+
+  function onPtrMove(e) {
+    if (!ptrTracking || ptrRefreshing) return;
+    const pageEl = getActivePageEl();
+    if (pageEl && pageEl.scrollTop > 0) {
+      ptrTracking = false;
+      updatePtrVisual(0);
+      return;
+    }
+    ptrCurrentY = (e.touches ? e.touches[0].clientY : e.clientY);
+    const delta = Math.max(0, ptrCurrentY - ptrStartY);
+    if (delta > 0) {
+      // Prevent default scroll bounce while pulling
+      if (e.cancelable) e.preventDefault();
+    }
+    updatePtrVisual(delta);
+  }
+
+  function onPtrEnd() {
+    if (!ptrTracking || ptrRefreshing) return;
+    ptrTracking = false;
+    const delta = Math.max(0, ptrCurrentY - ptrStartY);
+    if (delta >= PTR_THRESHOLD) {
+      // Trigger refresh
+      ptrRefreshing = true;
+      const ind = document.getElementById('ptrIndicator');
+      ind.classList.remove('ready');
+      ind.classList.add('refreshing');
+      ind.style.transform = 'translate(-50%, 20px)';
+      loadData(false).finally(() => {
+        // Hide indicator with a small delay so it doesn't feel abrupt
+        setTimeout(() => {
+          ind.classList.remove('refreshing', 'active');
+          ind.style.transform = '';
+          ptrRefreshing = false;
+        }, 400);
+      });
+    } else {
+      // Cancel — hide
+      updatePtrVisual(0);
+    }
+  }
+
+  function updatePtrVisual(delta) {
+    const ind = document.getElementById('ptrIndicator');
+    if (delta <= 0) {
+      ind.classList.remove('active', 'ready');
+      ind.style.transform = '';
+      const fill = ind.querySelector('.ptr-fill');
+      if (fill) fill.style.strokeDashoffset = '56';
+      return;
+    }
+    const capped = Math.min(delta, PTR_MAX);
+    const eased = capped * 0.6;  // light resistance so it feels physical
+    const offset = Math.max(0, 56 - (capped / PTR_THRESHOLD) * 56);
+    ind.classList.add('active');
+    if (capped >= PTR_THRESHOLD) ind.classList.add('ready');
+    else ind.classList.remove('ready');
+    ind.style.transform = `translate(-50%, ${eased - 40}px)`;
+    const fill = ind.querySelector('.ptr-fill');
+    if (fill) fill.style.strokeDashoffset = offset;
+  }
+
+  // Attach PTR listeners to each page
+  ['homePage', 'statementPage', 'walletPage'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('touchstart', onPtrStart, { passive: true });
+    el.addEventListener('touchmove', onPtrMove, { passive: false });
+    el.addEventListener('touchend', onPtrEnd, { passive: true });
+    el.addEventListener('touchcancel', onPtrEnd, { passive: true });
+  });
+
+  // ============================================
+  // BOOT — splash screen + background data load
+  // ============================================
+  async function bootApp() {
+    const splashStart = Date.now();
+    const MIN_SPLASH_TIME = 900;  // don't flash splash too quickly
+    const MAX_SPLASH_TIME = 4000; // fall back to skeleton if data is slow
+
+    // Kick off data load in the background
+    const loadPromise = loadData(false).catch(err => {
+      console.warn('Initial load failed', err);
+    });
+
+    // Wait for either data ready OR max splash time, whichever first
+    const timeoutPromise = new Promise(resolve => setTimeout(resolve, MAX_SPLASH_TIME));
+    await Promise.race([loadPromise, timeoutPromise]);
+
+    // Ensure minimum splash time
+    const elapsed = Date.now() - splashStart;
+    if (elapsed < MIN_SPLASH_TIME) {
+      await new Promise(r => setTimeout(r, MIN_SPLASH_TIME - elapsed));
+    }
+
+    // If data still isn't here, show skeleton inside the home page now (under the fading splash)
+    if (!cachedData) {
+      showSkeleton();
+    }
+
+    // Fade out splash
+    const splash = document.getElementById('splash');
+    splash.classList.add('hide');
+    // Remove from DOM after the transition
+    setTimeout(() => splash.remove(), 600);
+  }
+
+  bootApp();
   setInterval(() => loadData(false), 5 * 60 * 1000);
 </script>
+
+
+<!-- Supercharge wheel overlay -->
+<div class="supercharge-overlay" id="superchargeOverlay">
+  <div class="super-stage active" id="superStageSpin">
+    <div class="super-intro">
+      <div class="super-eyebrow">★ Perfect week ★</div>
+      <div class="super-title">Supercharge.</div>
+      <div class="super-detail" id="superDetail">
+        8 points every day. You crushed last week.<br>
+        Spin to see what you've unlocked.
+      </div>
+    </div>
+    <div class="super-wheel-wrap">
+      <div class="super-pointer"><div class="super-pointer-shape"></div></div>
+      <div class="super-wheel" id="superWheel"></div>
+      <div class="super-wheel-hub">×</div>
+    </div>
+    <button class="super-spin-btn" id="superSpinBtn" onclick="superSpin()">Spin</button>
+    <div class="super-spin-meta" id="superSpinMeta"></div>
+  </div>
+
+  <div class="super-stage gone" id="superStageReveal">
+    <div class="super-glow-bg" id="superGlowBg"></div>
+    <div class="super-reveal-eyebrow" id="superRevealEyebrow"></div>
+    <div class="super-reveal-multiplier" id="superRevealMultiplier"></div>
+    <div class="super-reveal-message" id="superRevealMessage"></div>
+    <div class="super-points-calc" id="superPointsCalc"></div>
+    <button class="super-reveal-cta" id="superRevealCta" onclick="superClose()">Continue</button>
+  </div>
+</div>
 
 </body>
 </html>
