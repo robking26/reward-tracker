@@ -1588,6 +1588,7 @@
   let activeWalletTab = 'coupons'; // 'coupons' or 'shop'
   let pendingPurchase = false; // for optimistic locking
   let justPurchasedRowId = null; // rowId of the most recent purchase, for highlight animation
+  let pendingRedeems = new Set(); // rowIds we've optimistically redeemed but server may not have caught up
 
   // ============================================
   // CONFIG
@@ -1909,7 +1910,10 @@
       dailyLifetime += w.dailyTotal;
       weeklyBonusLifetime += w.bonusTotal;
     }
+    // This week's daily total counts toward the live balance immediately
     dailyLifetime += thisWeek.dailyTotal;
+    // This week's bonuses also count immediately — they're earned the moment they trigger
+    weeklyBonusLifetime += thisWeek.bonusTotal;
 
     const clusterBonusPoints = clusterBonusesEarned * RULES.clusterBonus;
 
@@ -1980,6 +1984,26 @@
       const response = await fetch(APPS_SCRIPT_URL);
       if (!response.ok) throw new Error('HTTP ' + response.status);
       cachedData = await response.json();
+      // Apply any local optimistic redeems that the server may not have caught up on yet.
+      // Also drop any locally-redeemed IDs that the server confirms as redeemed
+      // (so we don't keep masking forever).
+      if (cachedData.wallet && pendingRedeems.size > 0) {
+        const stillPending = new Set();
+        for (const id of pendingRedeems) {
+          const row = cachedData.wallet.find(w => w.rowId === id);
+          if (!row) {
+            // Row not yet on server (very fresh purchase) — keep tracking
+            stillPending.add(id);
+          } else if (row.status !== 'redeemed') {
+            // Server still says active — apply our local redeem and keep tracking
+            row.status = 'redeemed';
+            row.redeemedAt = new Date().toISOString();
+            stillPending.add(id);
+          }
+          // If row.status === 'redeemed' already on the server, our optimistic state matches reality — drop it
+        }
+        pendingRedeems = stillPending;
+      }
       const elapsed = Date.now() - loadStart;
       const minTime = 700;
       if (elapsed < minTime) await new Promise(r => setTimeout(r, minTime - elapsed));
@@ -2527,6 +2551,7 @@
     pendingPurchase = true;
     coupon.status = 'redeemed';
     coupon.redeemedAt = new Date().toISOString();
+    pendingRedeems.add(rowId);  // remember this is locally redeemed
     renderAll();
     toast(`Redeemed ${coupon.itemName}. Enjoy.`);
 
@@ -2540,11 +2565,14 @@
           rowId: rowId
         })
       });
-      setTimeout(() => loadData(false), 2500);
+      // Don't resync immediately — Apps Script needs a few seconds to write,
+      // and resyncing too early can resurrect the coupon. Trust the optimistic
+      // state; the next natural refresh (5min interval or manual) will reconcile.
     } catch (err) {
       // Network failed entirely — roll back
       coupon.status = 'active';
       coupon.redeemedAt = '';
+      pendingRedeems.delete(rowId);
       renderAll();
       toast(`Redeem failed. Try again.`, true);
     } finally {
