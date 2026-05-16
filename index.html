@@ -213,20 +213,6 @@
   .skeleton-ring { width: 200px; height: 200px; position: relative; }
   .skeleton-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
   .skeleton-ring .track { fill: none; stroke: var(--surface-3); stroke-width: 13; opacity: 0.6; }
-  .skeleton-ring .pulse {
-    fill: none;
-    stroke: var(--accent-bright);
-    stroke-width: 13;
-    stroke-linecap: round;
-    stroke-dasharray: 60 580;
-    animation: ring-rotate 2.4s linear infinite;
-    opacity: 0.6;
-    filter: drop-shadow(0 0 8px var(--ring-fill-glow));
-  }
-  @keyframes ring-rotate {
-    from { stroke-dashoffset: 0; }
-    to { stroke-dashoffset: -640; }
-  }
   .skeleton-loading-text {
     text-align: center;
     color: var(--text-faint);
@@ -1128,13 +1114,59 @@
     transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     max-width: 90%;
     text-align: center;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: default;
   }
   .toast.show {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
+  .toast.tappable {
+    cursor: pointer;
+    padding-right: 14px;
+  }
+  .toast.tappable:active {
+    transform: translateX(-50%) translateY(0) scale(0.96);
+  }
+  .toast-message {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .toast-action {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding-left: 10px;
+    border-left: 1px solid rgba(10, 10, 10, 0.2);
+    white-space: nowrap;
+    opacity: 0.85;
+  }
   .toast.error {
     background: #e8746d;
+  }
+
+  /* Coupon card highlight after purchase */
+  @keyframes coupon-flash {
+    0% {
+      background: var(--surface);
+      box-shadow: 0 0 0 0 var(--ring-fill-glow);
+    }
+    20% {
+      background: var(--accent-soft);
+      box-shadow: 0 0 0 4px var(--ring-fill-glow);
+    }
+    100% {
+      background: var(--surface);
+      box-shadow: 0 0 0 0 transparent;
+    }
+  }
+  .coupon-card.just-purchased {
+    animation: coupon-flash 2.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   /* ============================================
@@ -1545,7 +1577,7 @@
 <div class="sheet-overlay" id="sheetOverlay" onclick="closeSheet()"></div>
 <div class="sheet" id="sheet"></div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" onclick="onToastTap()"></div>
 
 <script>
   // ============================================
@@ -1555,6 +1587,7 @@
   let currentMonth, currentYear;
   let activeWalletTab = 'coupons'; // 'coupons' or 'shop'
   let pendingPurchase = false; // for optimistic locking
+  let justPurchasedRowId = null; // rowId of the most recent purchase, for highlight animation
 
   // ============================================
   // CONFIG
@@ -1629,7 +1662,6 @@
             <div class="skeleton-ring">
               <svg viewBox="0 0 200 200">
                 <circle class="track" cx="100" cy="100" r="93.5"></circle>
-                <circle class="pulse" cx="100" cy="100" r="93.5"></circle>
               </svg>
             </div>
           </div>
@@ -2066,9 +2098,22 @@
           <div class="days-row">
             ${dayResults.map(d => renderDayMini(d)).join('')}
           </div>
-          <div class="week-footer">
-            Last points earned <strong>${lastActivity}</strong>
-          </div>
+          ${econ.thisWeek.bonuses.length > 0 ? `
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--border);">
+              ${econ.thisWeek.bonuses.map(b => `
+                <div style="background: var(--accent-soft); color: var(--accent-bright); padding: 3px 9px; border-radius: 100px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+                  +${b.points} ${b.label}
+                </div>
+              `).join('')}
+            </div>
+            <div style="text-align: center; font-size: 11px; color: var(--text-dim); margin-top: 10px;">
+              <strong style="color: var(--text)">${econ.thisWeek.dailyTotal} daily + ${econ.thisWeek.bonusTotal} bonuses</strong> · last earned <strong style="color: var(--text)">${lastActivity}</strong>
+            </div>
+          ` : `
+            <div class="week-footer">
+              Last points earned <strong>${lastActivity}</strong>
+            </div>
+          `}
         </div>
 
         <div class="secondary-row">
@@ -2295,12 +2340,13 @@
       : daysLeft === 1 ? 'Expires tomorrow'
       : `${daysLeft} days left`;
 
-    // Icon — match by itemId
     const r = rewardById(c.itemId);
     const icon = r ? r.icon : '🎟️';
 
+    const highlightClass = (c.rowId === justPurchasedRowId) ? ' just-purchased' : '';
+
     return `
-      <div class="coupon-card">
+      <div class="coupon-card${highlightClass}">
         <div class="coupon-header">
           <div class="coupon-icon">${icon}</div>
           <div class="coupon-info">
@@ -2408,9 +2454,18 @@
     // Update local cache immediately so the UI reflects the purchase
     if (!cachedData.wallet) cachedData.wallet = [];
     cachedData.wallet.push(optimisticRow);
+    justPurchasedRowId = timestamp;
     renderAll();
     closeSheet();
-    toast(`Bought ${r.name}`);
+    toast(`Bought ${r.name}`, false, () => {
+      // Slide to wallet, ensure Coupons tab is active, highlight the new coupon
+      activeWalletTab = 'coupons';
+      document.getElementById('pages').classList.remove('show-statement');
+      document.getElementById('pages').classList.add('show-wallet');
+      renderWallet();
+      const p = document.getElementById('walletPage');
+      if (p) p.scrollTop = 0;
+    });
 
     // Send the write to Apps Script using no-cors mode.
     // We can't read the response (browser blocks it), but the write does go through.
@@ -2429,8 +2484,26 @@
           meta: ''
         })
       });
-      // Schedule a background re-sync after a couple of seconds to pick up the real row
-      setTimeout(() => loadData(false), 2500);
+      // Schedule a background re-sync after a couple of seconds to pick up the real row.
+      // When the real row comes back from the server, its rowId will differ from the optimistic
+      // one — we keep justPurchasedRowId pointing to the optimistic row until the reconcile,
+      // then we re-key it to the server rowId so the highlight persists for a moment more.
+      setTimeout(async () => {
+        const optimisticId = justPurchasedRowId;
+        await loadData(false);
+        // After reload, find the most recent purchase row and re-tag for the brief remaining highlight
+        if (optimisticId && cachedData && cachedData.wallet) {
+          const recent = [...cachedData.wallet]
+            .filter(w => w.type === 'purchase' && w.itemId === r.id)
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+          if (recent) {
+            justPurchasedRowId = recent.rowId;
+            renderWallet();
+          }
+        }
+        // Clear after the animation has played out
+        setTimeout(() => { justPurchasedRowId = null; renderWallet(); }, 2500);
+      }, 2500);
     } catch (err) {
       // Network truly failed (offline, etc) — roll back
       const idx = cachedData.wallet.findIndex(w => w.rowId === timestamp);
@@ -2522,12 +2595,38 @@
     document.getElementById('sheetOverlay').classList.remove('active');
     document.getElementById('sheet').classList.remove('open');
   }
-  function toast(message, isError = false) {
+  let toastAction = null;  // function to run if toast is tapped
+  let toastTimeout = null;
+
+  function toast(message, isError = false, action = null) {
     const t = document.getElementById('toast');
-    t.textContent = message;
+    if (toastTimeout) { clearTimeout(toastTimeout); toastTimeout = null; }
+    toastAction = action;
+
+    if (action) {
+      t.innerHTML = `<span class="toast-message">${message}</span><span class="toast-action">View ›</span>`;
+      t.classList.add('tappable');
+    } else {
+      t.textContent = message;
+      t.classList.remove('tappable');
+    }
     t.classList.toggle('error', isError);
     t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2400);
+    const duration = action ? 3500 : 2400;
+    toastTimeout = setTimeout(() => {
+      t.classList.remove('show');
+      toastAction = null;
+    }, duration);
+  }
+
+  function onToastTap() {
+    if (!toastAction) return;
+    const action = toastAction;
+    toastAction = null;
+    const t = document.getElementById('toast');
+    t.classList.remove('show');
+    if (toastTimeout) { clearTimeout(toastTimeout); toastTimeout = null; }
+    action();
   }
 
   // ============================================
