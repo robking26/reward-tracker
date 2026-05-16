@@ -1587,8 +1587,8 @@
   let currentMonth, currentYear;
   let activeWalletTab = 'coupons'; // 'coupons' or 'shop'
   let pendingPurchase = false; // for optimistic locking
-  let justPurchasedRowId = null; // rowId of the most recent purchase, for highlight animation
-  let pendingRedeems = new Set(); // rowIds we've optimistically redeemed but server may not have caught up
+  let justPurchasedId = null; // id of the most recent purchase, for highlight animation
+  let pendingRedeems = new Set(); // ids we've optimistically redeemed but server may not have caught up
 
   // ============================================
   // CONFIG
@@ -1990,7 +1990,7 @@
       if (cachedData.wallet && pendingRedeems.size > 0) {
         const stillPending = new Set();
         for (const id of pendingRedeems) {
-          const row = cachedData.wallet.find(w => w.rowId === id);
+          const row = cachedData.wallet.find(w => w.id === id);
           if (!row) {
             // Row not yet on server (very fresh purchase) — keep tracking
             stillPending.add(id);
@@ -2367,7 +2367,7 @@
     const r = rewardById(c.itemId);
     const icon = r ? r.icon : '🎟️';
 
-    const highlightClass = (c.rowId === justPurchasedRowId) ? ' just-purchased' : '';
+    const highlightClass = (c.id === justPurchasedId) ? ' just-purchased' : '';
 
     return `
       <div class="coupon-card${highlightClass}">
@@ -2379,7 +2379,7 @@
           </div>
           <div class="coupon-expiry ${urgent ? 'urgent' : ''}">${expiryLabel}</div>
         </div>
-        <button class="coupon-redeem-full" onclick="redeemCoupon('${c.rowId}')">Redeem</button>
+        <button class="coupon-redeem-full" onclick="redeemCoupon('${c.id}')">Redeem</button>
       </div>
     `;
   }
@@ -2456,15 +2456,14 @@
     if (buyBtn) { buyBtn.disabled = true; buyBtn.textContent = 'Buying…'; }
     if (cancelBtn) cancelBtn.disabled = true;
 
-    // Build the purchase row optimistically
+    // Generate a stable string ID with a prefix so Sheets keeps it as a string
     const now = new Date();
     const expiresAt = new Date(now);
     expiresAt.setDate(expiresAt.getDate() + 7);
-    const timestamp = now.toISOString();
+    const purchaseId = 'p_' + now.getTime() + '_' + Math.random().toString(36).slice(2, 8);
 
     const optimisticRow = {
-      rowId: timestamp,
-      timestamp: timestamp,
+      id: purchaseId,
       type: 'purchase',
       itemId: r.id,
       itemName: r.name,
@@ -2472,13 +2471,14 @@
       meta: '',
       status: 'active',
       expiresAt: expiresAt.toISOString(),
-      redeemedAt: ''
+      redeemedAt: '',
+      timestamp: now.toISOString()  // kept for display purposes only
     };
 
     // Update local cache immediately so the UI reflects the purchase
     if (!cachedData.wallet) cachedData.wallet = [];
     cachedData.wallet.push(optimisticRow);
-    justPurchasedRowId = timestamp;
+    justPurchasedId = purchaseId;
     renderAll();
     closeSheet();
     toast(`Bought ${r.name}`, false, () => {
@@ -2501,6 +2501,7 @@
         body: JSON.stringify({
           sheet: 'Wallet',
           action: 'purchase',
+          id: purchaseId,
           itemId: r.id,
           itemName: r.name,
           points: r.price,
@@ -2509,28 +2510,18 @@
         })
       });
       // Schedule a background re-sync after a couple of seconds to pick up the real row.
-      // When the real row comes back from the server, its rowId will differ from the optimistic
-      // one — we keep justPurchasedRowId pointing to the optimistic row until the reconcile,
-      // then we re-key it to the server rowId so the highlight persists for a moment more.
+      // When the real row comes back from the server, the id matches because we own it
+      // one — we keep justPurchasedId pointing to the optimistic row until the reconcile,
+      // so the highlight persists naturally without needing to remap.
       setTimeout(async () => {
-        const optimisticId = justPurchasedRowId;
         await loadData(false);
-        // After reload, find the most recent purchase row and re-tag for the brief remaining highlight
-        if (optimisticId && cachedData && cachedData.wallet) {
-          const recent = [...cachedData.wallet]
-            .filter(w => w.type === 'purchase' && w.itemId === r.id)
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
-          if (recent) {
-            justPurchasedRowId = recent.rowId;
-            renderWallet();
-          }
-        }
+        // After reload, the highlight should still attach because purchaseId matches by string
         // Clear after the animation has played out
-        setTimeout(() => { justPurchasedRowId = null; renderWallet(); }, 2500);
+        setTimeout(() => { justPurchasedId = null; renderWallet(); }, 2500);
       }, 2500);
     } catch (err) {
       // Network truly failed (offline, etc) — roll back
-      const idx = cachedData.wallet.findIndex(w => w.rowId === timestamp);
+      const idx = cachedData.wallet.findIndex(w => w.id === purchaseId);
       if (idx >= 0) cachedData.wallet.splice(idx, 1);
       renderAll();
       toast(`Purchase failed. Try again.`, true);
@@ -2542,16 +2533,16 @@
   // ============================================
   // REDEEM FLOW
   // ============================================
-  async function redeemCoupon(rowId) {
+  async function redeemCoupon(id) {
     if (pendingPurchase) return;
-    const coupon = cachedData.wallet.find(w => w.rowId === rowId);
+    const coupon = cachedData.wallet.find(w => w.id === id);
     if (!coupon) return;
 
     // Optimistic update
     pendingPurchase = true;
     coupon.status = 'redeemed';
     coupon.redeemedAt = new Date().toISOString();
-    pendingRedeems.add(rowId);  // remember this is locally redeemed
+    pendingRedeems.add(id);  // remember this is locally redeemed
     renderAll();
     toast(`Redeemed ${coupon.itemName}. Enjoy.`);
 
@@ -2562,7 +2553,7 @@
         body: JSON.stringify({
           sheet: 'Wallet',
           action: 'redeem',
-          rowId: rowId
+          id: id
         })
       });
       // Don't resync immediately — Apps Script needs a few seconds to write,
@@ -2572,7 +2563,7 @@
       // Network failed entirely — roll back
       coupon.status = 'active';
       coupon.redeemedAt = '';
-      pendingRedeems.delete(rowId);
+      pendingRedeems.delete(id);
       renderAll();
       toast(`Redeem failed. Try again.`, true);
     } finally {
