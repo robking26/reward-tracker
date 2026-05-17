@@ -2115,6 +2115,101 @@
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
 
+
+  /* Stamp card celebration state (when 10/10 reached) */
+  .stamp-card.complete {
+    background: linear-gradient(135deg, var(--accent-soft), var(--accent-tint));
+    border-color: var(--accent-bright);
+    box-shadow: 0 0 30px var(--ring-fill-glow);
+    animation: stamp-pulse-glow 2s ease-in-out infinite;
+  }
+  @keyframes stamp-pulse-glow {
+    0%, 100% { box-shadow: 0 0 30px var(--ring-fill-glow); }
+    50% { box-shadow: 0 0 50px var(--ring-fill-glow); }
+  }
+  .stamp-celebration {
+    text-align: center;
+    margin: 6px 0 16px;
+  }
+  .stamp-celebration-eyebrow {
+    font-size: 9px;
+    color: var(--accent-bright);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .stamp-celebration-title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 6px;
+  }
+  .stamp-celebration-detail {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+  .stamp-choice-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .stamp-choice-btn {
+    flex: 1;
+    background: var(--surface);
+    border: 1.5px solid var(--accent-border);
+    border-radius: 12px;
+    padding: 14px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    color: var(--text);
+    text-align: center;
+  }
+  .stamp-choice-btn:active {
+    transform: scale(0.97);
+    background: var(--surface-2);
+  }
+  .stamp-choice-btn:hover {
+    border-color: var(--accent-bright);
+  }
+  .stamp-choice-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+  .stamp-choice-icon {
+    font-size: 28px;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .stamp-choice-name {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  /* Free pill on free-reward coupons */
+  .coupon-card.free-reward {
+    background: linear-gradient(135deg, var(--accent-soft), var(--accent-tint));
+    border-color: var(--accent-bright);
+  }
+  .free-pill {
+    background: var(--accent-bright);
+    color: var(--bg);
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 100px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-left: 6px;
+    vertical-align: 1px;
+  }
+
 </style>
 </head>
 <body>
@@ -2506,8 +2601,19 @@
     const thisWeekYear = getYearOfSunday(thisMonday);
     const thisWeekCountsLive = thisWeek.isPerfect && thisWeekYear === currentYear;
     const annualCountIncludingThisWeek = annualCount + (thisWeekCountsLive ? 1 : 0);
-    const stampsEarned = annualCountIncludingThisWeek % RULES.stampCardTarget;
-    const stampClaimsEarned = Math.floor(annualCountIncludingThisWeek / RULES.stampCardTarget);
+
+    // Stamp claims: how many full sets of 10 perfect weeks have we earned this year?
+    // And how many have we already claimed (via stamp_claim wallet rows for currentYear)?
+    const stampClaimsEarnedTotal = Math.floor(annualCountIncludingThisWeek / RULES.stampCardTarget);
+    const stampClaimsUsed = (indexed.wallet || []).filter(w =>
+      w.type === 'stamp_claim' && String(w.meta) === String(currentYear)
+    ).length;
+    const stampClaimsPending = Math.max(0, stampClaimsEarnedTotal - stampClaimsUsed);
+
+    // Stamps shown on the card:
+    //   - if a claim is pending, show 10/10 (the unclaimed one)
+    //   - otherwise show the partial progress toward the next set of 10
+    const stampsEarned = stampClaimsPending > 0 ? 10 : (annualCountIncludingThisWeek % RULES.stampCardTarget);
 
     // Status
     let statusTier = 'Bronze';
@@ -2560,7 +2666,9 @@
       annualCount,
       currentYear,
       stampsEarned,
-      stampClaimsEarned,
+      stampClaimsEarnedTotal,
+      stampClaimsUsed,
+      stampClaimsPending,
       statusTier,
       thisWeekCountsLive
     };
@@ -2956,9 +3064,32 @@
   }
 
   function renderStampCard(econ) {
-    // The "live" stamp is the last filled one if this week is tentatively counting.
-    // We animate it ONLY on the render where stampsEarned has just increased — to avoid
-    // re-popping every time the page re-renders for unrelated reasons.
+    // If a stamp claim is pending, render the celebration state with the reward choice
+    if (econ.stampClaimsPending > 0) {
+      return `
+        <div class="stamp-card complete">
+          <div class="stamp-celebration">
+            <div class="stamp-celebration-eyebrow">★ Stamp card complete</div>
+            <div class="stamp-celebration-title">10 perfect weeks. Brilliant.</div>
+            <div class="stamp-celebration-detail">
+              You've earned a free reward. Choose what you'd like — your coupon will be added to your wallet.
+            </div>
+          </div>
+          <div class="stamp-choice-row">
+            <button class="stamp-choice-btn" onclick="claimStampReward('night-shorts')">
+              <div class="stamp-choice-icon">🥃</div>
+              <div class="stamp-choice-name">Guilt-free<br>night on shorts</div>
+            </button>
+            <button class="stamp-choice-btn" onclick="claimStampReward('cheat-meal')">
+              <div class="stamp-choice-icon">🍔</div>
+              <div class="stamp-choice-name">Cheat<br>meal</div>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Normal in-progress state
     const justCrossedThreshold = (lastSeenStampCount !== null
       && econ.stampsEarned > lastSeenStampCount
       && econ.thisWeekCountsLive);
@@ -2985,10 +3116,7 @@
           }).join('')}
         </div>
         <div class="stamp-footer">
-          ${econ.stampsEarned >= 10
-            ? `<strong>Free coupon ready!</strong> Reward claiming coming in next update.`
-            : `${10 - econ.stampsEarned} more 50+ weeks for a <strong>free reward</strong>`
-          }
+          ${10 - econ.stampsEarned} more 50+ weeks for a <strong>free reward</strong>
         </div>
       </div>
     `;
@@ -3006,14 +3134,18 @@
     const icon = r ? r.icon : '🎟️';
 
     const highlightClass = (c.id === justPurchasedId) ? ' just-purchased' : '';
+    // Free coupons are those earned from the stamp card (meta starts with 'stamp_claim')
+    const isFree = (c.meta && String(c.meta).startsWith('stamp_claim'));
+    const cardClass = isFree ? ' free-reward' : '';
+    const sourceLabel = isFree ? 'Earned from stamp card' : 'Purchased ' + (formatPurchasedDate(c.timestamp) || 'recently');
 
     return `
-      <div class="coupon-card${highlightClass}">
+      <div class="coupon-card${highlightClass}${cardClass}">
         <div class="coupon-header">
           <div class="coupon-icon">${icon}</div>
           <div class="coupon-info">
-            <div class="coupon-name">${c.itemName}</div>
-            <div class="coupon-meta">Purchased ${formatPurchasedDate(c.timestamp)}</div>
+            <div class="coupon-name">${c.itemName}${isFree ? '<span class="free-pill">Free</span>' : ''}</div>
+            <div class="coupon-meta">${sourceLabel}</div>
           </div>
           <div class="coupon-expiry ${urgent ? 'urgent' : ''}">${expiryLabel}</div>
         </div>
@@ -3207,6 +3339,94 @@
     } finally {
       pendingPurchase = false;
     }
+  }
+
+  // ============================================
+  // STAMP CARD CLAIM
+  // ============================================
+  let pendingStampClaim = false;
+  async function claimStampReward(rewardId) {
+    if (pendingStampClaim) return;
+    const r = rewardById(rewardId);
+    if (!r) return;
+    pendingStampClaim = true;
+
+    // Disable both buttons to prevent double-tap
+    document.querySelectorAll('.stamp-choice-btn').forEach(b => b.disabled = true);
+
+    const now = new Date();
+    const expiresAt = new Date(now);
+    expiresAt.setDate(expiresAt.getDate() + 7);
+    const currentYear = now.getFullYear();
+    const claimId = 'sc_' + now.getTime() + '_' + Math.random().toString(36).slice(2, 8);
+    const couponId = 'p_' + (now.getTime() + 1) + '_' + Math.random().toString(36).slice(2, 8);
+
+    // Optimistic: add both rows locally
+    if (!cachedData.wallet) cachedData.wallet = [];
+    // The stamp_claim record (resets the card)
+    cachedData.wallet.push({
+      id: claimId,
+      type: 'stamp_claim',
+      itemId: 'stamp_claim_' + currentYear,
+      itemName: 'Stamp card reward claimed',
+      points: 0,
+      meta: String(currentYear),
+      status: 'claimed',
+      expiresAt: '',
+      redeemedAt: ''
+    });
+    // The free coupon (note: type 'purchase' so it shows in coupons, but meta tags it as free)
+    cachedData.wallet.push({
+      id: couponId,
+      type: 'purchase',
+      itemId: r.id,
+      itemName: r.name,
+      points: 0, // free — no points cost
+      meta: 'stamp_claim_' + currentYear,
+      status: 'active',
+      expiresAt: expiresAt.toISOString(),
+      redeemedAt: '',
+      timestamp: now.toISOString()
+    });
+
+    justPurchasedId = couponId;
+    renderAll();
+    toast(`${r.name} added to your wallet!`, false, () => {
+      activeWalletTab = 'coupons';
+      document.getElementById('pages').classList.remove('show-statement');
+      document.getElementById('pages').classList.add('show-wallet');
+      renderWallet();
+      const p = document.getElementById('walletPage');
+      if (p) p.scrollTop = 0;
+    });
+
+    // Fire writes (no-cors)
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify({
+          sheet: 'Wallet',
+          action: 'stamp_claim',
+          claimId: claimId,
+          couponId: couponId,
+          year: String(currentYear),
+          itemId: r.id,
+          itemName: r.name,
+          expiresAt: expiresAt.toISOString()
+        })
+      });
+    } catch (err) {
+      console.warn('Stamp claim write failed', err);
+    }
+
+    // Re-sync after a couple of seconds
+    setTimeout(async () => {
+      await loadData(false);
+      // Clear highlight after animation
+      setTimeout(() => { justPurchasedId = null; renderWallet(); }, 2500);
+      pendingStampClaim = false;
+    }, 2500);
   }
 
   // ============================================
