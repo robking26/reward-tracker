@@ -9,7 +9,7 @@
 <title>Reward Tracker</title>
 <script>
   // 👇 PASTE YOUR GOOGLE APPS SCRIPT URL BELOW (the one ending in /exec)
-  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzWFaZRctlYwlQUknF5WTDsDvJfEF64G-C9fCfu6m-NtnwhuHVYIRtUne6i6Vib3y-z/exec";
+  const APPS_SCRIPT_URL = "PASTE_YOUR_URL_HERE";
 </script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -2300,7 +2300,7 @@
   const RULES = {
     dailyCap: 8,
     softCap: 1500,
-    perfectWeekThreshold: 50,
+    perfectWeekThreshold: 40,
     perfectWeekBonus: 5,
     gymVisits4Bonus: 5,
     gymVisits5Bonus: 10,
@@ -2320,7 +2320,6 @@
     { id: 'small-sweet', name: 'Small sweet treat', meta: '200 kcal', price: 30, icon: '🍫', cat: 'treats' },
     { id: 'big-sweet', name: 'Big sweet treat', meta: '500 kcal', price: 70, icon: '🍰', cat: 'treats' },
 
-    { id: 'flat-white', name: 'Flat white', meta: 'A proper one', price: 30, icon: '☕', cat: 'drinks' },
     { id: 'pint-1', name: '1 pint beer', meta: 'or 2 shandies / zeros', price: 30, icon: '🍺', cat: 'drinks' },
     { id: 'pint-2', name: '2 pints beer', meta: 'or 4 shandies / zeros', price: 50, icon: '🍻', cat: 'drinks' },
     { id: 'pint-4', name: '4 pints beer', meta: 'or 8 shandies / zeros', price: 90, icon: '🍻', cat: 'drinks' },
@@ -2451,21 +2450,48 @@
   // INDEX DATA
   // ============================================
   function indexData(data) {
+    // Dedupe at the data layer: if the same date has multiple entries, pick the
+    // canonical one. The Apps Script returns rows in sheet (append) order, so
+    // "last" means the most recent write.
+    //
+    //   Steps:  last write wins (latest sync has freshest count)
+    //   Swims:  last write wins (latest sync has freshest distance)
+    //   Gym:    first "entry" wins per day (the actual arrival; any subsequent
+    //           re-triggers from the geofence are duplicates of the same visit)
+
     const stepsByDate = {};
     (data.steps || []).forEach(s => {
       const actualDate = shiftDateBackOne(s.date);
-      if (actualDate) stepsByDate[actualDate] = s.count;
+      if (actualDate) stepsByDate[actualDate] = s.count; // overwrite — last wins
     });
+
     const swimsByDate = {};
     (data.swims || []).forEach(s => {
       const actualDate = shiftDateBackOne(s.date);
-      if (actualDate) swimsByDate[actualDate] = s.distance;
+      if (actualDate) swimsByDate[actualDate] = s.distance; // overwrite — last wins
     });
-    const gymVisits = data.gymVisits || [];
-    const gymVisitsByDate = {};
-    gymVisits.forEach(v => {
-      if (v.event === 'entry') gymVisitsByDate[v.date] = true;
-    });
+
+    // For gym visits, build a deduped list: one entry per date (the earliest).
+    // We keep exits separately if any code needs them later, but they aren't used
+    // in point calculation.
+    const allGymVisits = data.gymVisits || [];
+    const gymVisitsByDate = {};      // boolean: did we go that day?
+    const gymEntryByDate = {};        // the canonical entry row for that date
+    for (const v of allGymVisits) {
+      if (v.event !== 'entry') continue;
+      gymVisitsByDate[v.date] = true;
+      // Keep the earliest entry by time
+      const existing = gymEntryByDate[v.date];
+      if (!existing || (v.time && existing.time && v.time < existing.time) || (v.time && !existing.time)) {
+        gymEntryByDate[v.date] = v;
+      } else if (!existing) {
+        gymEntryByDate[v.date] = v;
+      }
+    }
+    // Deduped gymVisits list (used by display code) — one entry per date.
+    const gymVisits = Object.values(gymEntryByDate)
+      .sort((a, b) => b.date.localeCompare(a.date)); // most recent date first
+
     return { stepsByDate, swimsByDate, gymVisitsByDate, gymVisits, wallet: data.wallet || [] };
   }
 
@@ -2814,7 +2840,8 @@
 
     const weekStart = weekDays[0].key;
     const weekEnd = weekDays[6].key;
-    const recentVisits = indexed.gymVisits.filter(v => v.date >= weekStart && v.date <= weekEnd && v.event === 'entry');
+    // indexed.gymVisits is already deduped at the data layer (one entry per date)
+    const recentVisits = indexed.gymVisits.filter(v => v.date >= weekStart && v.date <= weekEnd);
     const recentSwims = Object.entries(indexed.swimsByDate)
       .filter(([date, distance]) => date >= weekStart && date <= weekEnd && distance > 0)
       .map(([date, distance]) => ({ date, distance }));
@@ -2846,11 +2873,11 @@
           </div>
           <div class="week-ring-wrap">
             <div class="week-ring">
-              ${ringSvg(econ.thisWeek.dailyTotal, 200, 13, 50)}
+              ${ringSvg(econ.thisWeek.dailyTotal, 200, 13, 40)}
               <div class="week-ring-center">
                 <div class="week-ring-label">This week</div>
                 <div class="week-ring-number">${econ.thisWeek.dailyTotal}</div>
-                <div class="week-ring-target">/ 50</div>
+                <div class="week-ring-target">/ 40</div>
               </div>
             </div>
           </div>
@@ -3662,7 +3689,8 @@
     const date = new Date(y, m - 1, d);
     const stepCount = indexed.stepsByDate[dateKey] || 0;
     const stepPoints = stepsToPoints(stepCount);
-    const visitsOnDay = indexed.gymVisits.filter(v => v.date === dateKey && v.event === 'entry');
+    // indexed.gymVisits is already deduped at the data layer
+    const visitsOnDay = indexed.gymVisits.filter(v => v.date === dateKey);
     const visitOnDay = visitsOnDay.length > 0;
     const vPoints = visitOnDay ? 5 : 0;
     const swimDistance = indexed.swimsByDate[dateKey] || 0;
@@ -3727,8 +3755,8 @@
   // SUPERCHARGE
   // ============================================
   const SUPER_WHEEL = [
-    1, 1, 1, 1.1, 1, 1, 1, 1.25, 1, 1,
-    1, 1.5, 1, 1, 1, 2, 1, 1, 1, 1.1
+    1, 1, 1, 1.1, 1, 1, 1, 1, 1, 1,
+    2, 1, 1, 1, 1, 1, 1, 1.1, 1, 1
   ];
 
   let superIsSpinning = false;
@@ -3784,25 +3812,16 @@
     const sundayKey = keyFor(lastSunday);
     if (!(sundayKey in indexed.stepsByDate)) return null;
 
-    // Check every day Mon-Sun of last week scored 8 daily points
-    const cursor = new Date(lastMonday);
-    let totalDaily = 0;
-    let totalAll = 0;
-    let bonusBreakdown = [];
-    while (cursor <= lastSunday) {
-      const key = keyFor(cursor);
-      const steps = indexed.stepsByDate[key] || 0;
-      const hasGym = !!indexed.gymVisitsByDate[key];
-      const hasSwim = (indexed.swimsByDate[key] || 0) > 0;
-      const dp = dailyTotal(steps, hasGym, hasSwim);
-      if (dp < 8) return null; // not a max week
-      totalDaily += dp;
-      cursor.setDate(cursor.getDate() + 1);
-    }
-
-    // Use computeWeek to get full earnings (daily + bonuses)
+    // Compute last week's full earnings
     const wk = computeWeek(lastMonday, lastSunday, indexed);
-    totalAll = wk.dailyTotal + wk.bonusTotal;
+
+    // Eligibility: hit the perfect-week threshold (raw daily total). The bonus
+    // points the week earned aren't part of qualification — only that you reached
+    // the daily-points target. Bonuses do get included in what the multiplier
+    // applies to, however.
+    if (wk.dailyTotal < RULES.perfectWeekThreshold) return null;
+
+    const totalAll = wk.dailyTotal + wk.bonusTotal;
 
     // Check Wallet for existing spin row for this week
     const lastMondayKey = keyFor(lastMonday);
@@ -4263,7 +4282,7 @@
       <div class="super-eyebrow">★ Perfect week ★</div>
       <div class="super-title">Supercharge.</div>
       <div class="super-detail" id="superDetail">
-        8 points every day. You crushed last week.<br>
+        You hit your target last week.<br>
         Spin to see what you've unlocked.
       </div>
     </div>
