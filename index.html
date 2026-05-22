@@ -1637,42 +1637,20 @@
     transition: transform 5s cubic-bezier(0.12, 0.7, 0.05, 1);
     will-change: transform;
   }
-  .super-wheel-segment {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    width: 0;
-    height: 50%;
-    transform-origin: bottom center;
+  .super-wheel svg {
+    width: 100%;
+    height: 100%;
+    display: block;
   }
-  .super-wheel-segment-content {
-    position: absolute;
-    left: -50%;
-    top: 0;
-    width: min(320px, 80vw);
-    aspect-ratio: 2 / 1;
-    clip-path: polygon(50% 100%, 41% 0%, 59% 0%);
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding-top: 24px;
+  .super-wheel-label {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
     font-weight: 800;
-    font-size: 16px;
+    font-size: 8px;
     letter-spacing: -0.02em;
+    pointer-events: none;
+    user-select: none;
   }
-  .super-wheel-segment-content.tier-1 { background: var(--surface-3); color: var(--text-dim); font-weight: 600; }
-  .super-wheel-segment-content.tier-1-alt { background: var(--surface-2); color: var(--text-dim); font-weight: 600; }
-  .super-wheel-segment-content.tier-1p1 { background: var(--accent); color: var(--bg); }
-  .super-wheel-segment-content.tier-1p25 { background: var(--accent-bright); color: var(--bg); }
-  .super-wheel-segment-content.tier-1p5 {
-    background: linear-gradient(135deg, #e6c757, #d4a93a);
-    color: var(--bg);
-  }
-  .super-wheel-segment-content.tier-2 {
-    background: linear-gradient(135deg, #f0e8d4, #e6c757);
-    color: var(--bg);
-    font-size: 18px;
-  }
+  /* Segment fills via fill attribute on path */
   .super-wheel-hub {
     position: absolute;
     top: 50%;
@@ -2396,6 +2374,22 @@
   // ============================================
   function keyFor(d) {
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  // Normalise a date-ish string (which Sheets may have mangled into an ISO or
+  // "Mon May 12 2026 ..." format) back to a canonical YYYY-MM-DD. Returns the
+  // original string if it doesn't look like a date.
+  function normalisedDateKey(str) {
+    if (!str) return '';
+    const s = String(str);
+    // Already YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    // Try to parse anything else
+    const parsed = new Date(s);
+    if (!isNaN(parsed.getTime())) {
+      return `${parsed.getFullYear()}-${String(parsed.getMonth()+1).padStart(2,'0')}-${String(parsed.getDate()).padStart(2,'0')}`;
+    }
+    return s;
   }
   function getWeekDays() {
     const today = new Date();
@@ -3769,25 +3763,57 @@
 
   function buildSuperWheel() {
     if (superBuildDone) return;
-    const segmentAngle = 360 / SUPER_WHEEL.length;
+    const N = SUPER_WHEEL.length;
+    const segmentAngle = 360 / N;
     const wheelEl = document.getElementById('superWheel');
-    wheelEl.innerHTML = '';
+    const cx = 100, cy = 100, r = 100;
+    const labelR = 78; // distance from centre for labels
+
+    // Color per multiplier
+    function colourFor(mult, i) {
+      if (mult === 1) return (i % 2 === 0) ? '#2a2a2a' : '#1f1f1f';
+      if (mult === 1.1) return '#b87333';
+      if (mult === 1.25) return '#c8843d';
+      if (mult === 1.5) return '#e6c757';
+      if (mult === 2) return '#f0e8d4';
+      return '#2a2a2a';
+    }
+    function textColourFor(mult) {
+      if (mult === 1) return '#888888';
+      return '#0a0a0a';
+    }
+
+    // Build SVG. Segment 0 sits centered at the top (12 o'clock), spanning
+    // angles from (-segmentAngle/2) to (+segmentAngle/2) from vertical.
+    // SVG uses 0° = positive x axis (3 o'clock), and angles increase clockwise (in our
+    // case with y-down it actually rotates the natural way if we treat angles as
+    // clockwise from top). We'll compute path points from top-of-wheel reference.
+    function polarToCartesian(centerX, centerY, radius, angleFromTopDeg) {
+      const rad = (angleFromTopDeg - 90) * Math.PI / 180;
+      return { x: centerX + radius * Math.cos(rad), y: centerY + radius * Math.sin(rad) };
+    }
+
+    let svgParts = [];
     SUPER_WHEEL.forEach((mult, i) => {
-      const seg = document.createElement('div');
-      seg.className = 'super-wheel-segment';
-      seg.style.transform = `rotate(${i * segmentAngle}deg)`;
-      const c = document.createElement('div');
-      let tier;
-      if (mult === 1) tier = (i % 2 === 0) ? 'tier-1' : 'tier-1-alt';
-      else if (mult === 1.1) tier = 'tier-1p1';
-      else if (mult === 1.25) tier = 'tier-1p25';
-      else if (mult === 1.5) tier = 'tier-1p5';
-      else if (mult === 2) tier = 'tier-2';
-      c.className = `super-wheel-segment-content ${tier}`;
-      c.textContent = mult + '×';
-      seg.appendChild(c);
-      wheelEl.appendChild(seg);
+      const startAngle = i * segmentAngle - segmentAngle / 2;
+      const endAngle = startAngle + segmentAngle;
+      const p1 = polarToCartesian(cx, cy, r, startAngle);
+      const p2 = polarToCartesian(cx, cy, r, endAngle);
+      const largeArc = segmentAngle > 180 ? 1 : 0;
+
+      // Wedge path: centre → arc start → arc end → close
+      const d = `M ${cx} ${cy} L ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${r} ${r} 0 ${largeArc} 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)} Z`;
+      svgParts.push(`<path d="${d}" fill="${colourFor(mult, i)}" stroke="rgba(0,0,0,0.2)" stroke-width="0.5"/>`);
+
+      // Label, positioned at the centre of the segment angle, at labelR from origin
+      const labelAngle = i * segmentAngle;
+      const lp = polarToCartesian(cx, cy, labelR, labelAngle);
+      // Rotate the label so it's readable along the radial direction (text reads outward)
+      const labelRotation = labelAngle;  // 0° at top → no rotation needed for that one
+      svgParts.push(`<text class="super-wheel-label" x="${lp.x.toFixed(2)}" y="${lp.y.toFixed(2)}" text-anchor="middle" dominant-baseline="middle" transform="rotate(${labelRotation.toFixed(2)} ${lp.x.toFixed(2)} ${lp.y.toFixed(2)})" fill="${textColourFor(mult)}">${mult}×</text>`);
     });
+
+    wheelEl.innerHTML = `<svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">${svgParts.join('')}</svg>`;
     superBuildDone = true;
   }
 
@@ -3823,10 +3849,12 @@
 
     const totalAll = wk.dailyTotal + wk.bonusTotal;
 
-    // Check Wallet for existing spin row for this week
+    // Check Wallet for existing spin row for this week.
+    // Compare normalised — Sheets may have mangled the stored 'YYYY-MM-DD' meta
+    // into an ISO date string or a long Date.toString() representation.
     const lastMondayKey = keyFor(lastMonday);
     const alreadySpun = (indexed.wallet || []).some(w =>
-      w.type === 'supercharge_spin' && w.meta === lastMondayKey
+      w.type === 'supercharge_spin' && normalisedDateKey(w.meta) === lastMondayKey
     );
     if (alreadySpun) return null;
 
