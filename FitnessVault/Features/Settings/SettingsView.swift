@@ -100,7 +100,7 @@ struct SettingsView: View {
                         ForEach(MealAnalysisMode.allCases) { Text($0.title).tag($0) }
                     }
                     if store.settings.mealAnalysisMode == .remote {
-                        TextField("https://your-server.example/analyse", text: $store.settings.mealAnalysisEndpoint)
+                        TextField("https://….workers.dev/analyse", text: $store.settings.mealAnalysisEndpoint)
                             .keyboardType(.URL)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()

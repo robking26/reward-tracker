@@ -44,17 +44,15 @@
 | 1. App foundation: navigation, design system, four tabs, reusable components | Done |
 | 2. Reward engine: rates, daily calculation, monthly cap, persistent ledger, unit tests | Done |
 | 3. Apple Health: permissions, reading, workout classification, sync, reconciliation | Implemented; needs on-device testing |
-| 4. AI meal logging: camera, analysis protocol, review, limits, totals, Health writing | Implemented with the mock analyser. **Next: the analysis backend.** |
+| 4. AI meal logging: camera, analysis protocol, review, limits, totals, Health writing | Implemented. The backend is in `server/meal-analysis` and needs deploying (see its README). |
 | 5. Starling sandbox: connection, balances, releases, payment initiation, status | Client written against the documented v2 API. **Next: check the request and response shapes against the sandbox, especially local payments and payment-order status.** |
 | 6. Production: live config, real-device testing, accessibility audit, performance | Not started |
 
-### Meal analysis backend (to do)
+### Meal analysis backend
 
-The app posts a resized JPEG to `POST {endpoint}` with `Authorization: Bearer <device token>` and expects `NutritionEstimate` JSON back:
+`server/meal-analysis` is a Cloudflare Worker. The app posts a resized JPEG to `POST {endpoint}` with `Authorization: Bearer <device token>` and gets back `NutritionEstimate` JSON. The AI provider's key lives only in the Worker's secrets. Setup, deployment and costs are in [`server/meal-analysis/README.md`](../server/meal-analysis/README.md).
 
-```json
-{ "name": "…", "items": ["…"], "portionDescription": "…", "kilocalories": 0,
-  "proteinGrams": 0, "carbohydrateGrams": 0, "fatGrams": 0, "confidence": "low|medium|high" }
-```
+## Continuous integration
 
-The AI provider's key belongs only in that server's environment configuration, never in GitHub or the app. Pick a provider and check its pricing and usage limits before relying on it. Live analysis isn't free by default.
+- `.github/workflows/ios.yml` builds the app and runs the unit tests on a macOS runner, using an unsigned Simulator build, on every push that touches the app.
+- `.github/workflows/meal-analysis.yml` type-checks and tests the server. It deploys only when run manually with **deploy** ticked.

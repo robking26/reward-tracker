@@ -1,0 +1,67 @@
+name: iOS build and tests
+
+on:
+  push:
+    paths:
+      - "FitnessVault/**"
+      - "FitnessVaultTests/**"
+      - "FitnessVault.xcodeproj/**"
+      - "Config/**"
+      - ".github/workflows/ios.yml"
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Choose an iPhone simulator
+        id: simulator
+        run: |
+          UDID=$(xcrun simctl list devices available -j \
+            | jq -r '[.devices | to_entries[] | select(.key | contains("iOS")) | .value[] | select(.name | startswith("iPhone"))][0].udid')
+          if [ -z "$UDID" ] || [ "$UDID" = "null" ]; then
+            echo "No iPhone simulator available" >&2
+            xcrun simctl list devices available
+            exit 1
+          fi
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          xcrun simctl list devices available | grep "$UDID"
+
+      # Unsigned simulator build: no Apple account or certificates needed in CI.
+      - name: Build and run unit tests
+        run: |
+          status=0
+          xcodebuild test \
+            -project FitnessVault.xcodeproj \
+            -scheme FitnessVault \
+            -destination "id=${{ steps.simulator.outputs.udid }}" \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            > xcodebuild.log 2>&1 || status=$?
+          grep -E "Test Suite|Test Case .* (passed|failed)|Executed|\*\* (BUILD|TEST)" xcodebuild.log || true
+          exit $status
+
+      - name: Show compile errors
+        if: failure()
+        run: grep -E "error:" xcodebuild.log | sort -u | head -100 || true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TestResults
+          path: |
+            TestResults.xcresult
+            xcodebuild.log
+          if-no-files-found: ignore

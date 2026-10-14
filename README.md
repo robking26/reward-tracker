@@ -75,6 +75,16 @@ FitnessVault/
 FitnessVaultTests/ Financial unit tests
 Config/            Info.plist additions and entitlements
 docs/              Architecture and roadmap
+server/meal-analysis/  Cloudflare Worker for AI meal analysis
+.github/workflows/     iOS build/test and server check/deploy
 ```
+
+## AI meal analysis
+
+Meal photos are analysed by your own small server, which keeps the AI key out of the app. It's in [`server/meal-analysis`](server/meal-analysis/README.md), along with the deployment steps and costs. Until you deploy it, the app uses a clearly labelled mock analyser.
+
+## Automatic checks
+
+Every push that touches the app is built and tested on GitHub's Macs. See the **Actions** tab, which needs no Apple account. The meal server is type-checked and tested the same way.
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for design decisions, platform limits and what is still to do.

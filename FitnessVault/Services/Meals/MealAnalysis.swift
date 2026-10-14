@@ -56,7 +56,8 @@ struct MockMealAnalyzer: MealAnalyzing {
 /// `NutritionEstimate` JSON. The device authenticates with a per-device token held in the Keychain.
 ///
 /// Request: `POST {endpoint}` with `Content-Type: image/jpeg` and `Authorization: Bearer <device token>`.
-/// Response: a JSON body matching `NutritionEstimate`.
+/// Response: a JSON body matching `NutritionEstimate`, or `{ "error": "..." }` with a non-2xx status.
+/// The reference server is in `server/meal-analysis`.
 struct RemoteMealAnalyzer: MealAnalyzing {
     let endpoint: URL
     let deviceToken: String?
@@ -78,7 +79,12 @@ struct RemoteMealAnalyzer: MealAnalyzing {
         }
         guard let http = response as? HTTPURLResponse else { throw MealAnalysisError.unreadableResponse }
         guard (200..<300).contains(http.statusCode) else {
-            throw MealAnalysisError.server("The analysis server returned an error (\(http.statusCode)).")
+            struct ErrorBody: Decodable { let error: String }
+            if http.statusCode == 401 {
+                throw MealAnalysisError.server("The analysis server didn't accept the device token. Check it in Settings.")
+            }
+            let message = (try? JSONDecoder().decode(ErrorBody.self, from: data))?.error
+            throw MealAnalysisError.server(message ?? "The analysis server returned an error (\(http.statusCode)).")
         }
         do {
             return try JSONDecoder().decode(NutritionEstimate.self, from: data)
