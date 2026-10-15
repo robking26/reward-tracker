@@ -1,39 +1,50 @@
 # Meal analysis server
 
-A small Cloudflare Worker that the iOS app calls to estimate a meal's nutrition from a photo. It holds the AI provider's API key, so the key never ships inside the app.
+A small Cloudflare Worker that the iOS app calls to estimate a meal's nutrition from a photo. AI credentials live here, never in the app.
 
 - **Endpoint:** `POST /analyse`, sent with `Content-Type: image/jpeg` and `Authorization: Bearer <DEVICE_TOKEN>`.
 - **Response:** `NutritionEstimate` JSON, or `{ "error": "..." }` with a non-2xx status.
-- **Provider:** Claude (`claude-opus-5-5`) using structured JSON output. If Claude declines a request on safety grounds, `fallbacks: "default"` re-runs it on Anthropic's recommended fallback model. Other providers can be added by implementing `MealAnalysisProvider` in `src/provider.ts`.
-- **Privacy:** each photo is processed in memory and passed only to the AI provider for that one request. This server never stores or logs photos.
+- **Privacy:** each photo is processed in memory and sent only to the chosen AI service for that request. This server never stores or logs photos.
 
-## Cost
+## Choosing the AI
 
-There is no free AI tier here. Each photo is billed by Anthropic per token, at the rates on [Anthropic's pricing page](https://www.anthropic.com/pricing).
+| Provider | Setting | Cost | Notes |
+|---|---|---|---|
+| **Cloudflare Workers AI** (default) | `workers-ai` | Free daily allowance (10,000 "neurons", resets 00:00 UTC). On the Workers Free plan, requests beyond it fail instead of being charged. | Uses Llama 4 Scout (`@cf/meta/llama-4-scout-17b-16e-instruct`). Rougher portion estimates than Claude. No extra account or key. |
+| **Claude** | `anthropic` | Paid per photo at [Anthropic's rates](https://www.anthropic.com/pricing). | More accurate. Needs an Anthropic API key, and you should set a spend limit. |
 
-- **Do this first:** set a monthly spend limit in the Anthropic Console.
-- **Price per photo:** depends on the photo size and how long the model reasons, so check your Console usage after a few real photos.
-- **Hosting:** Cloudflare Workers' free plan covers this usage level.
+How many photos fit in the free allowance depends on the image and the model. Check **Workers AI** in your Cloudflare dashboard after a day or two of use. When the allowance runs out, the app shows a message and you can still log the meal by typing the numbers.
 
-## One-time setup
+To switch, run the deploy workflow again and pick the other provider. Every estimate can be edited in the app before you confirm it.
 
-You need a Cloudflare account and an Anthropic account. Both have free sign-up.
+## One-time setup (free option)
 
-1. **Anthropic API key.** In [console.anthropic.com](https://console.anthropic.com), create an API key and set a spend limit.
-2. **Device token.** Make one with `openssl rand -hex 32` or a password manager. It's the shared secret between your iPhone and the server.
-3. **Cloudflare API token.** In the Cloudflare dashboard, go to My Profile → API Tokens → Create Token and use the **Edit Cloudflare Workers** template. Also copy your **Account ID** from the Workers overview page.
-4. **GitHub secrets.** In this repository, go to Settings → Secrets and variables → Actions and add four secrets:
+You need a free Cloudflare account.
+
+1. **Device token.** On a Mac, open Terminal and run `openssl rand -hex 32`. Copy the result. It's the shared password between your iPhone and the server.
+2. **Cloudflare API token.**
+   1. Sign up at cloudflare.com.
+   2. Go to My Profile → API Tokens → **Create Token** and use the **Edit Cloudflare Workers** template.
+   3. Copy the token.
+   4. Also copy your **Account ID**, which is on the Workers & Pages overview page.
+3. **GitHub secrets.** In this repository, go to Settings → Secrets and variables → Actions → **New repository secret**, and add:
    - `CLOUDFLARE_API_TOKEN`
    - `CLOUDFLARE_ACCOUNT_ID`
-   - `ANTHROPIC_API_KEY`
    - `DEVICE_TOKEN`
-5. **Deploy.** In GitHub, go to Actions → **Meal analysis server** → Run workflow, tick **deploy** and run it. The log prints the Worker's URL, for example `https://fitness-vault-meal-analysis.<you>.workers.dev`.
-6. **Connect the app.** In the app, open Settings → AI meal logging:
-   - Set Analysis to **Your analysis server**.
-   - Enter `https://…workers.dev/analyse`.
-   - Paste the device token.
+4. **Deploy.**
+   1. In GitHub, go to Actions → **Meal analysis server** → **Run workflow**.
+   2. Tick **deploy**, leave the provider as `workers-ai`, and run it.
+   3. The log prints the Worker's URL, for example `https://fitness-vault-meal-analysis.<you>.workers.dev`.
+5. **Connect the app.**
+   1. In the app, open ⚙️ → AI meal logging and set Analysis to **Your analysis server**.
+   2. Enter the URL followed by `/analyse`.
+   3. Paste the device token.
 
-To rotate a key, update the GitHub secret and run the deploy again.
+### Optional: use Claude instead
+
+1. In [console.anthropic.com](https://console.anthropic.com), create an API key and set a monthly spend limit.
+2. Add it as the `ANTHROPIC_API_KEY` repository secret.
+3. Run the deploy workflow with the provider set to `anthropic`.
 
 ## Local development
 
@@ -43,9 +54,9 @@ npm install
 npm run typecheck
 npm test
 
-# Run locally with real keys (never commit this file):
-printf 'ANTHROPIC_API_KEY=sk-ant-...\nDEVICE_TOKEN=dev-token\n' > .dev.vars
-npm run dev
+# Run locally (Workers AI calls go to your Cloudflare account; never commit .dev.vars):
+printf 'DEVICE_TOKEN=dev-token\n' > .dev.vars
+npx wrangler dev --remote
 curl -X POST http://localhost:8787/analyse \
   -H "Authorization: Bearer dev-token" -H "Content-Type: image/jpeg" \
   --data-binary @meal.jpg

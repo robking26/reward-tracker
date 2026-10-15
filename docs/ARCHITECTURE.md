@@ -50,7 +50,7 @@
 
 ### Meal analysis backend
 
-`server/meal-analysis` is a Cloudflare Worker. The app posts a resized JPEG to `POST {endpoint}` with `Authorization: Bearer <device token>` and gets back `NutritionEstimate` JSON. The AI provider's key lives only in the Worker's secrets. Setup, deployment and costs are in [`server/meal-analysis/README.md`](../server/meal-analysis/README.md).
+`server/meal-analysis` is a Cloudflare Worker. By default it uses Cloudflare Workers AI (Llama 4 Scout, free daily allowance), with Claude available as a paid provider. The app posts a resized JPEG to `POST {endpoint}` with `Authorization: Bearer <device token>` and gets back `NutritionEstimate` JSON. Any AI key lives only in the Worker's secrets. Setup, deployment and costs are in [`server/meal-analysis/README.md`](../server/meal-analysis/README.md).
 
 ## Continuous integration
 

@@ -81,7 +81,7 @@ server/meal-analysis/  Cloudflare Worker for AI meal analysis
 
 ## AI meal analysis
 
-Meal photos are analysed by your own small server, which keeps the AI key out of the app. It's in [`server/meal-analysis`](server/meal-analysis/README.md), along with the deployment steps and costs. Until you deploy it, the app uses a clearly labelled mock analyser.
+Meal photos are analysed by your own small server. By default it uses Cloudflare's free AI allowance, and Claude is available as a paid option. It's in [`server/meal-analysis`](server/meal-analysis/README.md), along with the deployment steps and costs. Until you deploy it, the app uses a clearly labelled mock analyser.
 
 ## Automatic checks
 

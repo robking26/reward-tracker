@@ -42,3 +42,52 @@ export const modelOutputJSONSchema = {
   ],
   additionalProperties: false,
 } as const;
+
+/**
+ * Open models sometimes return numbers as strings, decimals or "Medium". Tidy those
+ * into the strict shape before validating. Anything still invalid is rejected.
+ */
+export function normaliseModelOutput(raw: unknown): unknown {
+  if (typeof raw !== "object" || raw === null) return raw;
+  const input = raw as Record<string, unknown>;
+  const whole = (value: unknown) => {
+    const number = typeof value === "string" ? Number(value.replace(/[^0-9.\-]/g, "")) : value;
+    return typeof number === "number" && Number.isFinite(number) ? Math.round(number) : value;
+  };
+  const isFood = input.isFood === "false" ? false : input.isFood === "true" ? true : input.isFood;
+  return {
+    ...input,
+    isFood,
+    items: Array.isArray(input.items) ? input.items.map(String).filter((item) => item.trim() !== "").slice(0, 20) : [],
+    portionDescription: typeof input.portionDescription === "string" ? input.portionDescription.slice(0, 200) : "",
+    name: typeof input.name === "string" ? input.name.trim().slice(0, 120) : input.name,
+    kilocalories: whole(input.kilocalories),
+    proteinGrams: whole(input.proteinGrams),
+    carbohydrateGrams: whole(input.carbohydrateGrams),
+    fatGrams: whole(input.fatGrams),
+    confidence: typeof input.confidence === "string" ? input.confidence.trim().toLowerCase() : input.confidence,
+  };
+}
+
+/** Parses a model's reply (a JSON string or an already-parsed object) into a result. */
+export function parseModelReply(reply: unknown):
+  | { kind: "estimate"; estimate: NutritionEstimate }
+  | { kind: "notFood" }
+  | { kind: "invalid" } {
+  let json: unknown = reply;
+  if (typeof reply === "string") {
+    // Tolerate a stray code fence around the JSON.
+    const text = reply.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+    try {
+      json = JSON.parse(text);
+    } catch {
+      return { kind: "invalid" };
+    }
+  }
+  const normalised = normaliseModelOutput(json) as Record<string, unknown>;
+  if (normalised?.isFood === false) return { kind: "notFood" };
+  const parsed = ModelOutputSchema.safeParse(normalised);
+  if (!parsed.success) return { kind: "invalid" };
+  const { isFood, ...estimate } = parsed.data;
+  return isFood ? { kind: "estimate", estimate } : { kind: "notFood" };
+}

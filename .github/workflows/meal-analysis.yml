@@ -14,6 +14,13 @@ on:
         description: "Deploy to Cloudflare after the checks pass"
         type: boolean
         default: false
+      provider:
+        description: "Which AI analyses photos"
+        type: choice
+        options:
+          - workers-ai
+          - anthropic
+        default: workers-ai
 
 defaults:
   run:
@@ -34,13 +41,17 @@ jobs:
       - run: npm test
 
   # Deploys only when you run the workflow by hand with "deploy" ticked.
-  # Needs these repository secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID,
-  # ANTHROPIC_API_KEY and DEVICE_TOKEN.
+  # Required repository secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, DEVICE_TOKEN.
+  # Optional: ANTHROPIC_API_KEY, only needed when the provider is "anthropic".
   deploy:
     needs: check
     if: github.event_name == 'workflow_dispatch' && inputs.deploy
     runs-on: ubuntu-latest
     environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -49,14 +60,32 @@ jobs:
           cache: npm
           cache-dependency-path: server/meal-analysis/package-lock.json
       - run: npm ci
+
+      - name: Check required secrets
+        env:
+          DEVICE_TOKEN: ${{ secrets.DEVICE_TOKEN }}
+          PROVIDER: ${{ inputs.provider }}
+        run: |
+          missing=0
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID DEVICE_TOKEN; do
+            if [ -z "${!name}" ]; then echo "::error::Add the $name repository secret first."; missing=1; fi
+          done
+          if [ "$PROVIDER" = "anthropic" ] && [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::The anthropic provider needs the ANTHROPIC_API_KEY repository secret."; missing=1
+          fi
+          exit $missing
+
       - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: server/meal-analysis
+          command: deploy --var ANALYSIS_PROVIDER:${{ inputs.provider }}
           secrets: |
-            ANTHROPIC_API_KEY
             DEVICE_TOKEN
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           DEVICE_TOKEN: ${{ secrets.DEVICE_TOKEN }}
+
+      - name: Store the Anthropic key (only if provided)
+        if: env.ANTHROPIC_API_KEY != ''
+        run: printf '%s' "$ANTHROPIC_API_KEY" | npx wrangler secret put ANTHROPIC_API_KEY
