@@ -1,0 +1,231 @@
+import Foundation
+import SwiftData
+
+// SwiftData entities. Money is always stored as integer pence.
+
+@Model
+final class MonthlyVault {
+    @Attribute(.unique) var month: String
+    var allocationPence: Int
+    /// Space balance reported by Starling when the month was opened, if known.
+    var openingSpaceBalancePence: Int?
+    var carriedForwardPence: Int
+    var topUpRequiredPence: Int
+    var createdAt: Date
+
+    init(month: MonthKey, allocation: Pence, openingSpaceBalance: Pence?, plan: VaultFunding.Plan?) {
+        self.month = month.description
+        allocationPence = allocation.value
+        openingSpaceBalancePence = openingSpaceBalance?.value
+        carriedForwardPence = plan?.carriedForward.value ?? 0
+        topUpRequiredPence = plan?.topUpRequired.value ?? 0
+        createdAt = .now
+    }
+
+    var monthKey: MonthKey? { MonthKey(string: month) }
+    var allocation: Pence { Pence(allocationPence) }
+}
+
+@Model
+final class DailyActivity {
+    @Attribute(.unique) var day: String
+    var steps: Int
+    var swimmingMetres: Int
+    var strengthSeconds: Int
+    var exerciseSeconds: Int
+    var activeKilocalories: Int
+    var flightsClimbed: Int
+    /// Apple Health workout UUIDs counted towards strength, so a workout is never counted twice.
+    var strengthWorkoutIDs: [String]
+    var updatedAt: Date
+
+    init(day: DayKey) {
+        self.day = day.description
+        steps = 0
+        swimmingMetres = 0
+        strengthSeconds = 0
+        exerciseSeconds = 0
+        activeKilocalories = 0
+        flightsClimbed = 0
+        strengthWorkoutIDs = []
+        updatedAt = .now
+    }
+
+    var dayKey: DayKey? { DayKey(string: day) }
+}
+
+@Model
+final class RewardLedgerEntry {
+    @Attribute(.unique) var id: String
+    var day: String
+    var month: String
+    var categoryRaw: String
+    var amountPence: Int
+    var kindRaw: String
+    var createdAt: Date
+
+    init(line: LedgerLine) {
+        id = line.id
+        day = line.day.description
+        month = line.day.monthKey.description
+        categoryRaw = line.category.rawValue
+        amountPence = line.amount.value
+        kindRaw = line.kind.rawValue
+        createdAt = .now
+    }
+
+    var amount: Pence { Pence(amountPence) }
+    var category: RewardCategory? { RewardCategory(rawValue: categoryRaw) }
+
+    var line: LedgerLine? {
+        guard let dayKey = DayKey(string: day), let category else { return nil }
+        return LedgerLine(id: id, day: dayKey, category: category, amount: amount,
+                          kind: LedgerLine.Kind(rawValue: kindRaw) ?? .accrual)
+    }
+}
+
+@Model
+final class Meal {
+    @Attribute(.unique) var id: UUID
+    var loggedAt: Date
+    var day: String
+    var name: String
+    var items: [String]
+    var kilocalories: Int
+    var proteinGrams: Int
+    var carbohydrateGrams: Int
+    var fatGrams: Int
+    var confidenceRaw: String
+    var isRewardEligible: Bool
+    /// 64-bit perceptual hash, used to spot repeated photos of the same meal.
+    var imageHash: Int64
+    @Attribute(.externalStorage) var thumbnailJPEG: Data?
+    var savedToHealth: Bool
+
+    init(id: UUID = UUID(), loggedAt: Date, estimate: NutritionEstimate, isRewardEligible: Bool,
+         imageHash: UInt64, thumbnailJPEG: Data?) {
+        self.id = id
+        self.loggedAt = loggedAt
+        day = DayKey(loggedAt).description
+        name = estimate.name
+        items = estimate.items
+        kilocalories = estimate.kilocalories
+        proteinGrams = estimate.proteinGrams
+        carbohydrateGrams = estimate.carbohydrateGrams
+        fatGrams = estimate.fatGrams
+        confidenceRaw = estimate.confidence.rawValue
+        self.isRewardEligible = isRewardEligible
+        self.imageHash = Int64(bitPattern: imageHash)
+        self.thumbnailJPEG = thumbnailJPEG
+        savedToHealth = false
+    }
+
+    var confidence: NutritionEstimate.Confidence { .init(rawValue: confidenceRaw) ?? .low }
+    var photoHash: UInt64 { UInt64(bitPattern: imageHash) }
+}
+
+@Model
+final class HealthSyncState {
+    @Attribute(.unique) var key: String
+    var lastSuccessfulSync: Date?
+    var lastAttempt: Date?
+    var lastError: String?
+    /// The latest day whose rewards are final (`yyyy-MM-dd`).
+    var finalisedThrough: String?
+
+    init() { key = "default" }
+}
+
+@Model
+final class BankTransfer {
+    /// Also sent to Starling as the transfer UID, which makes retries idempotent.
+    @Attribute(.unique) var id: UUID
+    var amountPence: Int
+    var statusRaw: String
+    var createdAt: Date
+    var updatedAt: Date
+    var isSandbox: Bool
+    var note: String?
+
+    init(id: UUID = UUID(), amount: Pence, isSandbox: Bool) {
+        self.id = id
+        amountPence = amount.value
+        statusRaw = TransferStatus.requested.rawValue
+        createdAt = .now
+        updatedAt = .now
+        self.isSandbox = isSandbox
+    }
+
+    var amount: Pence { Pence(amountPence) }
+    var status: TransferStatus {
+        get { TransferStatus(rawValue: statusRaw) ?? .requested }
+        set { statusRaw = newValue.rawValue; updatedAt = .now }
+    }
+}
+
+@Model
+final class PaymentOrder {
+    /// Sent to Starling as the external identifier.
+    @Attribute(.unique) var id: UUID
+    var amountPence: Int
+    var statusRaw: String
+    var starlingPaymentOrderUID: String?
+    var reference: String
+    /// The last activity day whose earnings this payment covers.
+    var coversThroughDay: String
+    var createdAt: Date
+    var updatedAt: Date
+    var isSandbox: Bool
+    var lastStatusDetail: String?
+
+    init(id: UUID = UUID(), amount: Pence, reference: String, coversThrough: DayKey, isSandbox: Bool) {
+        self.id = id
+        amountPence = amount.value
+        statusRaw = PaymentStatus.awaitingInitiation.rawValue
+        self.reference = reference
+        coversThroughDay = coversThrough.description
+        createdAt = .now
+        updatedAt = .now
+        self.isSandbox = isSandbox
+    }
+
+    var amount: Pence { Pence(amountPence) }
+    var status: PaymentStatus {
+        get { PaymentStatus(rawValue: statusRaw) ?? .reconciliationRequired }
+        set { statusRaw = newValue.rawValue; updatedAt = .now }
+    }
+}
+
+/// Append-only audit trail for every financial event.
+@Model
+final class AuditEvent {
+    var id: UUID
+    var date: Date
+    var kind: String
+    var message: String
+    var relatedID: String?
+
+    init(kind: String, message: String, relatedID: String? = nil) {
+        id = UUID()
+        date = .now
+        self.kind = kind
+        self.message = message
+        self.relatedID = relatedID
+    }
+}
+
+enum Persistence {
+    static let schema = Schema([
+        MonthlyVault.self, DailyActivity.self, RewardLedgerEntry.self, Meal.self,
+        HealthSyncState.self, BankTransfer.self, PaymentOrder.self, AuditEvent.self,
+    ])
+
+    static func makeContainer(inMemory: Bool = false) -> ModelContainer {
+        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: inMemory)
+        do {
+            return try ModelContainer(for: schema, configurations: [configuration])
+        } catch {
+            fatalError("Could not open the Fitness Vault store: \(error)")
+        }
+    }
+}

@@ -1,0 +1,20 @@
+name = "fitness-vault-meal-analysis"
+main = "src/index.ts"
+compatibility_date = "2025-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Cloudflare Workers AI: free daily allowance, used by the default provider.
+[ai]
+binding = "AI"
+
+[vars]
+# "workers-ai" (free) or "anthropic" (Claude, paid per photo, needs ANTHROPIC_API_KEY).
+ANALYSIS_PROVIDER = "workers-ai"
+
+# Secrets (never put them here):
+#   DEVICE_TOKEN       - a long random string, also entered in the iOS app (required)
+#   ANTHROPIC_API_KEY  - only if ANALYSIS_PROVIDER = "anthropic"
+# Set them with `npx wrangler secret put <NAME>` or through the GitHub deploy workflow.
+
+[observability]
+enabled = true
