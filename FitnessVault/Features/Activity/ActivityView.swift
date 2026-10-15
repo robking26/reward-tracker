@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ActivityView: View {
     @Environment(AppModel.self) private var model
+    @Binding var showingSettings: Bool
     @State private var period: ActivityPeriod = .day
 
     private let columns = [GridItem(.flexible(), spacing: Spacing.s), GridItem(.flexible(), spacing: Spacing.s)]
@@ -10,6 +11,8 @@ struct ActivityView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.xl) {
+                    StatusNotices()
+
                     Picker("Period", selection: $period) {
                         ForEach(ActivityPeriod.allCases) { Text($0.rawValue).tag($0) }
                     }
@@ -27,15 +30,6 @@ struct ActivityView: View {
                     }
 
                     VStack(alignment: .leading, spacing: Spacing.s) {
-                        SectionHeader("Nutrition")
-                        LazyVGrid(columns: columns, spacing: Spacing.s) {
-                            ForEach(RewardCategory.nutrition) { category in
-                                ActivityMetricLink(category: category, period: period)
-                            }
-                        }
-                    }
-
-                    VStack(alignment: .leading, spacing: Spacing.s) {
                         SectionHeader("History")
                         EarningsHistoryList(days: period.days(model: model))
                     }
@@ -46,7 +40,15 @@ struct ActivityView: View {
             }
             .pageBackground()
             .navigationTitle("Activity")
-            .refreshable { await model.syncHealth() }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    SettingsToolbarButton(isPresented: $showingSettings)
+                }
+            }
+            .refreshable {
+                await model.syncHealth()
+                await model.settleIfDue()
+            }
         }
     }
 }
@@ -121,27 +123,5 @@ enum DayLabel {
         if day == model.today { return "Today" }
         if day == model.today.adding(days: -1, calendar: model.calendar) { return "Yesterday" }
         return day.startDate(calendar: model.calendar).formatted(.dateTime.weekday(.wide).day().month(.abbreviated))
-    }
-}
-
-/// "See All" destination: every category in a group, with its reward rate.
-struct CategoryListView: View {
-    let title: String
-    let categories: [RewardCategory]
-    private let columns = [GridItem(.flexible(), spacing: Spacing.s), GridItem(.flexible(), spacing: Spacing.s)]
-
-    var body: some View {
-        ScrollView {
-            LazyVGrid(columns: columns, spacing: Spacing.s) {
-                ForEach(categories) { category in
-                    ActivityMetricLink(category: category, period: .day, showsRate: true)
-                }
-            }
-            .padding(.horizontal, Spacing.page)
-            .padding(.vertical, Spacing.m)
-        }
-        .pageBackground()
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.large)
     }
 }

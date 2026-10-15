@@ -1,8 +1,9 @@
 import SwiftData
 import SwiftUI
 
-struct MealsView: View {
+struct NutritionView: View {
     @Environment(AppModel.self) private var model
+    @Binding var showingSettings: Bool
     @State private var capturing = false
     @State private var choosingFromLibrary = false
 
@@ -10,6 +11,9 @@ struct MealsView: View {
         NavigationStack {
             MealsJournalList(header: AnyView(captureHeader))
                 .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        SettingsToolbarButton(isPresented: $showingSettings)
+                    }
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
                             choosingFromLibrary = true
@@ -55,39 +59,12 @@ struct MealsView: View {
             .buttonStyle(CardButtonStyle())
             .accessibilityLabel("Photograph a meal. \(left) photo rewards left today.")
 
-            HStack(spacing: Spacing.s) {
-                MacroPill(title: "Calories", value: "\(MeasureFormat.number(today.dietaryKilocalories))", unit: "kcal")
-                MacroPill(title: "Protein", value: "\(today.proteinGrams)", unit: "g")
-                MacroPill(title: "Carbs", value: "\(today.carbohydrateGrams)", unit: "g")
-                MacroPill(title: "Fat", value: "\(today.fatGrams)", unit: "g")
+            VStack(alignment: .leading, spacing: Spacing.s) {
+                SectionHeader("Today")
+                NutritionGrid()
             }
+            .padding(.top, Spacing.s)
         }
-    }
-}
-
-struct MacroPill: View {
-    let title: String
-    let value: String
-    let unit: String
-
-    var body: some View {
-        VStack(spacing: 2) {
-            Text(value)
-                .font(.subheadline.weight(.semibold))
-                .monospacedDigit()
-                .foregroundStyle(Palette.textPrimary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-            Text("\(title)")
-                .font(.caption2)
-                .foregroundStyle(Palette.textTertiary)
-                .lineLimit(1)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, Spacing.s)
-        .background(Palette.surface, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(title) today: \(value) \(unit)")
     }
 }
 
@@ -125,7 +102,7 @@ struct MealsJournalList: View {
                             }
                     }
                 } header: {
-                    Text(DayKey(string: day).map { DayLabel.text($0, model: model) } ?? day)
+                    Text(DayKey(string: day).map { "Meals · " + DayLabel.text($0, model: model) } ?? day)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Palette.textSecondary)
                         .textCase(nil)
@@ -135,7 +112,7 @@ struct MealsJournalList: View {
         }
         .scrollContentBackground(.hidden)
         .pageBackground()
-        .navigationTitle("Meals")
+        .navigationTitle("Nutrition")
         .confirmationDialog("Delete this meal?", isPresented: .init(
             get: { pendingDeletion != nil }, set: { if !$0 { pendingDeletion = nil } }), titleVisibility: .visible) {
             Button("Delete Meal", role: .destructive) {

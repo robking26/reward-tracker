@@ -11,10 +11,12 @@ struct VaultView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.xl) {
-                    MonthAllocationCard(summary: model.vault)
+                    VaultHeroCard(summary: model.vault)
 
                     if let pending = model.payments.first(where: { $0.status.isUnresolved }) {
                         PendingPaymentCard(payment: pending, checking: $checkingPayments)
+                    } else {
+                        PayoutStatusLine().surface()
                     }
 
                     VStack(alignment: .leading, spacing: Spacing.s) {
@@ -90,35 +92,6 @@ struct VaultView: View {
                 Text("Only the shortfall for this month's allocation is moved. Unearned money already in the Space stays where it is.")
             }
         }
-    }
-}
-
-struct MonthAllocationCard: View {
-    let summary: VaultSummary
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.m) {
-            Text(summary.month.title())
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Palette.textSecondary)
-            VStack(alignment: .leading, spacing: Spacing.xxs) {
-                MoneyText(amount: summary.earned, font: .largeTitle, weight: .medium, color: Palette.accent)
-                Text("earned of \(summary.allocation.formatted())")
-                    .font(.subheadline)
-                    .foregroundStyle(Palette.textSecondary)
-            }
-            ThinProgressBar(progress: summary.progress)
-            HStack {
-                Text(summary.isFullyUnlocked ? "Fully unlocked" : "\(summary.remainingToUnlock.formatted()) still to unlock")
-                Spacer()
-                Text("\(summary.percentUnlocked)%")
-                    .monospacedDigit()
-            }
-            .font(.footnote)
-            .foregroundStyle(Palette.textSecondary)
-        }
-        .surface(radius: Radius.hero, padding: Spacing.l)
-        .accessibilityElement(children: .combine)
     }
 }
 

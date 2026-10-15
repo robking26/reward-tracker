@@ -1,27 +1,23 @@
 import SwiftUI
 
 enum AppTab: Hashable {
-    case home, activity, meals, vault
+    case activity, nutrition, vault
 }
 
 struct RootView: View {
     @Environment(AppModel.self) private var model
-    @State private var selection: AppTab = .home
+    @State private var selection: AppTab = .activity
     @State private var showingSettings = false
 
     var body: some View {
         TabView(selection: $selection) {
-            HomeView(showingSettings: $showingSettings, selection: $selection)
-                .tabItem { Label("Home", systemImage: "house.fill") }
-                .tag(AppTab.home)
-
-            ActivityView()
+            ActivityView(showingSettings: $showingSettings)
                 .tabItem { Label("Activity", systemImage: "figure.run") }
                 .tag(AppTab.activity)
 
-            MealsView()
-                .tabItem { Label("Meals", systemImage: "fork.knife") }
-                .tag(AppTab.meals)
+            NutritionView(showingSettings: $showingSettings)
+                .tabItem { Label("Nutrition", systemImage: "fork.knife") }
+                .tag(AppTab.nutrition)
 
             VaultView(showingSettings: $showingSettings)
                 .tabItem { Label("Vault", systemImage: "sterlingsign.circle.fill") }
@@ -50,3 +46,11 @@ struct SettingsToolbarButton: View {
         .accessibilityLabel("Settings")
     }
 }
+
+#if DEBUG
+#Preview {
+    RootView()
+        .environment(PreviewFixtures.model())
+        .preferredColorScheme(.dark)
+}
+#endif

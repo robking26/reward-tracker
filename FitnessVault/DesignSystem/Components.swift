@@ -164,6 +164,8 @@ struct MetricCard: View {
     let earned: Pence?
     /// Shown in place of the earned amount, e.g. "Not rewarded".
     var earnedCaption: String? = nil
+    /// False for cards that don't open a detail screen.
+    var showsChevron = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.s) {
@@ -177,10 +179,12 @@ struct MetricCard: View {
                     .foregroundStyle(Palette.textPrimary)
                     .lineLimit(1)
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Palette.textTertiary)
-                    .accessibilityHidden(true)
+                if showsChevron {
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Palette.textTertiary)
+                        .accessibilityHidden(true)
+                }
             }
             Text(timeframe)
                 .font(.caption)
@@ -224,7 +228,7 @@ struct MetricCard: View {
         .contentShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
-        .accessibilityAddTraits(.isButton)
+        .accessibilityAddTraits(showsChevron ? .isButton : [])
     }
 
     private var accessibilityText: String {

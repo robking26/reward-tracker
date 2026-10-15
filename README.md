@@ -70,7 +70,7 @@ FitnessVault/
   Domain/          Pure, tested logic: Pence, reward engine, ledger, settlement
   Persistence/     SwiftData entities and settings
   Services/        Health (HealthKit + mock), Meals (AI analysis), Banking (Starling + mock), Platform
-  Features/        Home, Activity, Meals, Vault, Settings
+  Features/        Activity, Nutrition, Vault, Settings
   Preview Content/ Preview-only fixtures (DEBUG only)
 FitnessVaultTests/ Financial unit tests
 Config/            Info.plist additions and entitlements
