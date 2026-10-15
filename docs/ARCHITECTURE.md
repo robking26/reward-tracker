@@ -32,7 +32,7 @@
 ## Platform constraints (verified, not assumed)
 
 - **Health permissions:** iOS never tells an app whether reading was allowed. The app shows "Connected" once the request has been made, and explains where to check if data is missing.
-- **Background work:** HealthKit background delivery and `BGAppRefreshTask` are best effort. iOS decides when they run, and Health data is unavailable while the phone is locked. So the 08:00 settlement also runs whenever you open the app after 08:00. No server can read HealthKit.
+- **Background work:** HealthKit background delivery and `BGAppRefreshTask` are best effort. The background-delivery entitlement is left out so the app can be signed with a free Apple ID; with a paid developer account, add `com.apple.developer.healthkit.background-delivery` to `Config/FitnessVault.entitlements` to let iOS wake the app for new Health data. iOS decides when they run, and Health data is unavailable while the phone is locked. So the 08:00 settlement also runs whenever you open the app after 08:00. No server can read HealthKit.
 - **Exercise minutes:** read from `appleExerciseTime`, a public read-only HealthKit type. Heart rate is never used.
 - **Strength:** only `traditionalStrengthTraining` and `functionalStrengthTraining` workouts, de-duplicated by workout UUID and assigned to the day the workout started.
 - **Starling payments:** with a personal access token, payments to a payee must be approved in the Starling app. The app never tries to approve them.
