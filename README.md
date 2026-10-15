@@ -14,8 +14,8 @@ A native iOS app that turns activity recorded in Apple Health into real money. E
 
 ## Getting started
 
-1. Open `FitnessVault.xcodeproj`.
-2. Select the **FitnessVault** target. Under **Signing & Capabilities**, choose your team. If `com.robking.FitnessVault` is taken, change the bundle identifier.
+1. In Xcode, choose **Integrate → Clone…**, paste `https://github.com/robking26/reward-tracker.git` and pick the `main` branch. To get updates later, use **Integrate → Pull…**.
+2. Signing is preset to Rob's personal team (`P9VHAY42J5`) and the bundle identifier `com.robking.FitnessVault`. If you're signing with a different Apple ID, choose your team under **Signing & Capabilities**.
 3. Run on your iPhone. On first launch, tap **Allow Access** to connect Apple Health.
 4. To try the app without Health data or a bank, open **Settings → Development → Demo mode**. Demo mode uses generated activity and a pretend bank, and it can never move real money.
 5. Run the tests with **⌘U**. They cover all the reward, ledger, cap, settlement and meal-limit maths.
