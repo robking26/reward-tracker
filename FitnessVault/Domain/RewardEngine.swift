@@ -44,7 +44,7 @@ enum RewardEngine {
     ) -> [RewardCategory: Pence] {
         var result: [RewardCategory: Pence] = [:]
         result[.steps] = min(
-            intervals(metrics.steps - max(0, rates.stepsBaseline), per: rates.stepsPerPenny),
+            startedIntervals(metrics.steps - max(0, rates.stepsBaseline), per: rates.stepsPerPenny),
             rates.stepsDailyCap.nonNegative)
         result[.swimming] = intervals(metrics.swimmingMetres, per: rates.swimmingMetresPerPenny)
         result[.strength] = intervals(metrics.strengthSeconds, per: rates.strengthSecondsPerPenny)
@@ -69,6 +69,12 @@ enum RewardEngine {
 
     static func total(_ rewards: [RewardCategory: Pence]) -> Pence {
         rewards.values.sum { $0 }
+    }
+
+    /// Each interval pays as soon as it starts: steps 1-10 over the baseline pay 1p, 11-20 pay 2p.
+    static func startedIntervals(_ measurement: Int, per interval: Int) -> Pence {
+        guard interval > 0, measurement > 0 else { return .zero }
+        return Pence((measurement + interval - 1) / interval)
     }
 
     /// Whole completed intervals only. 249 steps at 1p/50 = 4p.
