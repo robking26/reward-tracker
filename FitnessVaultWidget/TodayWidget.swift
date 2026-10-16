@@ -66,6 +66,7 @@ struct TodayWidgetView: View {
     }
     private var breakdown: [WidgetCategoryLine] { current?.breakdown ?? [] }
     private var earnedText: String { current.map { WidgetMoney.format(pence: $0.earnedTodayPence) } ?? "–" }
+    private var stepsText: String { current.map { $0.steps.formatted(.number) } ?? "–" }
 
     var body: some View {
         Group {
@@ -160,10 +161,34 @@ struct TodayWidgetView: View {
 
     private var small: some View {
         VStack(alignment: .leading, spacing: 0) {
-            earnedBlock(size: 28)
+            Text("Earned today")
+                .font(.caption.weight(.medium))
+                .foregroundStyle(WidgetPalette.textSecondary)
+            Text(earnedText)
+                .font(.system(size: 30, weight: .medium))
+                .monospacedDigit()
+                .foregroundStyle(WidgetPalette.accent)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .contentTransition(.numericText())
             Spacer(minLength: 6)
-            breakdownList(limit: 3, showsDetail: false)
+            HStack(alignment: .bottom, spacing: 8) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(stepsText)
+                        .font(.headline)
+                        .monospacedDigit()
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    Text("steps")
+                        .font(.caption2)
+                        .foregroundStyle(WidgetPalette.textSecondary)
+                }
+                Spacer(minLength: 0)
+                ActivityRingsView(rings: current?.rings, lineWidth: 7, spacing: 1.5)
+                    .frame(width: 58, height: 58)
+            }
         }
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: Medium (4×2)
@@ -310,31 +335,23 @@ struct TodayWidgetView: View {
         .accessibilityLabel("Earned today \(earnedText). \(Int(monthProgress * 100)) percent of this month unlocked.")
     }
 
-    /// Earnings plus the two biggest contributors today, whichever they are.
     private var lockRectangular: some View {
         HStack(spacing: 8) {
             VStack(alignment: .leading, spacing: 0) {
-                Text(earnedText + " today")
+                Text(earnedText)
                     .font(.headline)
                     .monospacedDigit()
                     .widgetAccentable()
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
-                if current == nil {
-                    Text("Open app to update")
-                        .font(.caption)
-                } else if breakdown.isEmpty {
-                    Text("Nothing earned yet")
-                        .font(.caption)
-                } else {
-                    ForEach(breakdown.prefix(2)) { item in
-                        Label("\(item.title) \(WidgetMoney.format(pence: item.earnedPence))", systemImage: item.symbol)
-                            .font(.caption)
-                            .monospacedDigit()
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
-                    }
-                }
+                Text(current == nil ? "Open app to update" : "earned today")
+                    .font(.caption)
+                    .lineLimit(1)
+                Label(stepsText + " steps", systemImage: "figure.walk")
+                    .font(.caption)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             ActivityRingsView(rings: current?.rings, lineWidth: 5, spacing: 1)
@@ -345,7 +362,7 @@ struct TodayWidgetView: View {
 
     private var lockInline: some View {
         // Inline widgets show a single line of text and one image only.
-        Label(current == nil ? "Open Fitness Vault" : "\(earnedText) earned today",
+        Label(current == nil ? "Open Fitness Vault" : "\(earnedText) today · \(stepsText) steps",
               systemImage: "sterlingsign.circle")
     }
 }
