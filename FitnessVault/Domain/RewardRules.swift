@@ -15,7 +15,7 @@ enum RewardCategory: String, CaseIterable, Codable, Sendable, Identifiable {
     var id: String { rawValue }
 
     static let activity: [RewardCategory] = [.steps, .exercise, .strength, .activeEnergy, .swimming, .flights]
-    static let nutrition: [RewardCategory] = [.mealPhoto, .proteinTarget, .calorieTarget]
+    static let nutrition: [RewardCategory] = [.proteinTarget, .calorieTarget]
 
     var title: String {
         switch self {
@@ -54,19 +54,31 @@ enum RewardCategory: String, CaseIterable, Codable, Sendable, Identifiable {
 /// Reward rates. Each rate is "one penny per N units" or a fixed amount, so every reward
 /// is a whole number of completed intervals and partial progress is never rounded up.
 struct RewardRates: Codable, Hashable, Sendable {
-    var stepsPerPenny = 50
+    var stepsPerPenny = 20
     var swimmingMetresPerPenny = 5
     var strengthSecondsPerPenny = 6
     var exerciseSecondsPerPenny = 10
     var activeKilocaloriesPerPenny = 10
-    var pencePerFlight: Pence = 10
-    var pencePerMealPhoto: Pence = 50
+    var pencePerFlight: Pence = 2
+    /// Meal photos are logged for nutrition but earn nothing.
+    var pencePerMealPhoto: Pence = 0
     var maxRewardedMealPhotosPerDay = 3
     var proteinTargetReward: Pence = 100
     var calorieTargetReward: Pence = 50
 
-    /// The rates specified for the initial release.
+    /// The current rates. Days that are already final keep the rates they were calculated with.
     static let standard = RewardRates()
+
+    /// Whether a category currently earns anything.
+    func isRewarded(_ category: RewardCategory) -> Bool {
+        switch category {
+        case .mealPhoto: pencePerMealPhoto.isPositive && maxRewardedMealPhotosPerDay > 0
+        case .flights: pencePerFlight.isPositive
+        case .proteinTarget: proteinTargetReward.isPositive
+        case .calorieTarget: calorieTargetReward.isPositive
+        default: true
+        }
+    }
 
     func rateDescription(for category: RewardCategory) -> String {
         switch category {
@@ -76,7 +88,9 @@ struct RewardRates: Codable, Hashable, Sendable {
         case .exercise: "1p per \(exerciseSecondsPerPenny) seconds"
         case .activeEnergy: "1p per \(activeKilocaloriesPerPenny) kcal"
         case .flights: "\(pencePerFlight.formatted()) per flight"
-        case .mealPhoto: "\(pencePerMealPhoto.formatted()) per meal, up to \(maxRewardedMealPhotosPerDay) a day"
+        case .mealPhoto: pencePerMealPhoto.isPositive
+            ? "\(pencePerMealPhoto.formatted()) per meal, up to \(maxRewardedMealPhotosPerDay) a day"
+            : "Not rewarded"
         case .proteinTarget: "\(proteinTargetReward.formatted()) when reached"
         case .calorieTarget: "\(calorieTargetReward.formatted()) when within range"
         }

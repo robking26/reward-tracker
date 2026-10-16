@@ -77,6 +77,8 @@ final class SettingsStore {
         if let data = defaults.data(forKey: Self.key),
            let decoded = try? JSONDecoder().decode(AppSettings.self, from: data) {
             settings = decoded
+            // Rates are defined in code, not by the user, so a saved copy of older rates is replaced.
+            settings.rates = .standard
         } else {
             settings = AppSettings()
         }

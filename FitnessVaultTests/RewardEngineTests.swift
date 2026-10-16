@@ -15,10 +15,11 @@ final class RewardEngineTests: XCTestCase {
     // Examples from the specification, section 6.2.
 
     func testStepsUseWholeIntervalsOnly() {
-        XCTAssertEqual(reward(.steps) { $0.steps = 249 }, Pence(4))
-        XCTAssertEqual(reward(.steps) { $0.steps = 250 }, Pence(5))
-        XCTAssertEqual(reward(.steps) { $0.steps = 49 }, .zero)
-        XCTAssertEqual(reward(.steps) { $0.steps = 12_500 }, Pence(250))
+        // 1p per 20 steps.
+        XCTAssertEqual(reward(.steps) { $0.steps = 19 }, .zero)
+        XCTAssertEqual(reward(.steps) { $0.steps = 20 }, Pence(1))
+        XCTAssertEqual(reward(.steps) { $0.steps = 259 }, Pence(12))
+        XCTAssertEqual(reward(.steps) { $0.steps = 10_000 }, Pence(500))
     }
 
     func testSwimming() {
@@ -41,13 +42,22 @@ final class RewardEngineTests: XCTestCase {
     }
 
     func testFlights() {
-        XCTAssertEqual(reward(.flights) { $0.flightsClimbed = 12 }, Pence(120))
+        // 2p per flight.
+        XCTAssertEqual(reward(.flights) { $0.flightsClimbed = 12 }, Pence(24))
     }
 
-    func testMealPhotosCappedAtThree() {
-        XCTAssertEqual(reward(.mealPhoto) { $0.rewardEligibleMeals = 1 }, Pence(50))
-        XCTAssertEqual(reward(.mealPhoto) { $0.rewardEligibleMeals = 3 }, Pence(150))
-        XCTAssertEqual(reward(.mealPhoto) { $0.rewardEligibleMeals = 7 }, Pence(150))
+    func testMealPhotosEarnNothing() {
+        XCTAssertEqual(reward(.mealPhoto) { $0.rewardEligibleMeals = 3 }, .zero)
+        XCTAssertFalse(rates.isRewarded(.mealPhoto))
+    }
+
+    func testMealPhotoCapStillHoldsIfRewardsReturn() {
+        var paid = rates
+        paid.pencePerMealPhoto = 50
+        var metrics = DailyMetrics(day: day)
+        metrics.rewardEligibleMeals = 7
+        let rewards = RewardEngine.rewards(for: metrics, rates: paid, targets: targets, includeNutritionTargets: false)
+        XCTAssertEqual(rewards[.mealPhoto], Pence(150))
     }
 
     func testProteinTarget() {
@@ -71,14 +81,14 @@ final class RewardEngineTests: XCTestCase {
         XCTAssertEqual(reward(.calorieTarget, { $0.dietaryKilocalories = 2_000 }, nutrition: false), .zero)
     }
 
-    func testMaximumDailyNutritionRewardIsThreePounds() {
+    func testMaximumDailyNutritionRewardIsOnePoundFifty() {
         var metrics = DailyMetrics(day: day)
         metrics.rewardEligibleMeals = 10
         metrics.proteinGrams = 300
         metrics.dietaryKilocalories = 2_200
         let rewards = RewardEngine.rewards(for: metrics, rates: rates, targets: targets, includeNutritionTargets: true)
-        let nutrition = RewardCategory.nutrition.sum { rewards[$0] ?? .zero }
-        XCTAssertEqual(nutrition, .pounds(3))
+        let nutrition = ([.mealPhoto] + RewardCategory.nutrition).sum { rewards[$0] ?? .zero }
+        XCTAssertEqual(nutrition, Pence(150), "Protein £1 + calories 50p; meal photos earn nothing")
     }
 
     func testCategoriesStack() {
@@ -87,7 +97,7 @@ final class RewardEngineTests: XCTestCase {
         metrics.exerciseSeconds = 1_800
         metrics.activeKilocalories = 500
         let total = RewardEngine.total(RewardEngine.rewards(for: metrics, rates: rates, targets: targets, includeNutritionTargets: false))
-        XCTAssertEqual(total, Pence(200 + 180 + 50))
+        XCTAssertEqual(total, Pence(500 + 180 + 50))
     }
 
     func testDeterministic() {

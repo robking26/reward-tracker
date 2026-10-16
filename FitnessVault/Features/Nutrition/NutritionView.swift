@@ -30,8 +30,14 @@ struct NutritionView: View {
 
     private var captureHeader: some View {
         let today = model.todayMetrics
-        let limit = model.settings.rates.maxRewardedMealPhotosPerDay
+        let rates = model.settings.rates
+        let limit = rates.maxRewardedMealPhotosPerDay
         let left = max(0, limit - today.rewardEligibleMeals)
+        let subtitle = !rates.isRewarded(.mealPhoto)
+            ? "Calories and macros are estimated from the photo."
+            : left > 0
+                ? "\(left) of \(limit) photo rewards left today · \(rates.pencePerMealPhoto.formatted()) each"
+                : "Today's photo rewards are used. Keep logging for your nutrition totals."
         return VStack(spacing: Spacing.m) {
             Button {
                 capturing = true
@@ -45,9 +51,7 @@ struct NutritionView: View {
                     Text("Photograph a meal")
                         .font(.headline)
                         .foregroundStyle(Palette.textPrimary)
-                    Text(left > 0
-                         ? "\(left) of \(limit) photo rewards left today · \(model.settings.rates.pencePerMealPhoto.formatted()) each"
-                         : "Today's photo rewards are used. Keep logging for your nutrition totals.")
+                    Text(subtitle)
                         .font(.footnote)
                         .foregroundStyle(Palette.textSecondary)
                         .multilineTextAlignment(.center)
@@ -57,7 +61,7 @@ struct NutritionView: View {
                 .surface(radius: Radius.hero)
             }
             .buttonStyle(CardButtonStyle())
-            .accessibilityLabel("Photograph a meal. \(left) photo rewards left today.")
+            .accessibilityLabel("Photograph a meal. \(subtitle)")
 
             VStack(alignment: .leading, spacing: Spacing.s) {
                 SectionHeader("Today")
@@ -153,10 +157,12 @@ struct MealRow: View {
                     .font(.caption)
                     .monospacedDigit()
                     .foregroundStyle(Palette.textSecondary)
-                Text(meal.isRewardEligible ? "+\(rewardAmount.formatted())" : "No photo reward")
-                    .font(.caption.weight(.semibold))
-                    .monospacedDigit()
-                    .foregroundStyle(meal.isRewardEligible ? Palette.accent : Palette.textTertiary)
+                if rewardAmount.isPositive {
+                    Text(meal.isRewardEligible ? "+\(rewardAmount.formatted())" : "No photo reward")
+                        .font(.caption.weight(.semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(meal.isRewardEligible ? Palette.accent : Palette.textTertiary)
+                }
             }
         }
         .padding(.vertical, Spacing.xxs)

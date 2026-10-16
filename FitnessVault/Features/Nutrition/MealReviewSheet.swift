@@ -116,7 +116,9 @@ struct MealReviewSheet: View {
             }
             .surface(padding: Spacing.m)
 
-            rewardNote
+            if model.settings.rates.isRewarded(.mealPhoto) {
+                rewardNote
+            }
         }
     }
 

@@ -74,7 +74,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    ForEach(RewardCategory.allCases) { category in
+                    ForEach(RewardCategory.allCases.filter { model.settings.rates.isRewarded($0) }) { category in
                         LabeledContent {
                             Text(model.settings.rates.rateDescription(for: category))
                                 .monospacedDigit()

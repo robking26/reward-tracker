@@ -49,17 +49,16 @@ Tokens are stored only in the iPhone's Keychain, marked device-only. They are ne
 
 | Activity | Reward |
 |---|---|
-| Steps | 1p per 50 steps |
+| Steps | 1p per 20 steps |
 | Swimming | 1p per 5 m |
 | Strength training | 1p per 6 seconds (strength workouts only) |
 | Exercise minutes | 1p per 10 seconds (Apple Exercise minutes) |
 | Active energy | 1p per 10 kcal |
-| Flights climbed | 10p per flight |
-| Meal photo | 50p each, first 3 distinct meals a day |
+| Flights climbed | 2p per flight |
 | Protein target | £1 |
 | Calorie target (range) | 50p |
 
-Rewards are calculated from cumulative daily totals using whole intervals only. Days become final after 7 days, and after that they are never recalculated, even if the rates change.
+Meal photos are logged for nutrition tracking but earn nothing. Rewards are calculated from cumulative daily totals using whole intervals only. Days become final after 7 days, and after that they are never recalculated, even if the rates change.
 
 ## Project layout
 
