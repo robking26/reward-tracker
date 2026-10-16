@@ -72,12 +72,23 @@ FitnessVault/
   Services/        Health (HealthKit + mock), Meals (AI analysis), Banking (Starling + mock), Platform
   Features/        Activity, Nutrition, Vault, Settings
   Preview Content/ Preview-only fixtures (DEBUG only)
+FitnessVaultWidget/ Large home-screen widget (WidgetKit)
+Shared/           Code used by both the app and the widget
 FitnessVaultTests/ Financial unit tests
 Config/            Info.plist additions and entitlements
 docs/              Architecture and roadmap
 server/meal-analysis/  Cloudflare Worker for AI meal analysis
 .github/workflows/     iOS build/test and server check/deploy
 ```
+
+## Home-screen widget
+
+A large (4×4) widget shows money earned today, your step count, your Activity rings and this month's progress.
+
+- **Add it:** on the Home Screen, long-press an empty spot, tap **Edit → Add Widget**, search for **Fitness Vault**, choose the large size and tap **Add Widget**.
+- **How it updates:** the widget can't read Apple Health itself. It shows the numbers the app saved at its last sync, with the time of that sync, and refreshes whenever you open the app.
+- **After midnight:** until the app syncs again, the widget asks you to open it rather than showing yesterday's numbers as today's.
+- **Activity rings:** these need the Activity summary permission in Apple Health. Open the app and tap **Allow Access** when it asks.
 
 ## AI meal analysis
 

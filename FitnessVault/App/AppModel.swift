@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import SwiftData
+import WidgetKit
 
 /// The app's single source of state. Coordinates Apple Health sync, reward calculation,
 /// the ledger and Starling settlement. Views read derived state from here; they never compute money.
@@ -43,6 +44,9 @@ final class AppModel {
     private(set) var bankSnapshot: BankSnapshot?
     private(set) var bankError: String?
     private(set) var fundingPlan: VaultFunding.Plan?
+    /// Today's Activity rings from Apple Health, if available.
+    private(set) var todayRings: ActivityRingsSnapshot?
+    private var lastWidgetSnapshot: WidgetSnapshot?
 
     var settings: AppSettings { settingsStore.settings }
     var today: DayKey { DayKey(now(), calendar: calendar) }
@@ -160,6 +164,8 @@ final class AppModel {
         do {
             let readings = try await health.readings(from: start, through: today)
             upsert(readings)
+            // Rings are optional (no Apple Watch, or permission declined), so a failure here isn't a sync failure.
+            todayRings = try? await health.activityRings(on: today)
             recalculateRewards(from: start, through: today, finalisedThrough: state.finalisedThroughDay)
             state.lastSuccessfulSync = now()
             state.lastError = nil
@@ -549,6 +555,24 @@ final class AppModel {
             return VaultSummary(month: key, allocation: record.allocation, earned: ledgerEntries(month: key).sum(\.amount))
         }
         lastHealthSync = syncState().lastSuccessfulSync
+        publishWidgetSnapshot()
+    }
+
+    /// Shares today's numbers with the home-screen widget, refreshing it only when something changed.
+    private func publishWidgetSnapshot() {
+        let snapshot = WidgetSnapshot(
+            day: today.description,
+            earnedTodayPence: earned(on: today).value,
+            steps: todayMetrics.steps,
+            rings: todayRings,
+            monthEarnedPence: vault.earned.value,
+            monthAllocationPence: vault.allocation.value,
+            isDemo: settings.demoMode,
+            updatedAt: lastHealthSync ?? now())
+        if let lastWidgetSnapshot, lastWidgetSnapshot.hasSameContent(as: snapshot) { return }
+        WidgetSnapshotStore.save(snapshot)
+        lastWidgetSnapshot = snapshot
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetSnapshotStore.widgetKind)
     }
 
     // MARK: Store access

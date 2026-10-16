@@ -5,6 +5,8 @@ on:
     paths:
       - "FitnessVault/**"
       - "FitnessVaultTests/**"
+      - "FitnessVaultWidget/**"
+      - "Shared/**"
       - "FitnessVault.xcodeproj/**"
       - "Config/**"
       - ".github/workflows/ios.yml"

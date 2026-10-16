@@ -46,6 +46,15 @@ final class MockHealthService: HealthDataProviding, @unchecked Sendable {
             flightsClimbed: next(2...18))
     }
 
+    func activityRings(on day: DayKey) async throws -> ActivityRingsSnapshot? {
+        let reading = Self.reading(for: day, partial: day == DayKey(now(), calendar: calendar))
+        return ActivityRingsSnapshot(
+            move: RingProgress(value: Double(reading.activeKilocalories), goal: 600),
+            exercise: RingProgress(value: Double(reading.exerciseSeconds / 60), goal: 30),
+            stand: RingProgress(value: Double(min(12, reading.flightsClimbed)), goal: 12),
+            moveUnit: "kcal")
+    }
+
     func saveMeal(id: UUID, estimate: NutritionEstimate, date: Date) async throws -> Bool { false }
     func deleteMeal(id: UUID) async throws {}
     func startObservingChanges(_ onChange: @escaping @Sendable () async -> Void) {}

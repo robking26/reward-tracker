@@ -35,6 +35,7 @@ final class HealthKitService: HealthDataProviding, @unchecked Sendable {
     private var readTypes: Set<HKObjectType> {
         var types = Set<HKObjectType>(cumulativeTypes.map { HKQuantityType($0.0) as HKObjectType })
         types.insert(HKObjectType.workoutType())
+        types.insert(HKObjectType.activitySummaryType())
         return types
     }
 
@@ -131,6 +132,47 @@ final class HealthKitService: HealthDataProviding, @unchecked Sendable {
         let descriptor = HKSampleQueryDescriptor(
             predicates: [.workout(predicate)], sortDescriptors: [SortDescriptor(\.startDate)])
         return try await descriptor.result(for: store)
+    }
+
+    func activityRings(on day: DayKey) async throws -> ActivityRingsSnapshot? {
+        guard HKHealthStore.isHealthDataAvailable() else { return nil }
+        var components = calendar.dateComponents([.era, .year, .month, .day], from: day.startDate(calendar: calendar))
+        components.calendar = calendar
+        let predicate = HKQuery.predicateForActivitySummary(with: components)
+        return try await withCheckedThrowingContinuation { continuation in
+            let query = HKActivitySummaryQuery(predicate: predicate) { _, summaries, error in
+                if let error {
+                    if let hkError = error as? HKError, hkError.code == .errorNoData {
+                        continuation.resume(returning: nil)
+                    } else {
+                        continuation.resume(throwing: error)
+                    }
+                    return
+                }
+                guard let summary = summaries?.first else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                continuation.resume(returning: Self.rings(from: summary))
+            }
+            store.execute(query)
+        }
+    }
+
+    private static func rings(from summary: HKActivitySummary) -> ActivityRingsSnapshot {
+        let moveIsTime = summary.activityMoveMode == .appleMoveTime
+        let move = moveIsTime
+            ? RingProgress(value: summary.appleMoveTime.doubleValue(for: .minute()),
+                           goal: summary.appleMoveTimeGoal.doubleValue(for: .minute()))
+            : RingProgress(value: summary.activeEnergyBurned.doubleValue(for: .kilocalorie()),
+                           goal: summary.activeEnergyBurnedGoal.doubleValue(for: .kilocalorie()))
+        return ActivityRingsSnapshot(
+            move: move,
+            exercise: RingProgress(value: summary.appleExerciseTime.doubleValue(for: .minute()),
+                                   goal: summary.appleExerciseTimeGoal.doubleValue(for: .minute())),
+            stand: RingProgress(value: summary.appleStandHours.doubleValue(for: .count()),
+                                goal: summary.appleStandHoursGoal.doubleValue(for: .count())),
+            moveUnit: moveIsTime ? "min" : "kcal")
     }
 
     func saveMeal(id: UUID, estimate: NutritionEstimate, date: Date) async throws -> Bool {
