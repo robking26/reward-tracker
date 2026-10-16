@@ -112,12 +112,8 @@ struct CategoryDetailView: View {
             "Uses the duration of Traditional and Functional Strength Training workouts in Apple Health. Each workout counts once."
         case .swimming:
             "Uses swimming distance recorded in Apple Health."
-        case .mealPhoto:
-            "The first \(model.settings.rates.maxRewardedMealPhotosPerDay) distinct meals you photograph and confirm each day earn a reward. Repeat photos of the same meal don't."
-        case .proteinTarget:
-            "Earned when the protein in your confirmed meals reaches \(model.settings.nutrition.proteinGrams) g. Confirmed after the day ends."
-        case .calorieTarget:
-            "Earned when your confirmed meals land within \(MeasureFormat.number(model.settings.nutrition.calorieRange.lowerBound))–\(MeasureFormat.number(model.settings.nutrition.calorieRange.upperBound)) kcal. A range, so eating too little never pays."
+        case .mealPhoto, .proteinTarget, .calorieTarget:
+            "Nutrition has been removed from Fitness Vault. This category no longer earns anything; past amounts are kept in your history."
         }
     }
 }
@@ -140,7 +136,8 @@ struct DayDetailView: View {
             .listRowBackground(Palette.surface)
 
             Section("By category") {
-                ForEach(RewardCategory.allCases) { category in
+                // Current categories, plus any retired ones that still hold money for this day.
+                ForEach(RewardCategory.allCases.filter { !$0.isRetired || (model.earningsByDay[day]?[$0] ?? .zero) != .zero }) { category in
                     let measure = MeasureFormat.measurement(category, metrics)
                     let earned = model.earningsByDay[day]?[category] ?? .zero
                     HStack {

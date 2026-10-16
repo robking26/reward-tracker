@@ -48,22 +48,11 @@ struct ActivityMetricLink: View {
                 measurement: measure.value,
                 unit: measure.unit,
                 progress: period == .day ? DailyGoals.progress(category, metrics, settings: model.settings) : nil,
-                earned: earned(days),
-                earnedCaption: caption)
+                earned: model.earned(category, in: days))
         }
         .buttonStyle(CardButtonStyle())
     }
 
-    private func earned(_ days: [DayKey]) -> Pence? {
-        if category.settlesAfterDayEnds && period == .day { return nil }
-        return model.earned(category, in: days)
-    }
-
-    private var caption: String? {
-        guard category.settlesAfterDayEnds && period == .day else { return nil }
-        let reward = model.provisionalNutritionReward(category)
-        return reward.isPositive ? "On track for +\(reward.formatted())" : "Confirmed after today"
-    }
 }
 
 /// Reference goals for the compact progress bars. They don't affect earnings, which have no thresholds.
@@ -77,9 +66,7 @@ enum DailyGoals {
         case .activeEnergy: return ratio(metrics.activeKilocalories, 600)
         case .swimming: return ratio(metrics.swimmingMetres, 1_000)
         case .flights: return ratio(metrics.flightsClimbed, 10)
-        case .mealPhoto: return ratio(metrics.rewardEligibleMeals, settings.rates.maxRewardedMealPhotosPerDay)
-        case .proteinTarget: return ratio(metrics.proteinGrams, settings.nutrition.proteinGrams)
-        case .calorieTarget: return ratio(metrics.dietaryKilocalories, settings.nutrition.calorieRange.lowerBound)
+        case .mealPhoto, .proteinTarget, .calorieTarget: return nil
         }
     }
 }
@@ -95,12 +82,6 @@ extension Array where Element == DailyMetrics {
             total.exerciseSeconds += next.exerciseSeconds
             total.activeKilocalories += next.activeKilocalories
             total.flightsClimbed += next.flightsClimbed
-            total.rewardEligibleMeals += next.rewardEligibleMeals
-            total.loggedMeals += next.loggedMeals
-            total.proteinGrams += next.proteinGrams
-            total.dietaryKilocalories += next.dietaryKilocalories
-            total.carbohydrateGrams += next.carbohydrateGrams
-            total.fatGrams += next.fatGrams
         }
     }
 }

@@ -18,7 +18,7 @@ A native iOS app that turns activity recorded in Apple Health into real money. E
 2. Signing is preset to Rob's personal team (`P9VHAY42J5`) and the bundle identifier `com.robking.FitnessVault`. If you're signing with a different Apple ID, choose your team under **Signing & Capabilities**.
 3. Run on your iPhone. On first launch, tap **Allow Access** to connect Apple Health.
 4. To try the app without Health data or a bank, open **Settings → Development → Demo mode**. Demo mode uses generated activity and a pretend bank, and it can never move real money.
-5. Run the tests with **⌘U**. They cover all the reward, ledger, cap, settlement and meal-limit maths.
+5. Run the tests with **⌘U**. They cover all the reward, ledger, cap and settlement maths.
 
 ## Connecting Starling (sandbox first)
 
@@ -55,10 +55,8 @@ Tokens are stored only in the iPhone's Keychain, marked device-only. They are ne
 | Exercise minutes | 1p per 10 seconds (Apple Exercise minutes) |
 | Active energy | 1p per 10 kcal |
 | Flights climbed | 2p per flight |
-| Protein target | £1 |
-| Calorie target (range) | 50p |
 
-Meal photos are logged for nutrition tracking but earn nothing. Rewards are calculated from cumulative daily totals using whole intervals only. Days become final after 7 days, and after that they are never recalculated, even if the rates change.
+Rewards come from Apple Health activity only; the app has no nutrition or meal logging. They are calculated from cumulative daily totals using whole intervals only. Days become final after 7 days, and after that they are never recalculated, even if the rates change.
 
 ## Project layout
 
@@ -68,16 +66,15 @@ FitnessVault/
   DesignSystem/    Colour, spacing, radius tokens and shared components
   Domain/          Pure, tested logic: Pence, reward engine, ledger, settlement
   Persistence/     SwiftData entities and settings
-  Services/        Health (HealthKit + mock), Meals (AI analysis), Banking (Starling + mock), Platform
-  Features/        Activity, Nutrition, Vault, Settings
+  Services/        Health (HealthKit + mock), Banking (Starling + mock), Platform
+  Features/        Activity, Vault, Settings
   Preview Content/ Preview-only fixtures (DEBUG only)
 FitnessVaultWidget/ Large home-screen widget (WidgetKit)
 Shared/           Code used by both the app and the widget
 FitnessVaultTests/ Financial unit tests
 Config/            Info.plist additions and entitlements
 docs/              Architecture and roadmap
-server/meal-analysis/  Cloudflare Worker for AI meal analysis
-.github/workflows/     iOS build/test and server check/deploy
+.github/workflows/     iOS build and tests
 ```
 
 ## Home-screen widget
@@ -94,12 +91,8 @@ The widget comes in three sizes:
 - **After midnight:** until the app syncs again, the widget asks you to open it rather than showing yesterday's numbers as today's.
 - **Activity rings:** these need the Activity summary permission in Apple Health. Open the app and tap **Allow Access** when it asks.
 
-## AI meal analysis
-
-Meal photos are analysed by your own small server. By default it uses Cloudflare's free AI allowance, and Claude is available as a paid option. It's in [`server/meal-analysis`](server/meal-analysis/README.md), along with the deployment steps and costs. Until you deploy it, the app uses a clearly labelled mock analyser.
-
 ## Automatic checks
 
-Every push that touches the app is built and tested on GitHub's Macs. See the **Actions** tab, which needs no Apple account. The meal server is type-checked and tested the same way.
+Every push that touches the app is built and tested on GitHub's Macs. See the **Actions** tab, which needs no Apple account.
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for design decisions, platform limits and what is still to do.

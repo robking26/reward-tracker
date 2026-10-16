@@ -15,16 +15,6 @@ enum BankingEnvironment: String, Codable, CaseIterable, Sendable, Identifiable {
     }
 }
 
-enum MealAnalysisMode: String, Codable, CaseIterable, Sendable, Identifiable {
-    /// Deterministic on-device placeholder for development. Never a real estimate.
-    case mock
-    /// Your own backend, which holds the AI provider credentials.
-    case remote
-
-    var id: String { rawValue }
-    var title: String { self == .mock ? "Development mock" : "Your analysis server" }
-}
-
 /// Identifiers chosen when connecting Starling. None of these are secrets;
 /// the access token lives in the Keychain.
 struct StarlingConfiguration: Codable, Hashable, Sendable {
@@ -44,14 +34,9 @@ struct StarlingConfiguration: Codable, Hashable, Sendable {
 struct AppSettings: Codable, Hashable, Sendable {
     var monthlyAllocation: Pence = .pounds(400)
     var rates: RewardRates = .standard
-    var nutrition: NutritionTargets = .standard
     /// Minutes after midnight. Default 08:00.
     var settlementMinuteOfDay = 8 * 60
     var notificationsEnabled = true
-    var saveMealsToHealth = true
-    var keepMealThumbnails = true
-    var mealAnalysisMode: MealAnalysisMode = .mock
-    var mealAnalysisEndpoint: String = ""
     var bankingEnvironment: BankingEnvironment = .sandbox
     /// Live transfers require production *and* this explicit opt-in.
     var liveTransfersConfirmed = false
@@ -62,10 +47,9 @@ struct AppSettings: Codable, Hashable, Sendable {
     var lockAfterDays = 7
 
     // `rates` is deliberately not saved: rates are defined in code, so a rate change can never
-    // make previously saved settings (Starling setup, targets) fail to load.
+    // make previously saved settings (such as the Starling setup) fail to load.
     private enum CodingKeys: String, CodingKey {
-        case monthlyAllocation, nutrition, settlementMinuteOfDay, notificationsEnabled
-        case saveMealsToHealth, keepMealThumbnails, mealAnalysisMode, mealAnalysisEndpoint
+        case monthlyAllocation, settlementMinuteOfDay, notificationsEnabled
         case bankingEnvironment, liveTransfersConfirmed, starling, demoMode, lockAfterDays
     }
 }

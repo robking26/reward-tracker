@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum AppTab: Hashable {
-    case activity, nutrition, vault
+    case activity, vault
 }
 
 struct RootView: View {
@@ -14,10 +14,6 @@ struct RootView: View {
             ActivityView(showingSettings: $showingSettings)
                 .tabItem { Label("Activity", systemImage: "figure.run") }
                 .tag(AppTab.activity)
-
-            NutritionView(showingSettings: $showingSettings)
-                .tabItem { Label("Nutrition", systemImage: "fork.knife") }
-                .tag(AppTab.nutrition)
 
             VaultView(showingSettings: $showingSettings)
                 .tabItem { Label("Vault", systemImage: "sterlingsign.circle.fill") }

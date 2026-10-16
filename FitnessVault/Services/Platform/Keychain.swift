@@ -1,13 +1,12 @@
 import Foundation
 import Security
 
-/// Minimal Keychain wrapper for secrets: the Starling token and the analysis server device token.
+/// Minimal Keychain wrapper for secrets such as the Starling token.
 /// Items are device-only and never synced to iCloud.
 enum Keychain {
     enum Item: String {
         case starlingSandboxToken = "starling.token.sandbox"
         case starlingProductionToken = "starling.token.production"
-        case mealAnalysisDeviceToken = "meal-analysis.device-token"
 
         static func starlingToken(for environment: BankingEnvironment) -> Item {
             environment == .sandbox ? .starlingSandboxToken : .starlingProductionToken

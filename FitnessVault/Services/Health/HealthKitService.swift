@@ -8,8 +8,7 @@ import HealthKit
 /// - Exercise uses Apple's own Exercise minutes (`appleExerciseTime`). Heart rate is never used as a proxy.
 /// - Strength uses only real workout records of strength-training types, de-duplicated by workout UUID.
 ///   A workout counts towards the day it started.
-/// - Nutrition is never read back from Health, so the app's own meal records can't be imported twice
-///   and other nutrition apps can't double-count.
+/// - The app only reads from Health; it never writes.
 final class HealthKitService: HealthDataProviding, @unchecked Sendable {
     private let store = HKHealthStore()
     private let calendar: Calendar
@@ -24,10 +23,6 @@ final class HealthKitService: HealthDataProviding, @unchecked Sendable {
         (.flightsClimbed, .count()),
     ]
 
-    private let nutritionTypes: [HKQuantityTypeIdentifier] = [
-        .dietaryEnergyConsumed, .dietaryProtein, .dietaryCarbohydrates, .dietaryFatTotal,
-    ]
-
     init(calendar: Calendar = .current) {
         self.calendar = calendar
     }
@@ -39,9 +34,8 @@ final class HealthKitService: HealthDataProviding, @unchecked Sendable {
         return types
     }
 
-    private var shareTypes: Set<HKSampleType> {
-        Set<HKSampleType>(nutritionTypes.map { HKQuantityType($0) as HKSampleType })
-    }
+    /// Read-only: the app never writes to Apple Health.
+    private var shareTypes: Set<HKSampleType> { [] }
 
     func access() async -> HealthAccess {
         guard HKHealthStore.isHealthDataAvailable() else { return .unavailable }
@@ -173,41 +167,6 @@ final class HealthKitService: HealthDataProviding, @unchecked Sendable {
             stand: RingProgress(value: summary.appleStandHours.doubleValue(for: .count()),
                                 goal: summary.appleStandHoursGoal.doubleValue(for: .count())),
             moveUnit: moveIsTime ? "min" : "kcal")
-    }
-
-    func saveMeal(id: UUID, estimate: NutritionEstimate, date: Date) async throws -> Bool {
-        let values: [(HKQuantityTypeIdentifier, HKUnit, Int)] = [
-            (.dietaryEnergyConsumed, .kilocalorie(), estimate.kilocalories),
-            (.dietaryProtein, .gram(), estimate.proteinGrams),
-            (.dietaryCarbohydrates, .gram(), estimate.carbohydrateGrams),
-            (.dietaryFatTotal, .gram(), estimate.fatGrams),
-        ]
-        let allowed = values.filter { store.authorizationStatus(for: HKQuantityType($0.0)) == .sharingAuthorized }
-        guard !allowed.isEmpty else { return false }
-
-        let metadata: [String: Any] = [
-            HKMetadataKeyFoodType: estimate.name,
-            HKMetadataKeySyncIdentifier: "fitnessvault.meal.\(id.uuidString)",
-            HKMetadataKeySyncVersion: 1,
-            HKMetadataKeyExternalUUID: id.uuidString,
-        ]
-        let samples: Set<HKSample> = Set(allowed.map { identifier, unit, value in
-            HKQuantitySample(type: HKQuantityType(identifier), quantity: HKQuantity(unit: unit, doubleValue: Double(value)),
-                             start: date, end: date, metadata: metadata) as HKSample
-        })
-        guard let foodType = HKCorrelationType.correlationType(forIdentifier: .food) else { return false }
-        let correlation = HKCorrelation(type: foodType, start: date, end: date, objects: samples, metadata: metadata)
-        try await store.save(correlation)
-        return true
-    }
-
-    func deleteMeal(id: UUID) async throws {
-        let predicate = HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeyExternalUUID, allowedValues: [id.uuidString])
-        for identifier in nutritionTypes {
-            let type = HKQuantityType(identifier)
-            guard store.authorizationStatus(for: type) == .sharingAuthorized else { continue }
-            _ = try? await store.deleteObjects(of: type, predicate: predicate)
-        }
     }
 
     func startObservingChanges(_ onChange: @escaping @Sendable () async -> Void) {

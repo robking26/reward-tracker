@@ -10,12 +10,11 @@
 | Ledger | `Domain/Ledger.swift` | Append-only lines with stable IDs. Reconciles towards calculated totals, applies the monthly cap and skips final days. |
 | Settlement | `Domain/MoneyMovement.swift` | Pure rules for releases, payments, money-flow states and monthly funding. |
 | Health | `Services/Health/` | `HealthDataProviding` protocol, plus `HealthKitService` (live) and `MockHealthService`. |
-| Meal analysis | `Services/Meals/` | `MealAnalyzing` protocol, plus `MockMealAnalyzer` and `RemoteMealAnalyzer` (your own server). |
 | Banking | `Services/Banking/` | `BankingService` protocol, plus `StarlingClient` and `MockBankingService`. |
-| Persistence | `Persistence/` | SwiftData: `MonthlyVault`, `DailyActivity`, `RewardLedgerEntry`, `Meal`, `HealthSyncState`, `BankTransfer`, `PaymentOrder`, `AuditEvent`. Settings are `AppSettings` (Codable) in `UserDefaults`; secrets go in the Keychain. |
+| Persistence | `Persistence/` | SwiftData: `MonthlyVault`, `DailyActivity`, `RewardLedgerEntry`, `Meal` (retired, kept so existing stores open), `HealthSyncState`, `BankTransfer`, `PaymentOrder`, `AuditEvent`. Settings are `AppSettings` (Codable) in `UserDefaults`; secrets go in the Keychain. |
 | Notifications | `Services/Platform/Notifications.swift` | Local notifications only. |
 
-`RewardRule` from the spec is `RewardRates` plus `NutritionTargets`. `NutritionEstimate` is a value type stored on `Meal`.
+`RewardRule` from the spec is `RewardRates`. Nutrition (meal photos, AI analysis, protein and calorie targets) was removed; its reward categories remain only as retired, always-zero entries so older ledger lines load and unsettled amounts are corrected.
 
 ## Financial safety rules (enforced in code)
 
@@ -44,15 +43,10 @@
 | 1. App foundation: navigation, design system, four tabs, reusable components | Done |
 | 2. Reward engine: rates, daily calculation, monthly cap, persistent ledger, unit tests | Done |
 | 3. Apple Health: permissions, reading, workout classification, sync, reconciliation | Implemented; needs on-device testing |
-| 4. AI meal logging: camera, analysis protocol, review, limits, totals, Health writing | Implemented. The backend is in `server/meal-analysis` and needs deploying (see its README). |
+| 4. AI meal logging | Removed at the user's request. The app has no nutrition features. |
 | 5. Starling sandbox: connection, balances, releases, payment initiation, status | Client written against the documented v2 API. **Next: check the request and response shapes against the sandbox, especially local payments and payment-order status.** |
 | 6. Production: live config, real-device testing, accessibility audit, performance | Not started |
-
-### Meal analysis backend
-
-`server/meal-analysis` is a Cloudflare Worker. By default it uses Cloudflare Workers AI (Llama 4 Scout, free daily allowance), with Claude available as a paid provider. The app posts a resized JPEG to `POST {endpoint}` with `Authorization: Bearer <device token>` and gets back `NutritionEstimate` JSON. Any AI key lives only in the Worker's secrets. Setup, deployment and costs are in [`server/meal-analysis/README.md`](../server/meal-analysis/README.md).
 
 ## Continuous integration
 
 - `.github/workflows/ios.yml` builds the app and runs the unit tests on a macOS runner, using an unsigned Simulator build, on every push that touches the app.
-- `.github/workflows/meal-analysis.yml` type-checks and tests the server. It deploys only when run manually with **deploy** ticked.

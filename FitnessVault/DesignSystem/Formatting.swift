@@ -24,9 +24,7 @@ enum MeasureFormat {
         case .activeEnergy: (number(metrics.activeKilocalories), "kcal")
         case .swimming: distance(metres: metrics.swimmingMetres)
         case .flights: (number(metrics.flightsClimbed), metrics.flightsClimbed == 1 ? "flight" : "flights")
-        case .mealPhoto: (number(metrics.loggedMeals), metrics.loggedMeals == 1 ? "meal" : "meals")
-        case .proteinTarget: (number(metrics.proteinGrams), "g")
-        case .calorieTarget: (number(metrics.dietaryKilocalories), "kcal")
+        case .mealPhoto, .proteinTarget, .calorieTarget: ("–", "")
         }
     }
 

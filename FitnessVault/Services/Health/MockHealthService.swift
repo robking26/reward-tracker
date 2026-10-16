@@ -55,7 +55,5 @@ final class MockHealthService: HealthDataProviding, @unchecked Sendable {
             moveUnit: "kcal")
     }
 
-    func saveMeal(id: UUID, estimate: NutritionEstimate, date: Date) async throws -> Bool { false }
-    func deleteMeal(id: UUID) async throws {}
     func startObservingChanges(_ onChange: @escaping @Sendable () async -> Void) {}
 }

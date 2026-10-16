@@ -8,14 +8,18 @@ enum RewardCategory: String, CaseIterable, Codable, Sendable, Identifiable {
     case activeEnergy
     case swimming
     case flights
+    // Retired: nutrition is no longer part of the app. These cases remain so older ledger
+    // entries still load and any unsettled amounts are corrected back to zero.
     case mealPhoto
     case proteinTarget
     case calorieTarget
 
     var id: String { rawValue }
 
+    /// The categories that earn money.
     static let activity: [RewardCategory] = [.steps, .exercise, .strength, .activeEnergy, .swimming, .flights]
-    static let nutrition: [RewardCategory] = [.proteinTarget, .calorieTarget]
+
+    var isRetired: Bool { !Self.activity.contains(self) }
 
     var title: String {
         switch self {
@@ -25,9 +29,9 @@ enum RewardCategory: String, CaseIterable, Codable, Sendable, Identifiable {
         case .activeEnergy: "Active Energy"
         case .swimming: "Swimming"
         case .flights: "Flights Climbed"
-        case .mealPhoto: "Meal Photos"
-        case .proteinTarget: "Protein Target"
-        case .calorieTarget: "Calorie Target"
+        case .mealPhoto: "Meal Photos (retired)"
+        case .proteinTarget: "Protein Target (retired)"
+        case .calorieTarget: "Calorie Target (retired)"
         }
     }
 
@@ -39,20 +43,12 @@ enum RewardCategory: String, CaseIterable, Codable, Sendable, Identifiable {
         case .activeEnergy: "flame.fill"
         case .swimming: "figure.pool.swim"
         case .flights: "figure.stairs"
-        case .mealPhoto: "camera.fill"
-        case .proteinTarget: "fork.knife"
-        case .calorieTarget: "chart.bar.fill"
+        case .mealPhoto, .proteinTarget, .calorieTarget: "archivebox"
         }
-    }
-
-    /// Whether this category is rewarded only once the day's logging window has closed.
-    var settlesAfterDayEnds: Bool {
-        self == .proteinTarget || self == .calorieTarget
     }
 }
 
-/// Reward rates. Each rate is "one penny per N units" or a fixed amount, so every reward
-/// is a whole number of completed intervals and partial progress is never rounded up.
+/// Reward rates. Each rate is "one penny per N units" or a fixed amount.
 struct RewardRates: Codable, Hashable, Sendable {
     var stepsPerPenny = 10
     /// Steps up to this many each day earn nothing. Passing it earns 1p, then 1p per full 10 steps beyond it.
@@ -64,11 +60,6 @@ struct RewardRates: Codable, Hashable, Sendable {
     var exerciseSecondsPerPenny = 10
     var activeKilocaloriesPerPenny = 10
     var pencePerFlight: Pence = 2
-    /// Meal photos are logged for nutrition but earn nothing.
-    var pencePerMealPhoto: Pence = 0
-    var maxRewardedMealPhotosPerDay = 3
-    var proteinTargetReward: Pence = 100
-    var calorieTargetReward: Pence = 50
 
     /// The current rates. Days that are already final keep the rates they were calculated with.
     static let standard = RewardRates()
@@ -79,10 +70,8 @@ struct RewardRates: Codable, Hashable, Sendable {
     /// Whether a category currently earns anything.
     func isRewarded(_ category: RewardCategory) -> Bool {
         switch category {
-        case .mealPhoto: pencePerMealPhoto.isPositive && maxRewardedMealPhotosPerDay > 0
         case .flights: pencePerFlight.isPositive
-        case .proteinTarget: proteinTargetReward.isPositive
-        case .calorieTarget: calorieTargetReward.isPositive
+        case .mealPhoto, .proteinTarget, .calorieTarget: false
         default: true
         }
     }
@@ -95,29 +84,7 @@ struct RewardRates: Codable, Hashable, Sendable {
         case .exercise: "1p per \(exerciseSecondsPerPenny) seconds"
         case .activeEnergy: "1p per \(activeKilocaloriesPerPenny) kcal"
         case .flights: "\(pencePerFlight.formatted()) per flight"
-        case .mealPhoto: pencePerMealPhoto.isPositive
-            ? "\(pencePerMealPhoto.formatted()) per meal, up to \(maxRewardedMealPhotosPerDay) a day"
-            : "Not rewarded"
-        case .proteinTarget: "\(proteinTargetReward.formatted()) when reached"
-        case .calorieTarget: "\(calorieTargetReward.formatted()) when within range"
+        case .mealPhoto, .proteinTarget, .calorieTarget: "No longer rewarded"
         }
-    }
-}
-
-/// User-defined nutrition targets. Calories use a range so the app never rewards
-/// eating as little as possible.
-struct NutritionTargets: Codable, Hashable, Sendable {
-    var proteinGrams = 150
-    var minimumKilocalories = 1_900
-    var maximumKilocalories = 2_500
-
-    static let standard = NutritionTargets()
-
-    /// A guard against configuring an unsafe calorie range.
-    static let lowestAllowedMinimum = 1_200
-
-    var calorieRange: ClosedRange<Int> {
-        let lower = max(minimumKilocalories, Self.lowestAllowedMinimum)
-        return lower...max(lower, maximumKilocalories)
     }
 }

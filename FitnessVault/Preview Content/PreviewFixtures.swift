@@ -14,11 +14,6 @@ enum PreviewFixtures {
         Task { await model.start() }
         return model
     }
-
-    static let estimate = NutritionEstimate(
-        name: "Chicken, rice and greens", items: ["Grilled chicken", "Basmati rice", "Broccoli"],
-        portionDescription: "One plate", kilocalories: 640, proteinGrams: 48, carbohydrateGrams: 72, fatGrams: 15,
-        confidence: .medium)
 }
 
 #Preview("Metric card") {

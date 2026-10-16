@@ -84,6 +84,8 @@ final class RewardLedgerEntry {
     }
 }
 
+/// Retired: nutrition is no longer part of the app. The model stays in the schema only so stores
+/// created by earlier versions keep opening without a migration. Nothing reads or writes it.
 @Model
 final class Meal {
     @Attribute(.unique) var id: UUID
@@ -97,31 +99,26 @@ final class Meal {
     var fatGrams: Int
     var confidenceRaw: String
     var isRewardEligible: Bool
-    /// 64-bit perceptual hash, used to spot repeated photos of the same meal.
     var imageHash: Int64
     @Attribute(.externalStorage) var thumbnailJPEG: Data?
     var savedToHealth: Bool
 
-    init(id: UUID = UUID(), loggedAt: Date, estimate: NutritionEstimate, isRewardEligible: Bool,
-         imageHash: UInt64, thumbnailJPEG: Data?) {
+    init(id: UUID = UUID(), loggedAt: Date, name: String) {
         self.id = id
         self.loggedAt = loggedAt
         day = DayKey(loggedAt).description
-        name = estimate.name
-        items = estimate.items
-        kilocalories = estimate.kilocalories
-        proteinGrams = estimate.proteinGrams
-        carbohydrateGrams = estimate.carbohydrateGrams
-        fatGrams = estimate.fatGrams
-        confidenceRaw = estimate.confidence.rawValue
-        self.isRewardEligible = isRewardEligible
-        self.imageHash = Int64(bitPattern: imageHash)
-        self.thumbnailJPEG = thumbnailJPEG
+        self.name = name
+        items = []
+        kilocalories = 0
+        proteinGrams = 0
+        carbohydrateGrams = 0
+        fatGrams = 0
+        confidenceRaw = "low"
+        isRewardEligible = false
+        imageHash = 0
+        thumbnailJPEG = nil
         savedToHealth = false
     }
-
-    var confidence: NutritionEstimate.Confidence { .init(rawValue: confidenceRaw) ?? .low }
-    var photoHash: UInt64 { UInt64(bitPattern: imageHash) }
 }
 
 @Model

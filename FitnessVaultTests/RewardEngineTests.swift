@@ -4,15 +4,14 @@ import XCTest
 final class RewardEngineTests: XCTestCase {
     private let day = DayKey(year: 2026, month: 10, day: 14)
     private let rates = RewardRates.standard
-    private let targets = NutritionTargets.standard
 
-    private func reward(_ category: RewardCategory, _ configure: (inout DailyMetrics) -> Void, nutrition: Bool = true) -> Pence {
+    private func reward(_ category: RewardCategory, _ configure: (inout DailyMetrics) -> Void) -> Pence {
         var metrics = DailyMetrics(day: day)
         configure(&metrics)
-        return RewardEngine.rewards(for: metrics, rates: rates, targets: targets, includeNutritionTargets: nutrition)[category] ?? .zero
+        return RewardEngine.rewards(for: metrics, rates: rates)[category] ?? .zero
     }
 
-    // Examples from the specification, section 6.2.
+    // MARK: Steps
 
     func testStepsUpToBaselineEarnNothing() {
         XCTAssertEqual(reward(.steps) { $0.steps = 0 }, .zero)
@@ -36,14 +35,7 @@ final class RewardEngineTests: XCTestCase {
         XCTAssertEqual(reward(.steps) { $0.steps = 30_000 }, .pounds(10))
     }
 
-    func testSavedSettingsFromOlderVersionsStillLoad() throws {
-        // A settings blob saved before rates stopped being stored must still decode, keeping the Starling setup.
-        let old = #"{"monthlyAllocation":{"value":40000},"rates":{"stepsPerPenny":50},"nutrition":{"proteinGrams":160,"minimumKilocalories":1900,"maximumKilocalories":2500},"settlementMinuteOfDay":480,"notificationsEnabled":true,"saveMealsToHealth":true,"keepMealThumbnails":true,"mealAnalysisMode":"remote","mealAnalysisEndpoint":"https://example.com/analyse","bankingEnvironment":"sandbox","liveTransfersConfirmed":false,"starling":{"accountUID":"acc"},"demoMode":false,"lockAfterDays":7}"#
-        let decoded = try JSONDecoder().decode(AppSettings.self, from: Data(old.utf8))
-        XCTAssertEqual(decoded.starling.accountUID, "acc")
-        XCTAssertEqual(decoded.nutrition.proteinGrams, 160)
-        XCTAssertEqual(decoded.rates, .standard, "Rates always come from code, never from saved settings")
-    }
+    // MARK: Other activity
 
     func testSwimming() {
         XCTAssertEqual(reward(.swimming) { $0.swimmingMetres = 1_000 }, .pounds(2))
@@ -69,57 +61,12 @@ final class RewardEngineTests: XCTestCase {
         XCTAssertEqual(reward(.flights) { $0.flightsClimbed = 12 }, Pence(24))
     }
 
-    func testMealPhotosEarnNothing() {
-        XCTAssertEqual(reward(.mealPhoto) { $0.rewardEligibleMeals = 3 }, .zero)
-        XCTAssertFalse(rates.isRewarded(.mealPhoto))
-    }
-
-    func testMealPhotoCapStillHoldsIfRewardsReturn() {
-        var paid = rates
-        paid.pencePerMealPhoto = 50
-        var metrics = DailyMetrics(day: day)
-        metrics.rewardEligibleMeals = 7
-        let rewards = RewardEngine.rewards(for: metrics, rates: paid, targets: targets, includeNutritionTargets: false)
-        XCTAssertEqual(rewards[.mealPhoto], Pence(150))
-    }
-
-    func testProteinTarget() {
-        XCTAssertEqual(reward(.proteinTarget) { $0.proteinGrams = 149 }, .zero)
-        XCTAssertEqual(reward(.proteinTarget) { $0.proteinGrams = 150 }, .pounds(1))
-    }
-
-    func testCalorieTargetIsARangeNotAMinimum() {
-        XCTAssertEqual(reward(.calorieTarget) { $0.dietaryKilocalories = 2_000 }, Pence(50))
-        XCTAssertEqual(reward(.calorieTarget) { $0.dietaryKilocalories = 800 }, .zero, "Eating too little must never pay")
-        XCTAssertEqual(reward(.calorieTarget) { $0.dietaryKilocalories = 3_500 }, .zero)
-    }
-
-    func testCalorieRangeCannotBeConfiguredBelowSafeMinimum() {
-        let unsafe = NutritionTargets(proteinGrams: 100, minimumKilocalories: 500, maximumKilocalories: 900)
-        XCTAssertGreaterThanOrEqual(unsafe.calorieRange.lowerBound, NutritionTargets.lowestAllowedMinimum)
-    }
-
-    func testNutritionTargetsWaitForTheDayToEnd() {
-        XCTAssertEqual(reward(.proteinTarget, { $0.proteinGrams = 200 }, nutrition: false), .zero)
-        XCTAssertEqual(reward(.calorieTarget, { $0.dietaryKilocalories = 2_000 }, nutrition: false), .zero)
-    }
-
-    func testMaximumDailyNutritionRewardIsOnePoundFifty() {
-        var metrics = DailyMetrics(day: day)
-        metrics.rewardEligibleMeals = 10
-        metrics.proteinGrams = 300
-        metrics.dietaryKilocalories = 2_200
-        let rewards = RewardEngine.rewards(for: metrics, rates: rates, targets: targets, includeNutritionTargets: true)
-        let nutrition = ([.mealPhoto] + RewardCategory.nutrition).sum { rewards[$0] ?? .zero }
-        XCTAssertEqual(nutrition, Pence(150), "Protein £1 + calories 50p; meal photos earn nothing")
-    }
-
     func testCategoriesStack() {
         var metrics = DailyMetrics(day: day)
         metrics.steps = 10_000
         metrics.exerciseSeconds = 1_800
         metrics.activeKilocalories = 500
-        let total = RewardEngine.total(RewardEngine.rewards(for: metrics, rates: rates, targets: targets, includeNutritionTargets: false))
+        let total = RewardEngine.total(RewardEngine.rewards(for: metrics, rates: rates))
         XCTAssertEqual(total, Pence(750 + 180 + 50))
     }
 
@@ -127,14 +74,43 @@ final class RewardEngineTests: XCTestCase {
         var metrics = DailyMetrics(day: day)
         metrics.steps = 7_777
         metrics.strengthSeconds = 2_000
-        let first = RewardEngine.rewards(for: metrics, rates: rates, targets: targets, includeNutritionTargets: true)
-        let second = RewardEngine.rewards(for: metrics, rates: rates, targets: targets, includeNutritionTargets: true)
-        XCTAssertEqual(first, second)
+        XCTAssertEqual(RewardEngine.rewards(for: metrics, rates: rates), RewardEngine.rewards(for: metrics, rates: rates))
     }
 
     func testNegativeMeasurementsNeverPay() {
         XCTAssertEqual(reward(.steps) { $0.steps = -500 }, .zero)
         XCTAssertEqual(reward(.flights) { $0.flightsClimbed = -3 }, .zero)
+    }
+
+    // MARK: Retired nutrition categories
+
+    func testRetiredCategoriesAlwaysCalculateToZero() {
+        var metrics = DailyMetrics(day: day)
+        metrics.steps = 20_000
+        let rewards = RewardEngine.rewards(for: metrics, rates: rates)
+        for category in [RewardCategory.mealPhoto, .proteinTarget, .calorieTarget] {
+            XCTAssertEqual(rewards[category], .zero, "\(category) must be present and zero so old amounts are corrected")
+            XCTAssertTrue(category.isRetired)
+            XCTAssertFalse(rates.isRewarded(category))
+        }
+    }
+
+    func testRetiredEarningsInUnlockedDaysAreCorrectedAway() {
+        let existing = [LedgerLine(id: "x", day: day, category: .mealPhoto, amount: Pence(50), kind: .accrual)]
+        let calculated = [day: RewardEngine.rewards(for: DailyMetrics(day: day), rates: rates)]
+        let result = LedgerReconciler.reconcile(existing: existing, calculated: calculated, lockedDays: [], allocation: .pounds(400))
+        XCTAssertEqual((existing + result.newLines).sum(\.amount), .zero)
+    }
+
+    // MARK: Settings and formatting
+
+    func testSavedSettingsFromOlderVersionsStillLoad() throws {
+        // Settings saved by earlier versions (with rates and nutrition fields) must still decode, keeping the Starling setup.
+        let old = #"{"monthlyAllocation":{"value":40000},"rates":{"stepsPerPenny":50},"nutrition":{"proteinGrams":160,"minimumKilocalories":1900,"maximumKilocalories":2500},"settlementMinuteOfDay":480,"notificationsEnabled":true,"saveMealsToHealth":true,"keepMealThumbnails":true,"mealAnalysisMode":"remote","mealAnalysisEndpoint":"https://example.com/analyse","bankingEnvironment":"sandbox","liveTransfersConfirmed":false,"starling":{"accountUID":"acc"},"demoMode":false,"lockAfterDays":7}"#
+        let decoded = try JSONDecoder().decode(AppSettings.self, from: Data(old.utf8))
+        XCTAssertEqual(decoded.starling.accountUID, "acc")
+        XCTAssertEqual(decoded.settlementMinuteOfDay, 480)
+        XCTAssertEqual(decoded.rates, .standard, "Rates always come from code, never from saved settings")
     }
 
     func testPenceFormatting() {

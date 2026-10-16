@@ -88,16 +88,6 @@ final class AppModel {
 
     var isBankConfigured: Bool { settings.demoMode || (banking != nil && settings.starling.isComplete) }
 
-    var mealAnalyzer: MealAnalyzing? {
-        switch settings.mealAnalysisMode {
-        case .mock:
-            return MockMealAnalyzer()
-        case .remote:
-            guard let url = URL(string: settings.mealAnalysisEndpoint), url.scheme == "https" else { return nil }
-            return RemoteMealAnalyzer(endpoint: url, deviceToken: Keychain.read(.mealAnalysisDeviceToken))
-        }
-    }
-
     /// Health data older than this is shown as stale.
     var isHealthDataStale: Bool {
         guard let lastHealthSync else { return true }
@@ -220,9 +210,7 @@ final class AppModel {
             let days = month.days(calendar: calendar).filter { $0 <= end }
             var calculated: [DayKey: [RewardCategory: Pence]] = [:]
             for day in days {
-                calculated[day] = RewardEngine.rewards(
-                    for: metrics(for: day), rates: settings.rates, targets: settings.nutrition,
-                    includeNutritionTargets: day < today)
+                calculated[day] = RewardEngine.rewards(for: metrics(for: day), rates: settings.rates)
             }
             let locked = Set(days.filter { day in finalisedThrough.map { day <= $0 } ?? false })
             let existing = ledgerEntries(month: month).compactMap(\.line)
@@ -252,21 +240,7 @@ final class AppModel {
             metrics.activeKilocalories = activity.activeKilocalories
             metrics.flightsClimbed = activity.flightsClimbed
         }
-        let meals = meals(on: day)
-        metrics.loggedMeals = meals.count
-        metrics.rewardEligibleMeals = meals.filter(\.isRewardEligible).count
-        metrics.dietaryKilocalories = meals.reduce(0) { $0 + $1.kilocalories }
-        metrics.proteinGrams = meals.reduce(0) { $0 + $1.proteinGrams }
-        metrics.carbohydrateGrams = meals.reduce(0) { $0 + $1.carbohydrateGrams }
-        metrics.fatGrams = meals.reduce(0) { $0 + $1.fatGrams }
         return metrics
-    }
-
-    /// Today's nutrition-target rewards are confirmed after the day ends. This previews them.
-    func provisionalNutritionReward(_ category: RewardCategory) -> Pence {
-        let rewards = RewardEngine.rewards(for: todayMetrics, rates: settings.rates, targets: settings.nutrition,
-                                           includeNutritionTargets: true)
-        return rewards[category] ?? .zero
     }
 
     func earned(on day: DayKey) -> Pence {
@@ -275,44 +249,6 @@ final class AppModel {
 
     func earned(_ category: RewardCategory, in days: [DayKey]) -> Pence {
         days.sum { earningsByDay[$0]?[category] ?? .zero }
-    }
-
-    // MARK: Meals
-
-    func mealOutcome(for hash: UInt64, at date: Date) -> MealRewardPolicy.Outcome {
-        let earlier = meals(on: DayKey(date, calendar: calendar)).map { (hash: $0.photoHash, eligible: $0.isRewardEligible) }
-        return MealRewardPolicy.outcome(hash: hash, earlierMealsToday: earlier, limit: settings.rates.maxRewardedMealPhotosPerDay)
-    }
-
-    func confirmMeal(_ estimate: NutritionEstimate, photo: Data?, hash: UInt64, at date: Date) async {
-        let outcome = mealOutcome(for: hash, at: date)
-        let thumbnail = settings.keepMealThumbnails ? photo : nil
-        let meal = Meal(loggedAt: date, estimate: estimate, isRewardEligible: outcome == .eligible,
-                        imageHash: hash, thumbnailJPEG: thumbnail)
-        context.insert(meal)
-        audit("meal", "Logged \(estimate.name). Photo reward: \(outcome == .eligible ? "yes" : "no").", meal.id.uuidString)
-        let day = DayKey(date, calendar: calendar)
-        recalculateRewards(from: day, through: today, finalisedThrough: syncState().finalisedThroughDay)
-        save()
-        reload()
-
-        if settings.saveMealsToHealth {
-            if (try? await health.saveMeal(id: meal.id, estimate: estimate, date: date)) == true {
-                meal.savedToHealth = true
-                save()
-            }
-        }
-    }
-
-    func deleteMeal(_ meal: Meal) async {
-        let id = meal.id
-        let day = DayKey(string: meal.day) ?? today
-        if meal.savedToHealth { try? await health.deleteMeal(id: id) }
-        context.delete(meal)
-        audit("meal", "Deleted a meal.", id.uuidString)
-        recalculateRewards(from: day, through: today, finalisedThrough: syncState().finalisedThroughDay)
-        save()
-        reload()
     }
 
     // MARK: Banking
@@ -620,12 +556,6 @@ final class AppModel {
     private func dailyActivity(_ day: DayKey) -> DailyActivity? {
         let key = day.description
         return try? context.fetch(FetchDescriptor<DailyActivity>(predicate: #Predicate { $0.day == key })).first
-    }
-
-    func meals(on day: DayKey) -> [Meal] {
-        let key = day.description
-        let descriptor = FetchDescriptor<Meal>(predicate: #Predicate { $0.day == key }, sortBy: [SortDescriptor(\.loggedAt)])
-        return (try? context.fetch(descriptor)) ?? []
     }
 
     private func ledgerEntries(month: MonthKey) -> [RewardLedgerEntry] {

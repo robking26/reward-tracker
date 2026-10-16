@@ -237,7 +237,7 @@ struct TodayWidgetView: View {
         if current == nil {
             emptyMessage("Open the app to update today's numbers.")
         } else if breakdown.isEmpty {
-            emptyMessage("Nothing earned yet today. Every step, workout, swim and meal photo adds up.")
+            emptyMessage("Nothing earned yet today. Every step, workout and swim adds up.")
         } else {
             let items = Array(breakdown.prefix(6))
             Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 10) {
@@ -374,7 +374,7 @@ extension WidgetSnapshot {
             WidgetCategoryLine(id: "exercise", title: "Exercise", symbol: "figure.run", detail: "32 min", earnedPence: 192),
             WidgetCategoryLine(id: "steps", title: "Steps", symbol: "figure.walk", detail: "8,412 steps", earnedPence: 168),
             WidgetCategoryLine(id: "strength", title: "Strength", symbol: "dumbbell.fill", detail: "15 min", earnedPence: 150),
-            WidgetCategoryLine(id: "mealPhoto", title: "Meal Photos", symbol: "camera.fill", detail: "2 meals", earnedPence: 100),
+            WidgetCategoryLine(id: "swimming", title: "Swimming", symbol: "figure.pool.swim", detail: "1.20 km", earnedPence: 240),
             WidgetCategoryLine(id: "flights", title: "Flights Climbed", symbol: "figure.stairs", detail: "8 flights", earnedPence: 80),
             WidgetCategoryLine(id: "activeEnergy", title: "Active Energy", symbol: "flame.fill", detail: "520 kcal", earnedPence: 52),
         ],

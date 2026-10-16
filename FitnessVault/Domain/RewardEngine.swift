@@ -10,13 +10,6 @@ struct DailyMetrics: Hashable, Sendable {
     var exerciseSeconds = 0
     var activeKilocalories = 0
     var flightsClimbed = 0
-    /// Distinct, confirmed meals eligible for a photo reward.
-    var rewardEligibleMeals = 0
-    var loggedMeals = 0
-    var proteinGrams = 0
-    var dietaryKilocalories = 0
-    var carbohydrateGrams = 0
-    var fatGrams = 0
 
     func measurement(for category: RewardCategory) -> Int {
         switch category {
@@ -26,9 +19,7 @@ struct DailyMetrics: Hashable, Sendable {
         case .activeEnergy: activeKilocalories
         case .swimming: swimmingMetres
         case .flights: flightsClimbed
-        case .mealPhoto: rewardEligibleMeals
-        case .proteinTarget: proteinGrams
-        case .calorieTarget: dietaryKilocalories
+        case .mealPhoto, .proteinTarget, .calorieTarget: 0
         }
     }
 }
@@ -36,12 +27,7 @@ struct DailyMetrics: Hashable, Sendable {
 /// Pure, deterministic reward calculation. Calling it twice with the same input
 /// always yields the same output, so repeated syncs can never create extra money.
 enum RewardEngine {
-    static func rewards(
-        for metrics: DailyMetrics,
-        rates: RewardRates,
-        targets: NutritionTargets,
-        includeNutritionTargets: Bool
-    ) -> [RewardCategory: Pence] {
+    static func rewards(for metrics: DailyMetrics, rates: RewardRates) -> [RewardCategory: Pence] {
         var result: [RewardCategory: Pence] = [:]
         result[.steps] = stepsReward(metrics.steps, rates: rates)
         result[.swimming] = intervals(metrics.swimmingMetres, per: rates.swimmingMetresPerPenny)
@@ -49,19 +35,10 @@ enum RewardEngine {
         result[.exercise] = intervals(metrics.exerciseSeconds, per: rates.exerciseSecondsPerPenny)
         result[.activeEnergy] = intervals(metrics.activeKilocalories, per: rates.activeKilocaloriesPerPenny)
         result[.flights] = Pence(max(0, metrics.flightsClimbed) * rates.pencePerFlight.value)
-
-        let rewardedMeals = min(max(0, metrics.rewardEligibleMeals), max(0, rates.maxRewardedMealPhotosPerDay))
-        result[.mealPhoto] = Pence(rewardedMeals * rates.pencePerMealPhoto.value)
-
-        if includeNutritionTargets {
-            result[.proteinTarget] = metrics.proteinGrams >= targets.proteinGrams && targets.proteinGrams > 0
-                ? rates.proteinTargetReward : .zero
-            result[.calorieTarget] = targets.calorieRange.contains(metrics.dietaryKilocalories)
-                ? rates.calorieTargetReward : .zero
-        } else {
-            result[.proteinTarget] = .zero
-            result[.calorieTarget] = .zero
-        }
+        // Retired categories always calculate to zero, so any unsettled amounts are corrected away.
+        result[.mealPhoto] = .zero
+        result[.proteinTarget] = .zero
+        result[.calorieTarget] = .zero
         return result
     }
 

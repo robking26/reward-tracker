@@ -29,9 +29,6 @@ protocol HealthDataProviding: AnyObject, Sendable {
     func readings(from start: DayKey, through end: DayKey) async throws -> [DayKey: HealthDayReading]
     /// Today's Move, Exercise and Stand rings, or nil when Apple Health has no summary for the day.
     func activityRings(on day: DayKey) async throws -> ActivityRingsSnapshot?
-    /// Saves a confirmed meal as a food correlation. Returns false if permission was declined.
-    func saveMeal(id: UUID, estimate: NutritionEstimate, date: Date) async throws -> Bool
-    func deleteMeal(id: UUID) async throws
     /// Calls `onChange` when Health data changes, including in the background where iOS allows it.
     func startObservingChanges(_ onChange: @escaping @Sendable () async -> Void)
 }
