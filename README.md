@@ -54,7 +54,7 @@ Tokens are stored only in the iPhone's Keychain, marked device-only. They are ne
 | Strength training | 1p per 6 seconds (strength workouts only) |
 | Exercise minutes | 1p per 10 seconds (Apple Exercise minutes) |
 | Active energy | 1p per 10 kcal |
-| Flights climbed | 2p per flight |
+| Flights climbed | 5p per flight |
 
 Rewards come from Apple Health activity only; the app has no nutrition or meal logging. They are calculated from cumulative daily totals using whole intervals only. Days become final after 7 days, and after that they are never recalculated, even if the rates change.
 

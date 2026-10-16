@@ -57,8 +57,9 @@ final class RewardEngineTests: XCTestCase {
     }
 
     func testFlights() {
-        // 2p per flight.
-        XCTAssertEqual(reward(.flights) { $0.flightsClimbed = 12 }, Pence(24))
+        // 5p per flight.
+        XCTAssertEqual(reward(.flights) { $0.flightsClimbed = 1 }, Pence(5))
+        XCTAssertEqual(reward(.flights) { $0.flightsClimbed = 12 }, Pence(60))
     }
 
     func testCategoriesStack() {

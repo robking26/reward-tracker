@@ -59,7 +59,7 @@ struct RewardRates: Codable, Hashable, Sendable {
     var strengthSecondsPerPenny = 6
     var exerciseSecondsPerPenny = 10
     var activeKilocaloriesPerPenny = 10
-    var pencePerFlight: Pence = 2
+    var pencePerFlight: Pence = 5
 
     /// The current rates. Days that are already final keep the rates they were calculated with.
     static let standard = RewardRates()
