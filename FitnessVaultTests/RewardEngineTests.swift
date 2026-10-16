@@ -37,14 +37,35 @@ final class RewardEngineTests: XCTestCase {
 
     // MARK: Other activity
 
-    func testSwimming() {
-        XCTAssertEqual(reward(.swimming) { $0.swimmingMetres = 1_000 }, .pounds(2))
-        XCTAssertEqual(reward(.swimming) { $0.swimmingMetres = 4 }, .zero)
+    func testSwimmingPaysThreePencePerFullTwentyFiveMetres() {
+        XCTAssertEqual(reward(.swimming) { $0.swimmingMetres = 24 }, .zero)
+        XCTAssertEqual(reward(.swimming) { $0.swimmingMetres = 25 }, Pence(3))
+        XCTAssertEqual(reward(.swimming) { $0.swimmingMetres = 49 }, Pence(3))
+        XCTAssertEqual(reward(.swimming) { $0.swimmingMetres = 1_500 }, Pence(180))
     }
 
-    func testStrength() {
-        XCTAssertEqual(reward(.strength) { $0.strengthSeconds = 45 * 60 }, Pence(450))
-        XCTAssertEqual(reward(.strength) { $0.strengthSeconds = 5 }, .zero)
+    func testStrengthPaysOnePennyPerTwelveSeconds() {
+        XCTAssertEqual(reward(.strength) { $0.strengthSeconds = 11 }, .zero)
+        XCTAssertEqual(reward(.strength) { $0.strengthSeconds = 60 * 60 }, .pounds(3))
+    }
+
+    func testRunningPaysOnePennyPerTwentyMetres() {
+        XCTAssertEqual(reward(.running) { $0.runningMetres = 19 }, .zero)
+        XCTAssertEqual(reward(.running) { $0.runningMetres = 5_000 }, Pence(250))
+    }
+
+    func testGymSwimAndRunEarnSimilarAmounts() {
+        func session(_ configure: (inout DailyMetrics) -> Void) -> Pence {
+            var metrics = DailyMetrics(day: day)
+            configure(&metrics)
+            return RewardEngine.total(RewardEngine.rewards(for: metrics, rates: rates))
+        }
+        let gym = session { $0.strengthSeconds = 3_600; $0.exerciseSeconds = 2_700; $0.activeKilocalories = 350 }
+        let swim = session { $0.swimmingMetres = 1_500; $0.exerciseSeconds = 2_400; $0.activeKilocalories = 400 }
+        let run = session { $0.runningMetres = 5_000; $0.exerciseSeconds = 1_800; $0.activeKilocalories = 350 }
+        XCTAssertEqual(gym, Pence(605))
+        XCTAssertEqual(swim, Pence(460))
+        XCTAssertEqual(run, Pence(465))
     }
 
     func testExercise() {

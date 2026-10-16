@@ -7,6 +7,7 @@ enum RewardCategory: String, CaseIterable, Codable, Sendable, Identifiable {
     case strength
     case activeEnergy
     case swimming
+    case running
     case flights
     // Retired: nutrition is no longer part of the app. These cases remain so older ledger
     // entries still load and any unsettled amounts are corrected back to zero.
@@ -17,7 +18,7 @@ enum RewardCategory: String, CaseIterable, Codable, Sendable, Identifiable {
     var id: String { rawValue }
 
     /// The categories that earn money.
-    static let activity: [RewardCategory] = [.steps, .exercise, .strength, .activeEnergy, .swimming, .flights]
+    static let activity: [RewardCategory] = [.steps, .exercise, .strength, .swimming, .running, .activeEnergy, .flights]
 
     var isRetired: Bool { !Self.activity.contains(self) }
 
@@ -28,6 +29,7 @@ enum RewardCategory: String, CaseIterable, Codable, Sendable, Identifiable {
         case .strength: "Strength"
         case .activeEnergy: "Active Energy"
         case .swimming: "Swimming"
+        case .running: "Running"
         case .flights: "Flights Climbed"
         case .mealPhoto: "Meal Photos (retired)"
         case .proteinTarget: "Protein Target (retired)"
@@ -38,10 +40,11 @@ enum RewardCategory: String, CaseIterable, Codable, Sendable, Identifiable {
     var symbol: String {
         switch self {
         case .steps: "figure.walk"
-        case .exercise: "figure.run"
+        case .exercise: "stopwatch"
         case .strength: "dumbbell.fill"
         case .activeEnergy: "flame.fill"
         case .swimming: "figure.pool.swim"
+        case .running: "figure.run"
         case .flights: "figure.stairs"
         case .mealPhoto, .proteinTarget, .calorieTarget: "archivebox"
         }
@@ -55,8 +58,12 @@ struct RewardRates: Codable, Hashable, Sendable {
     var stepsBaseline = 2_500
     /// The most steps can earn in a day.
     var stepsDailyCap: Pence = 1_000
-    var swimmingMetresPerPenny = 5
-    var strengthSecondsPerPenny = 6
+    /// Swimming pays `pencePerSwimInterval` for every full `swimmingMetresPerInterval` metres.
+    var swimmingMetresPerInterval = 25
+    var pencePerSwimInterval: Pence = 3
+    /// Distance from running workouts only, never walking, so everyday steps aren't paid twice.
+    var runningMetresPerPenny = 20
+    var strengthSecondsPerPenny = 12
     var exerciseSecondsPerPenny = 10
     var activeKilocaloriesPerPenny = 10
     var pencePerFlight: Pence = 5
@@ -79,7 +86,8 @@ struct RewardRates: Codable, Hashable, Sendable {
     func rateDescription(for category: RewardCategory) -> String {
         switch category {
         case .steps: "1p per \(stepsPerPenny) steps over \(stepsBaseline.formatted()), up to \(stepsDailyCap.formatted()) a day"
-        case .swimming: "1p per \(swimmingMetresPerPenny) m"
+        case .swimming: "\(pencePerSwimInterval.formatted()) per \(swimmingMetresPerInterval) m"
+        case .running: "1p per \(runningMetresPerPenny) m run"
         case .strength: "1p per \(strengthSecondsPerPenny) seconds"
         case .exercise: "1p per \(exerciseSecondsPerPenny) seconds"
         case .activeEnergy: "1p per \(activeKilocaloriesPerPenny) kcal"

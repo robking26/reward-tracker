@@ -5,6 +5,8 @@ struct HealthDayReading: Hashable, Sendable {
     var day: DayKey
     var steps = 0
     var swimmingMetres = 0
+    /// Distance recorded in running workouts.
+    var runningMetres = 0
     var strengthSeconds = 0
     var strengthWorkoutIDs: [String] = []
     var exerciseSeconds = 0

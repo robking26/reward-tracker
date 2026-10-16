@@ -111,7 +111,9 @@ struct CategoryDetailView: View {
         case .strength:
             "Uses the duration of Traditional and Functional Strength Training workouts in Apple Health. Each workout counts once."
         case .swimming:
-            "Uses swimming distance recorded in Apple Health."
+            "Uses swimming distance recorded in Apple Health. Every full \(model.settings.rates.swimmingMetresPerInterval) m earns \(model.settings.rates.pencePerSwimInterval.formatted())."
+        case .running:
+            "Uses the distance of Running workouts in Apple Health, indoor or outdoor. Walking never counts here, and your running steps still count towards Steps."
         case .mealPhoto, .proteinTarget, .calorieTarget:
             "Nutrition has been removed from Fitness Vault. This category no longer earns anything; past amounts are kept in your history."
         }

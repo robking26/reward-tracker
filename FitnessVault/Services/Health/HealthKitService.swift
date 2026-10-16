@@ -6,7 +6,8 @@ import HealthKit
 /// - Totals use `HKStatisticsCollectionQuery` cumulative sums, which de-duplicate overlapping
 ///   iPhone and Apple Watch samples the same way the Health app does.
 /// - Exercise uses Apple's own Exercise minutes (`appleExerciseTime`). Heart rate is never used as a proxy.
-/// - Strength uses only real workout records of strength-training types, de-duplicated by workout UUID.
+/// - Strength uses only real workout records of strength-training types, and running uses only the
+///   distance of running workouts (never walking), each de-duplicated by workout UUID.
 ///   A workout counts towards the day it started.
 /// - The app only reads from Health; it never writes.
 final class HealthKitService: HealthDataProviding, @unchecked Sendable {
@@ -76,13 +77,18 @@ final class HealthKitService: HealthDataProviding, @unchecked Sendable {
             }
         }
 
-        for workout in try await strengthWorkouts(from: startDate, to: endDate) {
+        var countedRuns = Set<UUID>()
+        for workout in try await rewardWorkouts(from: startDate, to: endDate) {
             let key = DayKey(workout.startDate, calendar: calendar)
             guard var reading = result[key] else { continue }
-            let id = workout.uuid.uuidString
-            guard !reading.strengthWorkoutIDs.contains(id) else { continue }
-            reading.strengthWorkoutIDs.append(id)
-            reading.strengthSeconds += Int(workout.duration.rounded(.down))
+            if Self.strengthWorkoutTypes.contains(workout.workoutActivityType) {
+                let id = workout.uuid.uuidString
+                guard !reading.strengthWorkoutIDs.contains(id) else { continue }
+                reading.strengthWorkoutIDs.append(id)
+                reading.strengthSeconds += Int(workout.duration.rounded(.down))
+            } else if workout.workoutActivityType == .running, countedRuns.insert(workout.uuid).inserted {
+                reading.runningMetres += Int(Self.runningDistance(of: workout).rounded(.down))
+            }
             result[key] = reading
         }
         return result
@@ -117,15 +123,22 @@ final class HealthKitService: HealthDataProviding, @unchecked Sendable {
         }
     }
 
-    private func strengthWorkouts(from start: Date, to end: Date) async throws -> [HKWorkout] {
+    private func rewardWorkouts(from start: Date, to end: Date) async throws -> [HKWorkout] {
         let datePredicate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
-        let typePredicates = Self.strengthWorkoutTypes.map { HKQuery.predicateForWorkouts(with: $0) }
+        let types = Self.strengthWorkoutTypes.union([.running])
+        let typePredicates = types.map { HKQuery.predicateForWorkouts(with: $0) }
         let predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
             datePredicate, NSCompoundPredicate(orPredicateWithSubpredicates: typePredicates),
         ])
         let descriptor = HKSampleQueryDescriptor(
             predicates: [.workout(predicate)], sortDescriptors: [SortDescriptor(\.startDate)])
         return try await descriptor.result(for: store)
+    }
+
+    /// Metres covered in a running workout (indoor runs included when the Watch recorded distance).
+    private static func runningDistance(of workout: HKWorkout) -> Double {
+        let type = HKQuantityType(.distanceWalkingRunning)
+        return workout.statistics(for: type)?.sumQuantity()?.doubleValue(for: .meter()) ?? 0
     }
 
     func activityRings(on day: DayKey) async throws -> ActivityRingsSnapshot? {

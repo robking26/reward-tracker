@@ -191,6 +191,7 @@ final class AppModel {
             }()
             record.steps = reading.steps
             record.swimmingMetres = reading.swimmingMetres
+            record.runningMetres = reading.runningMetres
             record.strengthSeconds = reading.strengthSeconds
             record.strengthWorkoutIDs = reading.strengthWorkoutIDs
             record.exerciseSeconds = reading.exerciseSeconds
@@ -235,6 +236,7 @@ final class AppModel {
         if let activity = dailyActivity(day) {
             metrics.steps = activity.steps
             metrics.swimmingMetres = activity.swimmingMetres
+            metrics.runningMetres = activity.runningMetres ?? 0
             metrics.strengthSeconds = activity.strengthSeconds
             metrics.exerciseSeconds = activity.exerciseSeconds
             metrics.activeKilocalories = activity.activeKilocalories

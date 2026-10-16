@@ -35,10 +35,12 @@ final class MockHealthService: HealthDataProviding, @unchecked Sendable {
         let scale = partial ? 0.6 : 1
         let lifts = next(0...9) < 4
         let swims = next(0...9) < 2
+        let runs = next(0...9) < 3
         return HealthDayReading(
             day: day,
             steps: Int(Double(next(5_000...15_000)) * scale),
             swimmingMetres: swims ? next(800...1_600) : 0,
+            runningMetres: runs ? next(3_000...8_000) : 0,
             strengthSeconds: lifts ? next(35...60) * 60 : 0,
             strengthWorkoutIDs: lifts ? ["demo-\(day)"] : [],
             exerciseSeconds: Int(Double(next(15...70) * 60) * scale),

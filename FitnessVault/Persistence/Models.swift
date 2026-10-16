@@ -31,6 +31,8 @@ final class DailyActivity {
     @Attribute(.unique) var day: String
     var steps: Int
     var swimmingMetres: Int
+    /// Added later; optional so stores from earlier versions open without migration.
+    var runningMetres: Int?
     var strengthSeconds: Int
     var exerciseSeconds: Int
     var activeKilocalories: Int

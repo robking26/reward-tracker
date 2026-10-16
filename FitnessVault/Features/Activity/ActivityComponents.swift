@@ -64,7 +64,8 @@ enum DailyGoals {
         case .exercise: return ratio(metrics.exerciseSeconds, 30 * 60)
         case .strength: return ratio(metrics.strengthSeconds, 45 * 60)
         case .activeEnergy: return ratio(metrics.activeKilocalories, 600)
-        case .swimming: return ratio(metrics.swimmingMetres, 1_000)
+        case .swimming: return ratio(metrics.swimmingMetres, 1_500)
+        case .running: return ratio(metrics.runningMetres, 5_000)
         case .flights: return ratio(metrics.flightsClimbed, 10)
         case .mealPhoto, .proteinTarget, .calorieTarget: return nil
         }
@@ -78,6 +79,7 @@ extension Array where Element == DailyMetrics {
         reduce(into: DailyMetrics(day: day)) { total, next in
             total.steps += next.steps
             total.swimmingMetres += next.swimmingMetres
+            total.runningMetres += next.runningMetres
             total.strengthSeconds += next.strengthSeconds
             total.exerciseSeconds += next.exerciseSeconds
             total.activeKilocalories += next.activeKilocalories

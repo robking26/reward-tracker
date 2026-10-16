@@ -6,6 +6,7 @@ struct DailyMetrics: Hashable, Sendable {
     var day: DayKey
     var steps = 0
     var swimmingMetres = 0
+    var runningMetres = 0
     var strengthSeconds = 0
     var exerciseSeconds = 0
     var activeKilocalories = 0
@@ -18,6 +19,7 @@ struct DailyMetrics: Hashable, Sendable {
         case .strength: strengthSeconds
         case .activeEnergy: activeKilocalories
         case .swimming: swimmingMetres
+        case .running: runningMetres
         case .flights: flightsClimbed
         case .mealPhoto, .proteinTarget, .calorieTarget: 0
         }
@@ -30,7 +32,9 @@ enum RewardEngine {
     static func rewards(for metrics: DailyMetrics, rates: RewardRates) -> [RewardCategory: Pence] {
         var result: [RewardCategory: Pence] = [:]
         result[.steps] = stepsReward(metrics.steps, rates: rates)
-        result[.swimming] = intervals(metrics.swimmingMetres, per: rates.swimmingMetresPerPenny)
+        result[.swimming] = Pence(intervals(metrics.swimmingMetres, per: rates.swimmingMetresPerInterval).value
+                                  * rates.pencePerSwimInterval.value)
+        result[.running] = intervals(metrics.runningMetres, per: rates.runningMetresPerPenny)
         result[.strength] = intervals(metrics.strengthSeconds, per: rates.strengthSecondsPerPenny)
         result[.exercise] = intervals(metrics.exerciseSeconds, per: rates.exerciseSecondsPerPenny)
         result[.activeEnergy] = intervals(metrics.activeKilocalories, per: rates.activeKilocaloriesPerPenny)
