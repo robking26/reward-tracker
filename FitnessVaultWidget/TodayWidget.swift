@@ -1,7 +1,7 @@
 import SwiftUI
 import WidgetKit
 
-/// Large (4×4) widget: money earned today, steps and Activity rings.
+/// Money earned today, steps and Activity rings, in small (2×2), medium (4×2) and large (4×4) sizes.
 struct TodayWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: WidgetSnapshotStore.widgetKind, provider: TodayProvider()) { entry in
@@ -10,7 +10,7 @@ struct TodayWidget: Widget {
         }
         .configurationDisplayName("Today")
         .description("Money earned today, your steps and Activity rings.")
-        .supportedFamilies([.systemLarge])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 
@@ -52,6 +52,7 @@ enum WidgetPalette {
 
 struct TodayWidgetView: View {
     let entry: TodayEntry
+    @Environment(\.widgetFamily) private var family
 
     private var snapshot: WidgetSnapshot? { entry.snapshot }
     /// Numbers saved on an earlier day aren't today's, so they're never shown as if they were.
@@ -61,6 +62,90 @@ struct TodayWidgetView: View {
     }
 
     var body: some View {
+        Group {
+            switch family {
+            case .systemSmall: small
+            case .systemMedium: medium
+            default: large
+            }
+        }
+        .foregroundStyle(WidgetPalette.textPrimary)
+    }
+
+    // MARK: Small (2×2)
+
+    private var small: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Earned today")
+                .font(.caption.weight(.medium))
+                .foregroundStyle(WidgetPalette.textSecondary)
+            Text(earnedText)
+                .font(.system(size: 30, weight: .medium))
+                .monospacedDigit()
+                .foregroundStyle(WidgetPalette.accent)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .contentTransition(.numericText())
+            Spacer(minLength: 6)
+            HStack(alignment: .bottom, spacing: 8) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(stepsText)
+                        .font(.headline)
+                        .monospacedDigit()
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    Text("steps")
+                        .font(.caption2)
+                        .foregroundStyle(WidgetPalette.textSecondary)
+                }
+                Spacer(minLength: 0)
+                ActivityRingsView(rings: current?.rings, lineWidth: 7, spacing: 1.5)
+                    .frame(width: 58, height: 58)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: Medium (4×2)
+
+    private var medium: some View {
+        HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 0) {
+                header
+                Spacer(minLength: 6)
+                Text("Earned today")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(WidgetPalette.textSecondary)
+                Text(earnedText)
+                    .font(.system(size: 34, weight: .medium))
+                    .monospacedDigit()
+                    .foregroundStyle(WidgetPalette.accent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .contentTransition(.numericText())
+                Spacer(minLength: 6)
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Image(systemName: "figure.walk")
+                        .font(.footnote)
+                        .foregroundStyle(WidgetPalette.textSecondary)
+                    Text(stepsText)
+                        .font(.headline)
+                        .monospacedDigit()
+                    Text("steps")
+                        .font(.caption)
+                        .foregroundStyle(WidgetPalette.textSecondary)
+                }
+                .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            ActivityRingsView(rings: current?.rings, lineWidth: 12, spacing: 2.5)
+                .frame(width: 112, height: 112)
+        }
+    }
+
+    // MARK: Large (4×4)
+
+    private var large: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
             Spacer(minLength: 12)
@@ -78,7 +163,14 @@ struct TodayWidgetView: View {
             Spacer(minLength: 10)
             footer
         }
-        .foregroundStyle(WidgetPalette.textPrimary)
+    }
+
+    private var earnedText: String {
+        current.map { WidgetMoney.format(pence: $0.earnedTodayPence) } ?? "–"
+    }
+
+    private var stepsText: String {
+        current.map { $0.steps.formatted(.number) } ?? "–"
     }
 
     private var header: some View {
@@ -105,7 +197,7 @@ struct TodayWidgetView: View {
             Text("Earned today")
                 .font(.subheadline)
                 .foregroundStyle(WidgetPalette.textSecondary)
-            Text(current.map { WidgetMoney.format(pence: $0.earnedTodayPence) } ?? "–")
+            Text(earnedText)
                 .font(.system(size: 46, weight: .medium))
                 .monospacedDigit()
                 .foregroundStyle(WidgetPalette.accent)
@@ -151,7 +243,7 @@ struct TodayWidgetView: View {
             Image(systemName: "figure.walk")
                 .font(.headline)
                 .foregroundStyle(WidgetPalette.textSecondary)
-            Text(current.map { $0.steps.formatted(.number) } ?? "–")
+            Text(stepsText)
                 .font(.title2.weight(.semibold))
                 .monospacedDigit()
             Text("steps")
@@ -214,6 +306,18 @@ extension WidgetSnapshot {
 }
 
 #if DEBUG
+#Preview(as: .systemSmall) {
+    TodayWidget()
+} timeline: {
+    TodayEntry(date: .now, snapshot: .placeholder)
+}
+
+#Preview(as: .systemMedium) {
+    TodayWidget()
+} timeline: {
+    TodayEntry(date: .now, snapshot: .placeholder)
+}
+
 #Preview(as: .systemLarge) {
     TodayWidget()
 } timeline: {

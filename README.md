@@ -83,9 +83,13 @@ server/meal-analysis/  Cloudflare Worker for AI meal analysis
 
 ## Home-screen widget
 
-A large (4×4) widget shows money earned today, your step count, your Activity rings and this month's progress.
+The widget comes in three sizes:
 
-- **Add it:** on the Home Screen, long-press an empty spot, tap **Edit → Add Widget**, search for **Fitness Vault**, choose the large size and tap **Add Widget**.
+- **Small (2×2):** earned today, steps and mini rings.
+- **Medium (4×2):** earned today and steps, with the rings alongside.
+- **Large (4×4):** everything, plus ring details and this month's progress.
+
+- **Add it:** on the Home Screen, long-press an empty spot, tap **Edit → Add Widget**, search for **Fitness Vault**, swipe to the size you want and tap **Add Widget**.
 - **How it updates:** the widget can't read Apple Health itself. It shows the numbers the app saved at its last sync, with the time of that sync, and refreshes whenever you open the app.
 - **After midnight:** until the app syncs again, the widget asks you to open it rather than showing yesterday's numbers as today's.
 - **Activity rings:** these need the Activity summary permission in Apple Health. Open the app and tap **Allow Access** when it asks.
