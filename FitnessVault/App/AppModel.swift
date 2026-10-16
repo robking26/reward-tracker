@@ -558,12 +558,29 @@ final class AppModel {
         publishWidgetSnapshot()
     }
 
+    /// Today's earnings by input, highest first, with equal standing for every category.
+    private func widgetBreakdown() -> [WidgetCategoryLine] {
+        let earnings = earningsByDay[today] ?? [:]
+        let metrics = todayMetrics
+        return RewardCategory.allCases
+            .compactMap { category -> WidgetCategoryLine? in
+                let amount = earnings[category] ?? .zero
+                guard amount.isPositive else { return nil }
+                let measure = MeasureFormat.measurement(category, metrics)
+                return WidgetCategoryLine(
+                    id: category.rawValue, title: category.title, symbol: category.symbol,
+                    detail: "\(measure.value) \(measure.unit)", earnedPence: amount.value)
+            }
+            .sorted { $0.earnedPence > $1.earnedPence }
+    }
+
     /// Shares today's numbers with the home-screen widget, refreshing it only when something changed.
     private func publishWidgetSnapshot() {
         let snapshot = WidgetSnapshot(
             day: today.description,
             earnedTodayPence: earned(on: today).value,
             steps: todayMetrics.steps,
+            breakdown: widgetBreakdown(),
             rings: todayRings,
             monthEarnedPence: vault.earned.value,
             monthAllocationPence: vault.allocation.value,

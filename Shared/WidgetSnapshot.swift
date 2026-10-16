@@ -17,12 +17,24 @@ struct ActivityRingsSnapshot: Codable, Hashable, Sendable {
     var moveUnit: String
 }
 
+/// One reward input's contribution today, e.g. Exercise · 32 min · £1.92.
+struct WidgetCategoryLine: Codable, Hashable, Sendable, Identifiable {
+    var id: String
+    var title: String
+    var symbol: String
+    /// The measurement, already formatted, e.g. "8,412 steps" or "32 min".
+    var detail: String
+    var earnedPence: Int
+}
+
 /// What the app shares with its widget. Written by the app after each sync; the widget only reads it.
 struct WidgetSnapshot: Codable, Hashable, Sendable {
     /// The local calendar day the numbers belong to, `yyyy-MM-dd`.
     var day: String
     var earnedTodayPence: Int
     var steps: Int
+    /// Every input that earned money today, highest first. Optional so older saved snapshots still load.
+    var breakdown: [WidgetCategoryLine]?
     var rings: ActivityRingsSnapshot?
     var monthEarnedPence: Int
     var monthAllocationPence: Int

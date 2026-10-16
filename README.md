@@ -85,10 +85,10 @@ server/meal-analysis/  Cloudflare Worker for AI meal analysis
 
 The widget comes in three sizes:
 
-- **Small (2×2):** earned today, steps and mini rings.
-- **Medium (4×2):** earned today and steps, with the rings alongside.
-- **Large (4×4):** everything, plus ring details and this month's progress.
-- **Lock Screen:** a circle (today's earnings inside a ring of the month's progress), a rectangle (earnings, steps and mini rings) or a single line above the clock. To add one, press and hold the Lock Screen, tap **Customise → Lock Screen**, tap the widget area and choose **Fitness Vault**.
+- **Small (2×2):** earned today and the top three inputs that earned it.
+- **Medium (4×2):** earned today and the top three inputs, with the Activity rings alongside.
+- **Large (4×4):** earned today, the rings, up to six inputs that earned money (with their measurements) and this month's progress.
+- **Lock Screen:** a circle (today's earnings inside a ring of the month's progress), a rectangle (earnings, the two biggest contributors and mini rings) or a single line above the clock. To add one, press and hold the Lock Screen, tap **Customise → Lock Screen**, tap the widget area and choose **Fitness Vault**.
 
 - **Add it:** on the Home Screen, long-press an empty spot, tap **Edit → Add Widget**, search for **Fitness Vault**, swipe to the size you want and tap **Add Widget**.
 - **How it updates:** the widget can't read Apple Health itself. It shows the numbers the app saved at its last sync, with the time of that sync, and refreshes whenever you open the app.
