@@ -103,7 +103,7 @@ struct CategoryDetailView: View {
     private var explanation: String {
         switch category {
         case .steps:
-            "The first \(model.settings.rates.stepsBaseline.formatted()) steps each day earn nothing. Step \((model.settings.rates.stepsBaseline + 1).formatted()) earns your first 1p, then 1p for every full \(model.settings.rates.stepsPerPenny) steps over \(model.settings.rates.stepsBaseline.formatted()), up to \(model.settings.rates.stepsDailyCap.formatted()) a day (reached at \(model.settings.rates.stepsForCap.formatted()) steps)."
+            "The first \(model.settings.rates.stepsBaseline.formatted()) steps each day earn nothing. After that, every full \(model.settings.rates.stepsPerPenny) steps earns 1p, up to \(model.settings.rates.stepsDailyCap.formatted()) a day (reached at \(model.settings.rates.stepsForCap.formatted()) steps)."
         case .activeEnergy, .flights:
             "Calculated from your cumulative daily total in Apple Health. Only whole intervals count; partial progress carries on through the day."
         case .exercise:

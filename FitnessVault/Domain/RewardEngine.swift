@@ -50,13 +50,11 @@ enum RewardEngine {
         rewards.values.sum { $0 }
     }
 
-    /// Nothing up to the baseline. Passing it earns 1p straight away; after that, 1p for each
-    /// full 10 steps above the baseline (2,501-2,519 = 1p, 2,520 = 2p), up to the daily cap.
+    /// Nothing up to the baseline, then 1p for each full 20 steps above it
+    /// (2,519 = 0p, 2,520 = 1p, 2,540 = 2p), up to the daily cap.
     static func stepsReward(_ steps: Int, rates: RewardRates) -> Pence {
         let beyond = steps - max(0, rates.stepsBaseline)
-        guard beyond > 0, rates.stepsPerPenny > 0 else { return .zero }
-        let earned = Swift.max(Pence(1), intervals(beyond, per: rates.stepsPerPenny))
-        return Swift.min(earned, rates.stepsDailyCap.nonNegative)
+        return Swift.min(intervals(beyond, per: rates.stepsPerPenny), rates.stepsDailyCap.nonNegative)
     }
 
     /// Whole completed intervals only. 249 steps at 1p/50 = 4p.

@@ -53,8 +53,8 @@ enum RewardCategory: String, CaseIterable, Codable, Sendable, Identifiable {
 
 /// Reward rates. Each rate is "one penny per N units" or a fixed amount.
 struct RewardRates: Codable, Hashable, Sendable {
-    var stepsPerPenny = 10
-    /// Steps up to this many each day earn nothing. Passing it earns 1p, then 1p per full 10 steps beyond it.
+    var stepsPerPenny = 20
+    /// Steps up to this many each day earn nothing; after it, 1p per full 20 steps (2,520 = 1p).
     var stepsBaseline = 2_500
     /// The most steps can earn in a day.
     var stepsDailyCap: Pence = 1_000
