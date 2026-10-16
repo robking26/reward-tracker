@@ -22,15 +22,17 @@ final class RewardEngineTests: XCTestCase {
     func testStepTwoThousandFiveHundredAndOneEarnsFirstPenny() {
         XCTAssertEqual(reward(.steps) { $0.steps = 2_501 }, Pence(1))
         XCTAssertEqual(reward(.steps) { $0.steps = 2_510 }, Pence(1))
-        XCTAssertEqual(reward(.steps) { $0.steps = 2_511 }, Pence(2))
+        XCTAssertEqual(reward(.steps) { $0.steps = 2_511 }, Pence(1))
+        XCTAssertEqual(reward(.steps) { $0.steps = 2_519 }, Pence(1))
+        XCTAssertEqual(reward(.steps) { $0.steps = 2_520 }, Pence(2))
         XCTAssertEqual(reward(.steps) { $0.steps = 5_000 }, Pence(250))
         XCTAssertEqual(reward(.steps) { $0.steps = 10_000 }, Pence(750))
     }
 
     func testStepsCappedAtTenPoundsADay() {
-        XCTAssertEqual(rates.stepsForCap, 12_491)
-        XCTAssertEqual(reward(.steps) { $0.steps = 12_490 }, Pence(999))
-        XCTAssertEqual(reward(.steps) { $0.steps = 12_491 }, .pounds(10))
+        XCTAssertEqual(rates.stepsForCap, 12_500)
+        XCTAssertEqual(reward(.steps) { $0.steps = 12_499 }, Pence(999))
+        XCTAssertEqual(reward(.steps) { $0.steps = 12_500 }, .pounds(10))
         XCTAssertEqual(reward(.steps) { $0.steps = 30_000 }, .pounds(10))
     }
 

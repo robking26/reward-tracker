@@ -43,9 +43,7 @@ enum RewardEngine {
         includeNutritionTargets: Bool
     ) -> [RewardCategory: Pence] {
         var result: [RewardCategory: Pence] = [:]
-        result[.steps] = min(
-            startedIntervals(metrics.steps - max(0, rates.stepsBaseline), per: rates.stepsPerPenny),
-            rates.stepsDailyCap.nonNegative)
+        result[.steps] = stepsReward(metrics.steps, rates: rates)
         result[.swimming] = intervals(metrics.swimmingMetres, per: rates.swimmingMetresPerPenny)
         result[.strength] = intervals(metrics.strengthSeconds, per: rates.strengthSecondsPerPenny)
         result[.exercise] = intervals(metrics.exerciseSeconds, per: rates.exerciseSecondsPerPenny)
@@ -71,10 +69,13 @@ enum RewardEngine {
         rewards.values.sum { $0 }
     }
 
-    /// Each interval pays as soon as it starts: steps 1-10 over the baseline pay 1p, 11-20 pay 2p.
-    static func startedIntervals(_ measurement: Int, per interval: Int) -> Pence {
-        guard interval > 0, measurement > 0 else { return .zero }
-        return Pence((measurement + interval - 1) / interval)
+    /// Nothing up to the baseline. Passing it earns 1p straight away; after that, 1p for each
+    /// full 10 steps above the baseline (2,501-2,519 = 1p, 2,520 = 2p), up to the daily cap.
+    static func stepsReward(_ steps: Int, rates: RewardRates) -> Pence {
+        let beyond = steps - max(0, rates.stepsBaseline)
+        guard beyond > 0, rates.stepsPerPenny > 0 else { return .zero }
+        let earned = Swift.max(Pence(1), intervals(beyond, per: rates.stepsPerPenny))
+        return Swift.min(earned, rates.stepsDailyCap.nonNegative)
     }
 
     /// Whole completed intervals only. 249 steps at 1p/50 = 4p.
