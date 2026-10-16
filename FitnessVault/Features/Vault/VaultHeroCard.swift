@@ -9,7 +9,7 @@ struct VaultHeroCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.m) {
             HStack {
-                Text("\(summary.month.monthName()) vault")
+                Text("\(summary.month.monthName()) allowance")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Palette.textSecondary)
                 Spacer()
@@ -46,7 +46,7 @@ struct VaultHeroCard: View {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("Monthly allocation")
+                    Text("Allowance")
                         .font(.caption)
                         .foregroundStyle(Palette.textTertiary)
                     MoneyText(amount: summary.allocation, font: .headline, weight: .semibold, color: Palette.textPrimary)
@@ -56,7 +56,7 @@ struct VaultHeroCard: View {
         .surface(radius: Radius.hero, padding: Spacing.l)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "\(summary.month.monthName()) vault. \(summary.remainingToUnlock.formatted()) left to unlock. " +
+            "\(summary.month.monthName()) allowance. \(summary.remainingToUnlock.formatted()) left to unlock. " +
             "Earned \(summary.earned.formatted()) of \(summary.allocation.formatted()), \(summary.percentUnlocked) percent.")
     }
 }

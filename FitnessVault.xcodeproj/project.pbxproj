@@ -371,10 +371,9 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Fitness Vault";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Fitness Vault reads steps, workouts, exercise minutes, active energy, swimming distance and flights climbed to calculate the money you've earned.";
+				INFOPLIST_KEY_CFBundleDisplayName = "Vaultality";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Vaultality reads steps, workouts, exercise minutes, active energy, swimming distance and flights climbed to calculate the money you've earned.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -405,10 +404,9 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Fitness Vault";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Fitness Vault reads steps, workouts, exercise minutes, active energy, swimming distance and flights climbed to calculate the money you've earned.";
+				INFOPLIST_KEY_CFBundleDisplayName = "Vaultality";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Vaultality reads steps, workouts, exercise minutes, active energy, swimming distance and flights climbed to calculate the money you've earned.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -472,7 +470,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Config/FitnessVaultWidget-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Fitness Vault";
+				INFOPLIST_KEY_CFBundleDisplayName = "Vaultality";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -500,7 +498,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Config/FitnessVaultWidget-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Fitness Vault";
+				INFOPLIST_KEY_CFBundleDisplayName = "Vaultality";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

@@ -13,6 +13,8 @@ struct ActivityView: View {
                 VStack(alignment: .leading, spacing: Spacing.xl) {
                     StatusNotices()
 
+                    VaultHeroCard(summary: model.vault)
+
                     Picker("Period", selection: $period) {
                         ForEach(ActivityPeriod.allCases) { Text($0.rawValue).tag($0) }
                     }
@@ -39,7 +41,7 @@ struct ActivityView: View {
                 .animation(.snappy, value: period)
             }
             .pageBackground()
-            .navigationTitle("Activity")
+            .navigationTitle("Vaultality")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     SettingsToolbarButton(isPresented: $showingSettings)

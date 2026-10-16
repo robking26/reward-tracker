@@ -115,7 +115,7 @@ struct CategoryDetailView: View {
         case .running:
             "Uses the distance of Running workouts in Apple Health, indoor or outdoor. Walking never counts here, and your running steps still count towards Steps."
         case .mealPhoto, .proteinTarget, .calorieTarget:
-            "Nutrition has been removed from Fitness Vault. This category no longer earns anything; past amounts are kept in your history."
+            "Nutrition has been removed from Vaultality. This category no longer earns anything; past amounts are kept in your history."
         }
     }
 }

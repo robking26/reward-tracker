@@ -132,7 +132,23 @@ final class RewardEngineTests: XCTestCase {
         let decoded = try JSONDecoder().decode(AppSettings.self, from: Data(old.utf8))
         XCTAssertEqual(decoded.starling.accountUID, "acc")
         XCTAssertEqual(decoded.settlementMinuteOfDay, 480)
+        XCTAssertEqual(decoded.monthlyAllocation, .pounds(500), "The old £400 default moves to Vaultality's £500")
+        XCTAssertEqual(decoded.trading212.environment, .demo)
         XCTAssertEqual(decoded.rates, .standard, "Rates always come from code, never from saved settings")
+    }
+
+    func testCustomAllowanceIsKeptOnUpgrade() throws {
+        let old = #"{"monthlyAllocation":{"value":30000},"starling":{}}"#
+        let decoded = try JSONDecoder().decode(AppSettings.self, from: Data(old.utf8))
+        XCTAssertEqual(decoded.monthlyAllocation, .pounds(300))
+    }
+
+    func testSettingsRoundTrip() throws {
+        var settings = AppSettings()
+        settings.trading212.instrument = GoldInstrument(ticker: "SGLNl_EQ", name: "iShares Physical Gold", isin: nil,
+                                                        currencyCode: "GBX", minTradeQuantity: "0.01", confirmed: true)
+        let decoded = try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(settings))
+        XCTAssertEqual(decoded, settings)
     }
 
     func testPenceFormatting() {

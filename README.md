@@ -1,10 +1,12 @@
-# Fitness Vault
+# Vaultality
 
-A native iOS app that turns activity recorded in Apple Health into real money. Each month £400 sits in a Starling Savings Space. Activity unlocks it, and the money you earn is paid to your Monzo account. Every payment needs your approval in the Starling app.
+**Healthy habits unlock wealth.**
 
-**Move more. Earn more.**
+Vaultality is a native iOS app. Each month a £500 fitness allowance sits in a Starling Savings Space, and activity recorded in Apple Health unlocks it. Money you earn is paid to your Monzo account, and each payment needs your approval in the Starling app. Whatever isn't earned by month-end is set aside for a gold ETC investment through Trading 212. It never rolls into the next month's allowance.
 
-> The original web tracker (`index.html`, with points and a rewards shop) is still in the repo so the existing site keeps working. The iOS app replaces it and doesn't use it.
+The app is a single dashboard: this month's allowance, today's earnings and your activity cards. Everything about money (payouts, Starling, Trading 212, gold investments, previous months and reward rates) lives in **Settings → Money & Vault**.
+
+> The original web tracker (`index.html`) is still in the repo so the existing site keeps working.
 
 ## Requirements
 
@@ -85,9 +87,9 @@ The widget comes in three sizes:
 - **Small (2×2):** earned today, steps and mini rings.
 - **Medium (4×2):** earned today and the top three inputs, with the Activity rings alongside.
 - **Large (4×4):** earned today, the rings, up to six inputs that earned money (with their measurements) and this month's progress.
-- **Lock Screen:** a circle (today's earnings inside a ring of the month's progress), a rectangle (earnings, steps and mini rings) or a single line above the clock. To add one, press and hold the Lock Screen, tap **Customise → Lock Screen**, tap the widget area and choose **Fitness Vault**.
+- **Lock Screen:** a circle (today's earnings inside a ring of the month's progress), a rectangle (earnings, steps and mini rings) or a single line above the clock. To add one, press and hold the Lock Screen, tap **Customise → Lock Screen**, tap the widget area and choose **Vaultality**.
 
-- **Add it:** on the Home Screen, long-press an empty spot, tap **Edit → Add Widget**, search for **Fitness Vault**, swipe to the size you want and tap **Add Widget**.
+- **Add it:** on the Home Screen, long-press an empty spot, tap **Edit → Add Widget**, search for **Vaultality**, swipe to the size you want and tap **Add Widget**.
 - **How it updates:** the widget can't read Apple Health itself. It shows the numbers the app saved at its last sync, with the time of that sync, and refreshes whenever you open the app.
 - **After midnight:** until the app syncs again, the widget asks you to open it rather than showing yesterday's numbers as today's.
 - **Activity rings:** these need the Activity summary permission in Apple Health. Open the app and tap **Allow Access** when it asks.

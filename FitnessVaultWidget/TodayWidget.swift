@@ -47,9 +47,9 @@ struct TodayProvider: TimelineProvider {
 
 enum WidgetPalette {
     static let background = Color(.sRGB, red: 0x17 / 255, green: 0x19 / 255, blue: 0x1B / 255, opacity: 1)
-    static let elevated = Color(.sRGB, red: 0x2C / 255, green: 0x30 / 255, blue: 0x32 / 255, opacity: 1)
-    static let textPrimary = Color(.sRGB, red: 0xF7 / 255, green: 0xF8 / 255, blue: 0xF7 / 255, opacity: 1)
-    static let textSecondary = Color(.sRGB, red: 0xAD / 255, green: 0xB3 / 255, blue: 0xB1 / 255, opacity: 1)
+    static let elevated = Color(.sRGB, red: 0x30 / 255, green: 0x35 / 255, blue: 0x36 / 255, opacity: 1)
+    static let textPrimary = Color(.sRGB, red: 0xF5 / 255, green: 0xF5 / 255, blue: 0xF3 / 255, opacity: 1)
+    static let textSecondary = Color(.sRGB, red: 0xA7 / 255, green: 0xB0 / 255, blue: 0xAA / 255, opacity: 1)
     static let textTertiary = Color(.sRGB, red: 0x7F / 255, green: 0x88 / 255, blue: 0x84 / 255, opacity: 1)
     static let accent = Color(.sRGB, red: 0xC5 / 255, green: 0xF2 / 255, blue: 0x77 / 255, opacity: 1)
 }
@@ -259,7 +259,7 @@ struct TodayWidgetView: View {
         HStack(spacing: 6) {
             Image(systemName: "sterlingsign.circle.fill")
                 .foregroundStyle(WidgetPalette.accent)
-            Text("Fitness Vault")
+            Text("Vaultality")
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(WidgetPalette.textSecondary)
             Spacer()
@@ -302,12 +302,12 @@ struct TodayWidgetView: View {
         Group {
             if let snapshot {
                 if current == nil {
-                    Text("Open Fitness Vault to update today's numbers")
+                    Text("Open Vaultality to update today's numbers")
                 } else {
                     Text("Updated \(snapshot.updatedAt.formatted(date: .omitted, time: .shortened))")
                 }
             } else {
-                Text("Open Fitness Vault to set up this widget")
+                Text("Open Vaultality to set up this widget")
             }
         }
         .font(.caption2)
@@ -362,7 +362,7 @@ struct TodayWidgetView: View {
 
     private var lockInline: some View {
         // Inline widgets show a single line of text and one image only.
-        Label(current == nil ? "Open Fitness Vault" : "\(earnedText) today · \(stepsText) steps",
+        Label(current == nil ? "Open Vaultality" : "\(earnedText) today · \(stepsText) steps",
               systemImage: "sterlingsign.circle")
     }
 }

@@ -10,7 +10,18 @@ struct SettingsView: View {
         @Bindable var store = model.settingsStore
         NavigationStack {
             Form {
-                Section("Connections") {
+                Section {
+                    NavigationLink {
+                        MoneyVaultView()
+                    } label: {
+                        LabeledContent {
+                            Text("\(model.vault.earned.formatted()) of \(model.vault.allocation.formatted(wholePounds: true))")
+                                .monospacedDigit()
+                        } label: {
+                            Label("Money & Vault", systemImage: "sterlingsign.circle")
+                                .foregroundStyle(Palette.textPrimary)
+                        }
+                    }
                     NavigationLink {
                         StarlingConnectionView()
                     } label: {
@@ -21,6 +32,13 @@ struct SettingsView: View {
                     StatusRow(title: "Monzo payee", symbol: "arrow.right.circle",
                               status: model.settings.starling.payeeName ?? "Not chosen",
                               isGood: model.settings.starling.payeeAccountUID != nil)
+                } header: {
+                    Text("Money")
+                } footer: {
+                    Text("Allowance, payouts, payment history, previous months and reward rates.")
+                }
+
+                Section("Apple Health") {
                     Button {
                         Task { await model.requestHealthAccess() }
                     } label: {
@@ -28,45 +46,10 @@ struct SettingsView: View {
                                   status: healthStatus, isGood: model.healthAccess == .requested)
                     }
                     if model.healthAccess == .requested {
-                        Text("iOS doesn't tell apps which Health data you've allowed. If activity is missing, check Settings › Health › Data Access & Devices › Fitness Vault.")
+                        Text("iOS doesn't tell apps which Health data you've allowed. If activity is missing, check Settings › Health › Data Access & Devices › Vaultality.")
                             .font(.footnote)
                             .foregroundStyle(Palette.textTertiary)
                     }
-                }
-
-                Section {
-                    LabeledContent("Monthly allocation") {
-                        Stepper(store.settings.monthlyAllocation.formatted(),
-                                value: Binding(get: { store.settings.monthlyAllocation.value / 100 },
-                                               set: { store.settings.monthlyAllocation = .pounds($0) }),
-                                in: 0...2_000, step: 25)
-                            .monospacedDigit()
-                    }
-                    DatePicker("Daily settlement", selection: Binding(
-                        get: { model.settingsStore.settlementTime(on: .now) },
-                        set: { date in
-                            let parts = Calendar.current.dateComponents([.hour, .minute], from: date)
-                            store.settings.settlementMinuteOfDay = (parts.hour ?? 8) * 60 + (parts.minute ?? 0)
-                        }), displayedComponents: .hourAndMinute)
-                } header: {
-                    Text("Vault")
-                } footer: {
-                    Text("A new allocation applies from next month, or now if nothing has been earned this month. Settlement is best effort in the background and always runs when you open the app after this time.")
-                }
-
-                Section {
-                    ForEach(RewardCategory.allCases.filter { model.settings.rates.isRewarded($0) }) { category in
-                        LabeledContent {
-                            Text(model.settings.rates.rateDescription(for: category))
-                                .monospacedDigit()
-                        } label: {
-                            Label(category.title, systemImage: category.symbol)
-                        }
-                    }
-                } header: {
-                    Text("Reward rates")
-                } footer: {
-                    Text("Rewards stop once the month's allocation is unlocked. Days become final after \(model.settings.lockAfterDays) days and are never recalculated.")
                 }
 
                 Section("Notifications") {
@@ -108,7 +91,7 @@ struct SettingsView: View {
 
                 Section("About") {
                     LabeledContent("Version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0")
-                    Text("Fitness Vault turns activity recorded in Apple Health into money released from your own Starling Savings Space to your Monzo account. It only reads from Apple Health, and your Health data stays on this iPhone. Banking tokens are kept in the Keychain on this device only. Payments always need your approval in the Starling app.")
+                    Text("Vaultality: healthy habits unlock wealth. Activity recorded in Apple Health unlocks your own monthly allowance from a Starling Savings Space to Monzo; whatever isn't earned is set aside for a gold investment. It only reads from Apple Health, and your Health data stays on this iPhone. Banking tokens are kept in the Keychain on this device only. Payments always need your approval in the Starling app.")
                         .font(.footnote)
                         .foregroundStyle(Palette.textSecondary)
                 }

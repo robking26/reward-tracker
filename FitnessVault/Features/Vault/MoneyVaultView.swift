@@ -1,96 +1,146 @@
 import SwiftUI
 
-struct VaultView: View {
+/// Settings › Money & Vault: everything about the allowance, banking and payouts,
+/// kept off the dashboard so it stays focused on activity.
+struct MoneyVaultView: View {
     @Environment(AppModel.self) private var model
-    @Binding var showingSettings: Bool
     @State private var confirmingSettlement = false
     @State private var confirmingTopUp = false
     @State private var checkingPayments = false
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: Spacing.xl) {
-                    VaultHeroCard(summary: model.vault)
+        @Bindable var store = model.settingsStore
+        ScrollView {
+            VStack(alignment: .leading, spacing: Spacing.xl) {
+                VaultHeroCard(summary: model.vault)
 
-                    if let pending = model.payments.first(where: { $0.status.isUnresolved }) {
-                        PendingPaymentCard(payment: pending, checking: $checkingPayments)
-                    } else {
-                        PayoutStatusLine().surface()
-                    }
+                if let pending = model.payments.first(where: { $0.status.isUnresolved }) {
+                    PendingPaymentCard(payment: pending, checking: $checkingPayments)
+                } else {
+                    PayoutStatusLine().surface()
+                }
 
-                    VStack(alignment: .leading, spacing: Spacing.s) {
-                        SectionHeader("Where your money is")
-                        MoneyFlowCard(flow: model.flow)
-                    }
-
-                    VStack(alignment: .leading, spacing: Spacing.s) {
-                        SectionHeader("Starling")
-                        StarlingCard(showingSettings: $showingSettings, confirmingTopUp: $confirmingTopUp)
-                    }
-
-                    VStack(alignment: .leading, spacing: Spacing.s) {
-                        SectionHeader("Payments to Monzo")
-                        PaymentHistory(payments: model.payments)
-                    }
-
-                    if !model.monthHistory.isEmpty {
-                        VStack(alignment: .leading, spacing: Spacing.s) {
-                            SectionHeader("Previous months")
-                            VStack(spacing: 0) {
-                                ForEach(model.monthHistory, id: \.month) { summary in
-                                    MonthHistoryRow(summary: summary)
-                                    if summary.month != model.monthHistory.last?.month { Divider().overlay(Palette.border) }
-                                }
+                VStack(alignment: .leading, spacing: Spacing.s) {
+                    SectionHeader("Monthly allowance")
+                    VStack(spacing: Spacing.s) {
+                        Stepper(value: Binding(get: { store.settings.monthlyAllocation.value / 100 },
+                                               set: { store.settings.monthlyAllocation = .pounds($0) }),
+                                in: 0...2_000, step: 25) {
+                            HStack {
+                                Text("Allowance")
+                                Spacer()
+                                Text(store.settings.monthlyAllocation.formatted()).monospacedDigit()
                             }
-                            .surface()
                         }
+                        Divider().overlay(Palette.border)
+                        DatePicker("Daily payout to Monzo", selection: Binding(
+                            get: { model.settingsStore.settlementTime(on: .now) },
+                            set: { date in
+                                let parts = Calendar.current.dateComponents([.hour, .minute], from: date)
+                                store.settings.settlementMinuteOfDay = (parts.hour ?? 8) * 60 + (parts.minute ?? 0)
+                            }), displayedComponents: .hourAndMinute)
                     }
+                    .font(.subheadline)
+                    .foregroundStyle(Palette.textPrimary)
+                    .surface()
+                    Text("Earnings stop once the month's allowance is unlocked. Whatever isn't earned by month-end is set aside for a gold investment and never added to a future allowance.")
+                        .font(.caption)
+                        .foregroundStyle(Palette.textTertiary)
+                }
 
-                    HowMoneyMoves()
+                VStack(alignment: .leading, spacing: Spacing.s) {
+                    SectionHeader("Where your money is")
+                    MoneyFlowCard(flow: model.flow)
                 }
-                .padding(.horizontal, Spacing.page)
-                .padding(.bottom, Spacing.xl)
-            }
-            .pageBackground()
-            .navigationTitle("Vault")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button("Check Payment Status", systemImage: "arrow.clockwise") {
-                            Task { await model.checkPayments() }
+
+                VStack(alignment: .leading, spacing: Spacing.s) {
+                    SectionHeader("Starling")
+                    StarlingCard(confirmingTopUp: $confirmingTopUp)
+                }
+
+                VStack(alignment: .leading, spacing: Spacing.s) {
+                    SectionHeader("Payments to Monzo")
+                    PaymentHistory(payments: model.payments)
+                }
+
+                if !model.monthHistory.isEmpty {
+                    VStack(alignment: .leading, spacing: Spacing.s) {
+                        SectionHeader("Previous months")
+                        VStack(spacing: 0) {
+                            ForEach(model.monthHistory, id: \.month) { summary in
+                                MonthHistoryRow(summary: summary)
+                                if summary.month != model.monthHistory.last?.month { Divider().overlay(Palette.border) }
+                            }
                         }
-                        Button("Release and Pay Now", systemImage: "arrow.right.circle") {
-                            confirmingSettlement = true
-                        }
-                        .disabled(!model.isBankConfigured || !model.network.isOnline)
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                            .foregroundStyle(Palette.textSecondary)
+                        .surface()
                     }
-                    .accessibilityLabel("Vault actions")
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    SettingsToolbarButton(isPresented: $showingSettings)
+
+                VStack(alignment: .leading, spacing: Spacing.s) {
+                    SectionHeader("Reward rates")
+                    VStack(spacing: 0) {
+                        let rewarded = RewardCategory.activity.filter { model.settings.rates.isRewarded($0) }
+                        ForEach(rewarded) { category in
+                            HStack(alignment: .firstTextBaseline) {
+                                Label(category.title, systemImage: category.symbol)
+                                    .foregroundStyle(Palette.textPrimary)
+                                Spacer(minLength: Spacing.s)
+                                Text(model.settings.rates.rateDescription(for: category))
+                                    .multilineTextAlignment(.trailing)
+                                    .foregroundStyle(Palette.textSecondary)
+                            }
+                            .font(.subheadline)
+                            .padding(.vertical, Spacing.s)
+                            if category != rewarded.last { Divider().overlay(Palette.border) }
+                        }
+                    }
+                    .surface()
+                    Text("Days become final after \(model.settings.lockAfterDays) days and are never recalculated, even if rates change.")
+                        .font(.caption)
+                        .foregroundStyle(Palette.textTertiary)
                 }
+
+                HowMoneyMoves()
             }
-            .refreshable {
-                await model.refreshBank()
-                await model.checkPayments()
-            }
-            .task { await model.refreshBank() }
-            .confirmationDialog("Prepare a payment now?", isPresented: $confirmingSettlement, titleVisibility: .visible) {
-                Button("Release and Prepare Payment") { Task { await model.settleIfDue(force: true) } }
-            } message: {
-                Text("Earned money moves from your Savings Space to your Starling balance, and one payment to Monzo is created for finished, synced days. You'll approve it in the Starling app.")
-            }
-            .confirmationDialog("Top up your Savings Space?", isPresented: $confirmingTopUp, titleVisibility: .visible) {
-                Button("Move \(model.fundingPlan?.topUpRequired.formatted() ?? "") into Space") {
-                    Task { await model.topUpSpace() }
+            .padding(.horizontal, Spacing.page)
+            .padding(.bottom, Spacing.xl)
+        }
+        .pageBackground()
+        .navigationTitle("Money & Vault")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button("Check Payment Status", systemImage: "arrow.clockwise") {
+                        Task { await model.checkPayments() }
+                    }
+                    Button("Release and Pay Now", systemImage: "arrow.right.circle") {
+                        confirmingSettlement = true
+                    }
+                    .disabled(!model.isBankConfigured || !model.network.isOnline)
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .foregroundStyle(Palette.textSecondary)
                 }
-            } message: {
-                Text("Only the shortfall for this month's allocation is moved. Unearned money already in the Space stays where it is.")
+                .accessibilityLabel("Money actions")
             }
+        }
+        .refreshable {
+            await model.refreshBank()
+            await model.checkPayments()
+        }
+        .task { await model.refreshBank() }
+        .confirmationDialog("Prepare a payment now?", isPresented: $confirmingSettlement, titleVisibility: .visible) {
+            Button("Release and Prepare Payment") { Task { await model.settleIfDue(force: true) } }
+        } message: {
+            Text("Earned money moves from your Savings Space to your Starling balance, and one payment to Monzo is created for finished, synced days. You'll approve it in the Starling app.")
+        }
+        .confirmationDialog("Top up your Savings Space?", isPresented: $confirmingTopUp, titleVisibility: .visible) {
+            Button("Move \(model.fundingPlan?.topUpRequired.formatted() ?? "") into Space") {
+                Task { await model.topUpSpace() }
+            }
+        } message: {
+            Text("Only the shortfall for this month's allowance is moved.")
         }
     }
 }
@@ -194,7 +244,6 @@ struct MoneyFlowCard: View {
 
 struct StarlingCard: View {
     @Environment(AppModel.self) private var model
-    @Binding var showingSettings: Bool
     @Binding var confirmingTopUp: Bool
 
     var body: some View {
@@ -204,7 +253,7 @@ struct StarlingCard: View {
             } description: {
                 Text("Connect your Starling account, Savings Space and Monzo payee to receive what you earn.")
             } actions: {
-                Button("Connect Starling") { showingSettings = true }
+                NavigationLink("Connect Starling") { StarlingConnectionView() }
                     .buttonStyle(.borderedProminent)
                     .tint(Palette.accent)
                     .foregroundStyle(Palette.onAccent)

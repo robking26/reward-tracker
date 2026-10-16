@@ -31,8 +31,49 @@ struct StarlingConfiguration: Codable, Hashable, Sendable {
     }
 }
 
+enum TradingEnvironment: String, Codable, CaseIterable, Sendable, Identifiable {
+    case demo
+    case live
+
+    var id: String { rawValue }
+    var title: String { self == .demo ? "Demo (practice)" : "Live" }
+    var baseURL: URL {
+        switch self {
+        case .demo: URL(string: "https://demo.trading212.com/api/v0")!
+        case .live: URL(string: "https://live.trading212.com/api/v0")!
+        }
+    }
+}
+
+/// The gold ETC chosen for forfeited spending. Nothing is bought until `confirmed` is true.
+struct GoldInstrument: Codable, Hashable, Sendable {
+    var ticker: String
+    var name: String
+    var isin: String?
+    /// Trading 212 currency code for the share price, e.g. "GBP", "GBX" (pence) or "USD".
+    var currencyCode: String
+    /// Smallest quantity Trading 212 accepts, as a decimal string.
+    var minTradeQuantity: String
+    var confirmed: Bool
+}
+
+struct Trading212Configuration: Codable, Hashable, Sendable {
+    var environment: TradingEnvironment = .demo
+    var instrument: GoldInstrument?
+    /// Live orders need the live environment *and* this explicit opt-in.
+    var liveTradingConfirmed = false
+    /// When on, the app places the gold order by itself once cash is confirmed in Trading 212.
+    /// Off by default; funding from Starling always needs approval in the Starling app regardless.
+    var automationEnabled = false
+    /// Starling payee account used to send forfeited money to Trading 212, if set up.
+    var fundingPayeeAccountUID: String?
+    var fundingPayeeName: String?
+}
+
 struct AppSettings: Codable, Hashable, Sendable {
-    var monthlyAllocation: Pence = .pounds(400)
+    static let currentVersion = 2
+
+    var monthlyAllocation: Pence = .pounds(500)
     var rates: RewardRates = .standard
     /// Minutes after midnight. Default 08:00.
     var settlementMinuteOfDay = 8 * 60
@@ -41,16 +82,41 @@ struct AppSettings: Codable, Hashable, Sendable {
     /// Live transfers require production *and* this explicit opt-in.
     var liveTransfersConfirmed = false
     var starling = StarlingConfiguration()
+    var trading212 = Trading212Configuration()
     /// Shows preview data in place of Apple Health and banking. Never moves money.
     var demoMode = false
     /// Days after which a day's rewards are final and cannot change.
     var lockAfterDays = 7
+    var settingsVersion = AppSettings.currentVersion
 
-    // `rates` is deliberately not saved: rates are defined in code, so a rate change can never
-    // make previously saved settings (such as the Starling setup) fail to load.
+    init() {}
+
+    // `rates` is deliberately not saved: rates are defined in code.
     private enum CodingKeys: String, CodingKey {
         case monthlyAllocation, settlementMinuteOfDay, notificationsEnabled
-        case bankingEnvironment, liveTransfersConfirmed, starling, demoMode, lockAfterDays
+        case bankingEnvironment, liveTransfersConfirmed, starling, trading212, demoMode, lockAfterDays
+        case settingsVersion
+    }
+
+    /// Every field is optional when reading, so adding settings never wipes saved ones (such as the Starling setup).
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let defaults = AppSettings()
+        monthlyAllocation = (try? c.decodeIfPresent(Pence.self, forKey: .monthlyAllocation)) ?? defaults.monthlyAllocation
+        settlementMinuteOfDay = (try? c.decodeIfPresent(Int.self, forKey: .settlementMinuteOfDay)) ?? defaults.settlementMinuteOfDay
+        notificationsEnabled = (try? c.decodeIfPresent(Bool.self, forKey: .notificationsEnabled)) ?? defaults.notificationsEnabled
+        bankingEnvironment = (try? c.decodeIfPresent(BankingEnvironment.self, forKey: .bankingEnvironment)) ?? defaults.bankingEnvironment
+        liveTransfersConfirmed = (try? c.decodeIfPresent(Bool.self, forKey: .liveTransfersConfirmed)) ?? defaults.liveTransfersConfirmed
+        starling = (try? c.decodeIfPresent(StarlingConfiguration.self, forKey: .starling)) ?? defaults.starling
+        trading212 = (try? c.decodeIfPresent(Trading212Configuration.self, forKey: .trading212)) ?? defaults.trading212
+        demoMode = (try? c.decodeIfPresent(Bool.self, forKey: .demoMode)) ?? defaults.demoMode
+        lockAfterDays = (try? c.decodeIfPresent(Int.self, forKey: .lockAfterDays)) ?? defaults.lockAfterDays
+        let savedVersion = (try? c.decodeIfPresent(Int.self, forKey: .settingsVersion)) ?? 1
+        // Version 1 used a £400 allowance by default; Vaultality's allowance is £500.
+        if savedVersion < 2 && monthlyAllocation == .pounds(400) {
+            monthlyAllocation = .pounds(500)
+        }
+        settingsVersion = Self.currentVersion
     }
 }
 

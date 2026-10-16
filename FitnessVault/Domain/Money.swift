@@ -30,6 +30,12 @@ struct Pence: Hashable, Comparable, Codable, Sendable, AdditiveArithmetic, Expre
         decimalPounds.formatted(Self.style)
     }
 
+    /// "£500" rather than "£500.00", for round allowance figures.
+    func formatted(wholePounds: Bool) -> String {
+        guard wholePounds, value % 100 == 0 else { return formatted() }
+        return decimalPounds.formatted(Self.style.precision(.fractionLength(0)))
+    }
+
     private static let style = Decimal.FormatStyle.Currency(code: "GBP", locale: Locale(identifier: "en_GB"))
 
     /// Fraction of `total` covered by this amount, clamped to 0...1. Display only.

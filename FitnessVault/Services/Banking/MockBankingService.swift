@@ -44,7 +44,7 @@ struct MockBankingService: BankingService {
     }
 
     func savingsSpaces(accountUID: String) async throws -> [SavingsSpace] {
-        [SavingsSpace(uid: "mock-space", name: "Fitness Vault (demo)", balance: await state.spaceBalance)]
+        [SavingsSpace(uid: "mock-space", name: "Vaultality (demo)", balance: await state.spaceBalance)]
     }
 
     func payeeAccounts() async throws -> [PayeeAccount] {
@@ -53,7 +53,7 @@ struct MockBankingService: BankingService {
 
     func snapshot() async throws -> BankSnapshot {
         BankSnapshot(mainBalance: await state.mainBalance, spaceBalance: await state.spaceBalance,
-                     spaceName: "Fitness Vault (demo)", fetchedAt: .now)
+                     spaceName: "Vaultality (demo)", fetchedAt: .now)
     }
 
     func releaseFromSpace(amount: Pence, transferID: UUID) async throws {

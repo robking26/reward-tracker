@@ -112,7 +112,7 @@ struct StatusNotices: View {
                              tint: Palette.error)
             case .notDetermined where !model.settings.demoMode:
                 NoticeBanner(symbol: "heart.text.square", title: "Connect Apple Health",
-                             message: "Fitness Vault needs to read your activity to calculate what you've earned.",
+                             message: "Vaultality needs to read your activity to calculate what you've earned.",
                              tint: Palette.accent, actionTitle: "Allow Access") {
                     Task { await model.requestHealthAccess() }
                 }

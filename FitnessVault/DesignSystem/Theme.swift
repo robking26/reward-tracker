@@ -3,11 +3,11 @@ import SwiftUI
 /// Colour tokens. The app is predominantly charcoal; accent green is reserved for money earned and progress.
 enum Palette {
     static let background = Color(hex: 0x17191B)
-    static let surface = Color(hex: 0x222527)
-    static let elevated = Color(hex: 0x2C3032)
-    static let border = Color(hex: 0x393E40)
-    static let textPrimary = Color(hex: 0xF7F8F7)
-    static let textSecondary = Color(hex: 0xADB3B1)
+    static let surface = Color(hex: 0x25292A)
+    static let elevated = Color(hex: 0x303536)
+    static let border = Color(hex: 0x3B4142)
+    static let textPrimary = Color(hex: 0xF5F5F3)
+    static let textSecondary = Color(hex: 0xA7B0AA)
     static let textTertiary = Color(hex: 0x7F8884)
     static let accent = Color(hex: 0xC5F277)
     static let success = Color(hex: 0x8DD7AB)

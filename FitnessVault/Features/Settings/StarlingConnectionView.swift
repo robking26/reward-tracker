@@ -121,7 +121,7 @@ struct StarlingConnectionView: View {
         .confirmationDialog("Allow live transfers?", isPresented: $confirmingLive, titleVisibility: .visible) {
             Button("Allow Live Transfers") { store.settings.liveTransfersConfirmed = true }
         } message: {
-            Text("Fitness Vault will move real money from your Savings Space and create payments to your Monzo payee, which you approve in Starling.")
+            Text("Vaultality will move real money from your Savings Space and create payments to your Monzo payee, which you approve in Starling.")
         }
     }
 

@@ -26,7 +26,7 @@ enum Notifier {
 
     private static func post(id: String, body: String) {
         let content = UNMutableNotificationContent()
-        content.title = "Fitness Vault"
+        content.title = "Vaultality"
         content.body = body
         content.sound = .default
         let request = UNNotificationRequest(identifier: id, content: content, trigger: nil)

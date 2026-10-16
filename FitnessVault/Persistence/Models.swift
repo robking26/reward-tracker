@@ -12,6 +12,11 @@ final class MonthlyVault {
     var carriedForwardPence: Int
     var topUpRequiredPence: Int
     var createdAt: Date
+    /// Set once month-end settlement has run. Optional so stores from earlier versions open cleanly.
+    var closedAt: Date?
+    var finalEarnedPence: Int?
+    /// Unearned allowance at month-end, set aside for the gold investment.
+    var forfeitedPence: Int?
 
     init(month: MonthKey, allocation: Pence, openingSpaceBalance: Pence?, plan: VaultFunding.Plan?) {
         self.month = month.description
@@ -224,7 +229,7 @@ enum Persistence {
         do {
             return try ModelContainer(for: schema, configurations: [configuration])
         } catch {
-            fatalError("Could not open the Fitness Vault store: \(error)")
+            fatalError("Could not open the Vaultality store: \(error)")
         }
     }
 }

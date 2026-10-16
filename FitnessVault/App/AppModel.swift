@@ -387,7 +387,7 @@ final class AppModel {
         guard case .pay(let amount) = decision else { return }
 
         let yesterday = today.adding(days: -1, calendar: calendar)
-        let order = PaymentOrder(amount: amount, reference: "Fitness Vault", coversThrough: yesterday,
+        let order = PaymentOrder(amount: amount, reference: "Vaultality", coversThrough: yesterday,
                                  isSandbox: banking.isSandbox)
         context.insert(order)
         audit("payment", "Payment of \(amount.formatted()) to Monzo prepared.", order.id.uuidString)
@@ -536,9 +536,10 @@ final class AppModel {
         let key = month.description
         let descriptor = FetchDescriptor<MonthlyVault>(predicate: #Predicate { $0.month == key })
         if let existing = try? context.fetch(descriptor).first {
-            // An untouched current month follows the allocation setting.
-            if month == currentMonth, existing.allocationPence != settings.monthlyAllocation.value,
-               ledgerEntries(month: month).isEmpty {
+            // The open month follows the allowance setting; closed months never change.
+            if month == currentMonth, existing.closedAt == nil,
+               existing.allocationPence != settings.monthlyAllocation.value {
+                audit("vault", "\(month) allowance changed from \(existing.allocation.formatted()) to \(settings.monthlyAllocation.formatted()).")
                 existing.allocationPence = settings.monthlyAllocation.value
             }
             return existing
