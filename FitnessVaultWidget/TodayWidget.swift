@@ -1,7 +1,8 @@
 import SwiftUI
 import WidgetKit
 
-/// Money earned today, steps and Activity rings, in small (2×2), medium (4×2) and large (4×4) sizes.
+/// Money earned today, steps and Activity rings: small (2×2), medium (4×2) and large (4×4)
+/// Home Screen sizes, plus circular, rectangular and inline Lock Screen widgets.
 struct TodayWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: WidgetSnapshotStore.widgetKind, provider: TodayProvider()) { entry in
@@ -10,7 +11,10 @@ struct TodayWidget: Widget {
         }
         .configurationDisplayName("Today")
         .description("Money earned today, your steps and Activity rings.")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .supportedFamilies([
+            .systemSmall, .systemMedium, .systemLarge,
+            .accessoryCircular, .accessoryRectangular, .accessoryInline,
+        ])
     }
 }
 
@@ -66,10 +70,65 @@ struct TodayWidgetView: View {
             switch family {
             case .systemSmall: small
             case .systemMedium: medium
+            case .accessoryCircular: lockCircular
+            case .accessoryRectangular: lockRectangular
+            case .accessoryInline: lockInline
             default: large
             }
         }
         .foregroundStyle(WidgetPalette.textPrimary)
+    }
+
+    // MARK: Lock Screen
+
+    /// Today's earnings inside a ring showing how much of the month's vault is unlocked.
+    private var lockCircular: some View {
+        Gauge(value: monthProgress) {
+            Image(systemName: "sterlingsign")
+        } currentValueLabel: {
+            Text(current.map { WidgetMoney.format(pence: $0.earnedTodayPence) } ?? "–")
+                .monospacedDigit()
+                .minimumScaleFactor(0.4)
+        }
+        .gaugeStyle(.accessoryCircularCapacity)
+        .widgetAccentable()
+        .accessibilityLabel("Earned today \(earnedText). \(Int(monthProgress * 100)) percent of this month unlocked.")
+    }
+
+    private var lockRectangular: some View {
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(earnedText)
+                    .font(.headline)
+                    .monospacedDigit()
+                    .widgetAccentable()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                Text(current == nil ? "Open app to update" : "earned today")
+                    .font(.caption)
+                    .lineLimit(1)
+                Label(stepsText + " steps", systemImage: "figure.walk")
+                    .font(.caption)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            ActivityRingsView(rings: current?.rings, lineWidth: 5, spacing: 1)
+                .frame(width: 46, height: 46)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var lockInline: some View {
+        // Inline widgets show a single line of text and one image only.
+        Label(current == nil ? "Open Fitness Vault" : "\(earnedText) today · \(stepsText) steps",
+              systemImage: "sterlingsign.circle")
+    }
+
+    private var monthProgress: Double {
+        guard let snapshot, snapshot.monthAllocationPence > 0 else { return 0 }
+        return min(1, Double(snapshot.monthEarnedPence) / Double(snapshot.monthAllocationPence))
     }
 
     // MARK: Small (2×2)
@@ -313,6 +372,18 @@ extension WidgetSnapshot {
 }
 
 #Preview(as: .systemMedium) {
+    TodayWidget()
+} timeline: {
+    TodayEntry(date: .now, snapshot: .placeholder)
+}
+
+#Preview(as: .accessoryRectangular) {
+    TodayWidget()
+} timeline: {
+    TodayEntry(date: .now, snapshot: .placeholder)
+}
+
+#Preview(as: .accessoryCircular) {
     TodayWidget()
 } timeline: {
     TodayEntry(date: .now, snapshot: .placeholder)
