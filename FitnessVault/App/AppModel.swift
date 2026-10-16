@@ -18,6 +18,8 @@ final class AppModel {
     let settingsStore: SettingsStore
     let network: NetworkMonitor
     let calendar: Calendar
+    /// Held so the store outlives every use of `context`: a context doesn't keep its container alive.
+    private let container: ModelContainer
     let context: ModelContext
     private let liveHealth: HealthDataProviding
     private let demoHealth: HealthDataProviding
@@ -68,6 +70,7 @@ final class AppModel {
         calendar: Calendar = .current,
         now: @escaping () -> Date = { .now }
     ) {
+        self.container = container
         context = container.mainContext
         self.settingsStore = settingsStore
         self.liveHealth = liveHealth
