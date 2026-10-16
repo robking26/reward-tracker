@@ -14,12 +14,32 @@ final class RewardEngineTests: XCTestCase {
 
     // Examples from the specification, section 6.2.
 
-    func testStepsUseWholeIntervalsOnly() {
-        // 1p per 20 steps.
-        XCTAssertEqual(reward(.steps) { $0.steps = 19 }, .zero)
-        XCTAssertEqual(reward(.steps) { $0.steps = 20 }, Pence(1))
-        XCTAssertEqual(reward(.steps) { $0.steps = 259 }, Pence(12))
-        XCTAssertEqual(reward(.steps) { $0.steps = 10_000 }, Pence(500))
+    func testStepsBelowBaselineEarnNothing() {
+        XCTAssertEqual(reward(.steps) { $0.steps = 0 }, .zero)
+        XCTAssertEqual(reward(.steps) { $0.steps = 2_500 }, .zero)
+        XCTAssertEqual(reward(.steps) { $0.steps = 2_509 }, .zero)
+    }
+
+    func testStepsAboveBaselineEarnOnePennyPerTen() {
+        XCTAssertEqual(reward(.steps) { $0.steps = 2_510 }, Pence(1))
+        XCTAssertEqual(reward(.steps) { $0.steps = 2_519 }, Pence(1), "Partial intervals never round up")
+        XCTAssertEqual(reward(.steps) { $0.steps = 5_000 }, Pence(250))
+        XCTAssertEqual(reward(.steps) { $0.steps = 10_000 }, Pence(750))
+    }
+
+    func testStepsCappedAtTenPoundsADay() {
+        XCTAssertEqual(rates.stepsForCap, 12_500)
+        XCTAssertEqual(reward(.steps) { $0.steps = 12_500 }, .pounds(10))
+        XCTAssertEqual(reward(.steps) { $0.steps = 30_000 }, .pounds(10))
+    }
+
+    func testSavedSettingsFromOlderVersionsStillLoad() throws {
+        // A settings blob saved before rates stopped being stored must still decode, keeping the Starling setup.
+        let old = #"{"monthlyAllocation":{"value":40000},"rates":{"stepsPerPenny":50},"nutrition":{"proteinGrams":160,"minimumKilocalories":1900,"maximumKilocalories":2500},"settlementMinuteOfDay":480,"notificationsEnabled":true,"saveMealsToHealth":true,"keepMealThumbnails":true,"mealAnalysisMode":"remote","mealAnalysisEndpoint":"https://example.com/analyse","bankingEnvironment":"sandbox","liveTransfersConfirmed":false,"starling":{"accountUID":"acc"},"demoMode":false,"lockAfterDays":7}"#
+        let decoded = try JSONDecoder().decode(AppSettings.self, from: Data(old.utf8))
+        XCTAssertEqual(decoded.starling.accountUID, "acc")
+        XCTAssertEqual(decoded.nutrition.proteinGrams, 160)
+        XCTAssertEqual(decoded.rates, .standard, "Rates always come from code, never from saved settings")
     }
 
     func testSwimming() {
@@ -97,7 +117,7 @@ final class RewardEngineTests: XCTestCase {
         metrics.exerciseSeconds = 1_800
         metrics.activeKilocalories = 500
         let total = RewardEngine.total(RewardEngine.rewards(for: metrics, rates: rates, targets: targets, includeNutritionTargets: false))
-        XCTAssertEqual(total, Pence(500 + 180 + 50))
+        XCTAssertEqual(total, Pence(750 + 180 + 50))
     }
 
     func testDeterministic() {

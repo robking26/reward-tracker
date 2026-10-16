@@ -43,7 +43,9 @@ enum RewardEngine {
         includeNutritionTargets: Bool
     ) -> [RewardCategory: Pence] {
         var result: [RewardCategory: Pence] = [:]
-        result[.steps] = intervals(metrics.steps, per: rates.stepsPerPenny)
+        result[.steps] = min(
+            intervals(metrics.steps - max(0, rates.stepsBaseline), per: rates.stepsPerPenny),
+            rates.stepsDailyCap.nonNegative)
         result[.swimming] = intervals(metrics.swimmingMetres, per: rates.swimmingMetresPerPenny)
         result[.strength] = intervals(metrics.strengthSeconds, per: rates.strengthSecondsPerPenny)
         result[.exercise] = intervals(metrics.exerciseSeconds, per: rates.exerciseSecondsPerPenny)

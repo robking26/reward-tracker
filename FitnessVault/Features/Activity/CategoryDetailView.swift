@@ -102,7 +102,9 @@ struct CategoryDetailView: View {
 
     private var explanation: String {
         switch category {
-        case .steps, .activeEnergy, .flights:
+        case .steps:
+            "Steps beyond the first \(model.settings.rates.stepsBaseline.formatted()) each day earn money, up to \(model.settings.rates.stepsDailyCap.formatted()) a day (reached at \(model.settings.rates.stepsForCap.formatted()) steps). Only whole intervals count."
+        case .activeEnergy, .flights:
             "Calculated from your cumulative daily total in Apple Health. Only whole intervals count; partial progress carries on through the day."
         case .exercise:
             "Uses Apple's Exercise minutes from Apple Health, as recorded by your iPhone and Apple Watch. Heart rate alone never counts."

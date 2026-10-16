@@ -54,7 +54,11 @@ enum RewardCategory: String, CaseIterable, Codable, Sendable, Identifiable {
 /// Reward rates. Each rate is "one penny per N units" or a fixed amount, so every reward
 /// is a whole number of completed intervals and partial progress is never rounded up.
 struct RewardRates: Codable, Hashable, Sendable {
-    var stepsPerPenny = 20
+    var stepsPerPenny = 10
+    /// Steps up to this many each day earn nothing; only steps beyond it count.
+    var stepsBaseline = 2_500
+    /// The most steps can earn in a day.
+    var stepsDailyCap: Pence = 1_000
     var swimmingMetresPerPenny = 5
     var strengthSecondsPerPenny = 6
     var exerciseSecondsPerPenny = 10
@@ -69,6 +73,9 @@ struct RewardRates: Codable, Hashable, Sendable {
     /// The current rates. Days that are already final keep the rates they were calculated with.
     static let standard = RewardRates()
 
+    /// The step count at which the daily steps cap is reached.
+    var stepsForCap: Int { stepsBaseline + stepsDailyCap.value * stepsPerPenny }
+
     /// Whether a category currently earns anything.
     func isRewarded(_ category: RewardCategory) -> Bool {
         switch category {
@@ -82,7 +89,7 @@ struct RewardRates: Codable, Hashable, Sendable {
 
     func rateDescription(for category: RewardCategory) -> String {
         switch category {
-        case .steps: "1p per \(stepsPerPenny) steps"
+        case .steps: "1p per \(stepsPerPenny) steps after \(stepsBaseline.formatted()), up to \(stepsDailyCap.formatted()) a day"
         case .swimming: "1p per \(swimmingMetresPerPenny) m"
         case .strength: "1p per \(strengthSecondsPerPenny) seconds"
         case .exercise: "1p per \(exerciseSecondsPerPenny) seconds"

@@ -60,6 +60,14 @@ struct AppSettings: Codable, Hashable, Sendable {
     var demoMode = false
     /// Days after which a day's rewards are final and cannot change.
     var lockAfterDays = 7
+
+    // `rates` is deliberately not saved: rates are defined in code, so a rate change can never
+    // make previously saved settings (Starling setup, targets) fail to load.
+    private enum CodingKeys: String, CodingKey {
+        case monthlyAllocation, nutrition, settlementMinuteOfDay, notificationsEnabled
+        case saveMealsToHealth, keepMealThumbnails, mealAnalysisMode, mealAnalysisEndpoint
+        case bankingEnvironment, liveTransfersConfirmed, starling, demoMode, lockAfterDays
+    }
 }
 
 /// Persists `AppSettings` in UserDefaults. Secrets are never stored here.
@@ -77,8 +85,6 @@ final class SettingsStore {
         if let data = defaults.data(forKey: Self.key),
            let decoded = try? JSONDecoder().decode(AppSettings.self, from: data) {
             settings = decoded
-            // Rates are defined in code, not by the user, so a saved copy of older rates is replaced.
-            settings.rates = .standard
         } else {
             settings = AppSettings()
         }

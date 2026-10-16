@@ -49,7 +49,7 @@ Tokens are stored only in the iPhone's Keychain, marked device-only. They are ne
 
 | Activity | Reward |
 |---|---|
-| Steps | 1p per 20 steps |
+| Steps | Nothing for the first 2,500 steps, then 1p per 10 steps, up to £10 a day (reached at 12,500 steps) |
 | Swimming | 1p per 5 m |
 | Strength training | 1p per 6 seconds (strength workouts only) |
 | Exercise minutes | 1p per 10 seconds (Apple Exercise minutes) |

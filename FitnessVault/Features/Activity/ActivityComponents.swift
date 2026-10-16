@@ -71,7 +71,7 @@ enum DailyGoals {
     static func progress(_ category: RewardCategory, _ metrics: DailyMetrics, settings: AppSettings) -> Double? {
         func ratio(_ value: Int, _ goal: Int) -> Double { goal > 0 ? min(1, Double(value) / Double(goal)) : 0 }
         switch category {
-        case .steps: return ratio(metrics.steps, 10_000)
+        case .steps: return ratio(metrics.steps, settings.rates.stepsForCap)
         case .exercise: return ratio(metrics.exerciseSeconds, 30 * 60)
         case .strength: return ratio(metrics.strengthSeconds, 45 * 60)
         case .activeEnergy: return ratio(metrics.activeKilocalories, 600)
