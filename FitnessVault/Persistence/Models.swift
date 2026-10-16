@@ -150,6 +150,8 @@ final class BankTransfer {
     var updatedAt: Date
     var isSandbox: Bool
     var note: String?
+    /// nil for releases of earned money; "gold" when moving forfeited money out for investment.
+    var purpose: String?
 
     init(id: UUID = UUID(), amount: Pence, isSandbox: Bool) {
         self.id = id
@@ -181,6 +183,8 @@ final class PaymentOrder {
     var updatedAt: Date
     var isSandbox: Bool
     var lastStatusDetail: String?
+    /// nil for Monzo payouts of earnings; "goldFunding" for sending forfeited money to Trading 212.
+    var purpose: String?
 
     init(id: UUID = UUID(), amount: Pence, reference: String, coversThrough: DayKey, isSandbox: Bool) {
         self.id = id
@@ -198,6 +202,47 @@ final class PaymentOrder {
         get { PaymentStatus(rawValue: statusRaw) ?? .reconciliationRequired }
         set { statusRaw = newValue.rawValue; updatedAt = .now }
     }
+}
+
+/// A month's forfeited spending and its journey into a gold ETC. One per month, at most.
+@Model
+final class GoldAllocation {
+    @Attribute(.unique) var month: String
+    var id: UUID
+    var allocatedPence: Int
+    var statusRaw: String
+    var createdAt: Date
+    var updatedAt: Date
+    var lastDetail: String?
+    /// Starling transfer out of the Space and payment to Trading 212, if the app made them.
+    var fundingTransferID: UUID?
+    var fundingPaymentID: UUID?
+    var isDemoBroker: Bool?
+    var ticker: String?
+    /// Decimal strings, so quantities are stored exactly.
+    var orderQuantity: String?
+    var orderID: Int64?
+    var orderPlacedAt: Date?
+    var filledQuantity: String?
+    var filledValuePence: Int?
+
+    init(month: MonthKey, allocated: Pence) {
+        self.month = month.description
+        id = UUID()
+        allocatedPence = allocated.value
+        statusRaw = InvestmentStatus.awaitingFunding.rawValue
+        createdAt = .now
+        updatedAt = .now
+    }
+
+    var allocated: Pence { Pence(allocatedPence) }
+    var monthKey: MonthKey? { MonthKey(string: month) }
+    var status: InvestmentStatus {
+        get { InvestmentStatus(rawValue: statusRaw) ?? .reconciliationRequired }
+        set { statusRaw = newValue.rawValue; updatedAt = .now }
+    }
+    /// Uninvested remainder left as cash in Trading 212 after the purchase.
+    var residual: Pence? { filledValuePence.map { (allocated - Pence($0)).nonNegative } }
 }
 
 /// Append-only audit trail for every financial event.
@@ -221,7 +266,7 @@ final class AuditEvent {
 enum Persistence {
     static let schema = Schema([
         MonthlyVault.self, DailyActivity.self, RewardLedgerEntry.self, Meal.self,
-        HealthSyncState.self, BankTransfer.self, PaymentOrder.self, AuditEvent.self,
+        HealthSyncState.self, BankTransfer.self, PaymentOrder.self, AuditEvent.self, GoldAllocation.self,
     ])
 
     static func makeContainer(inMemory: Bool = false) -> ModelContainer {

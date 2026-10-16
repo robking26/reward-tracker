@@ -102,10 +102,9 @@ struct StarlingClient: BankingService {
         if response.success == false { throw BankingError.http(200, "Starling declined the Savings Space transfer.") }
     }
 
-    func initiatePayment(amount: Pence, externalID: UUID, reference: String) async throws -> PaymentInitiationResult {
+    func initiatePayment(amount: Pence, externalID: UUID, reference: String, payeeAccountUID: String) async throws -> PaymentInitiationResult {
         try guardMoneyMovement()
-        guard let accountUID = configuration.accountUID, let categoryUID = configuration.defaultCategoryUID,
-              let payeeAccountUID = configuration.payeeAccountUID
+        guard let accountUID = configuration.accountUID, let categoryUID = configuration.defaultCategoryUID
         else { throw BankingError.incompleteSetup }
 
         struct Body: Encodable {

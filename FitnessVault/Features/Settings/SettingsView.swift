@@ -32,10 +32,17 @@ struct SettingsView: View {
                     StatusRow(title: "Monzo payee", symbol: "arrow.right.circle",
                               status: model.settings.starling.payeeName ?? "Not chosen",
                               isGood: model.settings.starling.payeeAccountUID != nil)
+                    NavigationLink {
+                        Trading212ConnectionView()
+                    } label: {
+                        StatusRow(title: "Trading 212", symbol: "chart.line.uptrend.xyaxis",
+                                  status: model.settings.demoMode ? "Demo" : (model.isTrading212Connected ? model.settings.trading212.environment.title : "Not connected"),
+                                  isGood: model.isTrading212Connected)
+                    }
                 } header: {
                     Text("Money")
                 } footer: {
-                    Text("Allowance, payouts, payment history, previous months and reward rates.")
+                    Text("Allowance, payouts, gold investments, payment history, previous months and reward rates.")
                 }
 
                 Section("Apple Health") {

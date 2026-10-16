@@ -74,7 +74,8 @@ protocol BankingService: Sendable {
     func releaseFromSpace(amount: Pence, transferID: UUID) async throws
     /// Moves money into the Savings Space. Used for the monthly top-up.
     func addToSpace(amount: Pence, transferID: UUID) async throws
-    /// Creates one payment to the existing Monzo payee. It still needs approval in the Starling app.
-    func initiatePayment(amount: Pence, externalID: UUID, reference: String) async throws -> PaymentInitiationResult
+    /// Creates one payment to an existing payee (Monzo, or Trading 212 for gold funding).
+    /// It still needs approval in the Starling app.
+    func initiatePayment(amount: Pence, externalID: UUID, reference: String, payeeAccountUID: String) async throws -> PaymentInitiationResult
     func paymentStatus(paymentOrderUID: String) async throws -> PaymentStatus
 }

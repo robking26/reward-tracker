@@ -18,11 +18,12 @@ final class AppModel {
     let settingsStore: SettingsStore
     let network: NetworkMonitor
     let calendar: Calendar
-    private let context: ModelContext
+    let context: ModelContext
     private let liveHealth: HealthDataProviding
     private let demoHealth: HealthDataProviding
     private let demoBank: BankingService
-    private let now: () -> Date
+    let demoBroker: InvestingService
+    let now: () -> Date
 
     // MARK: Derived state
 
@@ -47,6 +48,10 @@ final class AppModel {
     /// Today's Activity rings from Apple Health, if available.
     private(set) var todayRings: ActivityRingsSnapshot?
     private var lastWidgetSnapshot: WidgetSnapshot?
+    /// Month-end gold allocations, newest first.
+    var goldAllocations: [GoldAllocation] = []
+    /// The latest problem with Trading 212 or gold funding, shown in Money & Vault.
+    var goldError: String?
 
     var settings: AppSettings { settingsStore.settings }
     var today: DayKey { DayKey(now(), calendar: calendar) }
@@ -59,6 +64,7 @@ final class AppModel {
         liveHealth: HealthDataProviding = HealthKitService(),
         demoHealth: HealthDataProviding = MockHealthService(),
         demoBank: BankingService = MockBankingService(),
+        demoBroker: InvestingService = MockInvestingService(),
         calendar: Calendar = .current,
         now: @escaping () -> Date = { .now }
     ) {
@@ -67,6 +73,7 @@ final class AppModel {
         self.liveHealth = liveHealth
         self.demoHealth = demoHealth
         self.demoBank = demoBank
+        self.demoBroker = demoBroker
         self.calendar = calendar
         self.now = now
         network = NetworkMonitor()
@@ -166,6 +173,7 @@ final class AppModel {
             }
             healthSyncError = nil
             loadState = .loaded
+            closeFinishedMonths()
         } catch {
             state.lastError = error.localizedDescription
             healthSyncError = "Couldn't read Apple Health. \(error.localizedDescription)"
@@ -267,7 +275,10 @@ final class AppModel {
         do {
             bankSnapshot = try await banking.snapshot()
             bankError = nil
-            let reserved = transfers().filter { $0.status == .requested }.sum(\.amount)
+            // Pending releases and gold money not yet sent out are both still in the Space but already spoken for;
+            // forfeited money must never count towards a future allowance.
+            let reserved = allTransfers().filter { $0.status == .requested }.sum(\.amount)
+                + goldAllocationRecords().filter { $0.status.isStillInSpace }.sum(\.allocated)
             fundingPlan = VaultFunding.plan(allocation: settings.monthlyAllocation,
                                             spaceBalance: bankSnapshot?.spaceBalance ?? .zero,
                                             reservedForPendingReleases: reserved)
@@ -288,6 +299,7 @@ final class AppModel {
 
         await checkPayments(using: banking)
         await retryRequestedTransfers(using: banking)
+        await advanceGold()
 
         let due = force || isSettlementDue
         await release(using: banking, force: due)
@@ -318,7 +330,7 @@ final class AppModel {
     }
 
     private func checkPayments(using banking: BankingService) async {
-        for payment in paymentOrders() where payment.status.isUnresolved {
+        for payment in allPaymentOrders() where payment.status.isUnresolved {
             guard let orderUID = payment.starlingPaymentOrderUID else {
                 if payment.status != .reconciliationRequired {
                     payment.status = .reconciliationRequired
@@ -342,7 +354,7 @@ final class AppModel {
     }
 
     private func retryRequestedTransfers(using banking: BankingService) async {
-        for transfer in transfers() where transfer.status == .requested {
+        for transfer in allTransfers() where transfer.status == .requested {
             // Re-sending with the same transfer UID is idempotent at Starling.
             await perform(transfer, using: banking)
         }
@@ -361,7 +373,7 @@ final class AppModel {
         await perform(transfer, using: banking)
     }
 
-    private func perform(_ transfer: BankTransfer, using banking: BankingService) async {
+    func perform(_ transfer: BankTransfer, using banking: BankingService) async {
         do {
             try await banking.releaseFromSpace(amount: transfer.amount, transferID: transfer.id)
             transfer.status = .confirmed
@@ -394,7 +406,10 @@ final class AppModel {
         save()
 
         do {
-            switch try await banking.initiatePayment(amount: amount, externalID: order.id, reference: order.reference) {
+            let monzo = settings.starling.payeeAccountUID ?? (settings.demoMode ? "mock-payee-account" : "")
+            guard !monzo.isEmpty else { throw BankingError.incompleteSetup }
+            switch try await banking.initiatePayment(amount: amount, externalID: order.id, reference: order.reference,
+                                                     payeeAccountUID: monzo) {
             case .accepted(let uid):
                 order.starlingPaymentOrderUID = uid
                 order.status = .awaitingApproval
@@ -485,6 +500,7 @@ final class AppModel {
 
         vault = VaultSummary(month: month, allocation: vaultRecord.allocation, earned: monthEntries.sum(\.amount))
         payments = paymentOrders()
+        goldAllocations = goldAllocationRecords()
         flow = MoneyFlow(earned: totalEarned(),
                          transfers: transfers().map { (amount: $0.amount, status: $0.status) },
                          payments: payments.map { (amount: $0.amount, status: $0.status) })
@@ -532,7 +548,7 @@ final class AppModel {
 
     // MARK: Store access
 
-    private func ensureVault(_ month: MonthKey) -> MonthlyVault {
+    func ensureVault(_ month: MonthKey) -> MonthlyVault {
         let key = month.description
         let descriptor = FetchDescriptor<MonthlyVault>(predicate: #Predicate { $0.month == key })
         if let existing = try? context.fetch(descriptor).first {
@@ -552,7 +568,7 @@ final class AppModel {
         return created
     }
 
-    private func vaults() -> [MonthlyVault] {
+    func vaults() -> [MonthlyVault] {
         (try? context.fetch(FetchDescriptor<MonthlyVault>(sortBy: [SortDescriptor(\.month, order: .reverse)]))) ?? []
     }
 
@@ -561,31 +577,37 @@ final class AppModel {
         return try? context.fetch(FetchDescriptor<DailyActivity>(predicate: #Predicate { $0.day == key })).first
     }
 
-    private func ledgerEntries(month: MonthKey) -> [RewardLedgerEntry] {
+    func ledgerEntries(month: MonthKey) -> [RewardLedgerEntry] {
         let key = month.description
         return (try? context.fetch(FetchDescriptor<RewardLedgerEntry>(predicate: #Predicate { $0.month == key }))) ?? []
     }
 
-    private func transfers() -> [BankTransfer] {
+    /// Releases of earned money only (gold funding transfers are kept separate).
+    func transfers() -> [BankTransfer] { allTransfers().filter { $0.purpose == nil } }
+
+    func allTransfers() -> [BankTransfer] {
         (try? context.fetch(FetchDescriptor<BankTransfer>(sortBy: [SortDescriptor(\.createdAt)]))) ?? []
     }
 
-    private func paymentOrders() -> [PaymentOrder] {
+    /// Monzo payouts of earnings only (gold funding payments are kept separate).
+    func paymentOrders() -> [PaymentOrder] { allPaymentOrders().filter { $0.purpose == nil } }
+
+    func allPaymentOrders() -> [PaymentOrder] {
         (try? context.fetch(FetchDescriptor<PaymentOrder>(sortBy: [SortDescriptor(\.createdAt, order: .reverse)]))) ?? []
     }
 
-    private func syncState() -> HealthSyncState {
+    func syncState() -> HealthSyncState {
         if let state = try? context.fetch(FetchDescriptor<HealthSyncState>()).first { return state }
         let state = HealthSyncState()
         context.insert(state)
         return state
     }
 
-    private func audit(_ kind: String, _ message: String, _ relatedID: String? = nil) {
+    func audit(_ kind: String, _ message: String, _ relatedID: String? = nil) {
         context.insert(AuditEvent(kind: kind, message: message, relatedID: relatedID))
     }
 
-    private func save() {
+    func save() {
         do { try context.save() } catch { healthSyncError = "Couldn't save: \(error.localizedDescription)" }
     }
 
@@ -599,10 +621,10 @@ final class AppModel {
         for entry in (try? context.fetch(FetchDescriptor<RewardLedgerEntry>(sortBy: [SortDescriptor(\.createdAt)]))) ?? [] {
             rows.append("reward,\(entry.id),\(iso.string(from: entry.createdAt)),\(entry.day),\(entry.categoryRaw),\(money(entry.amount))")
         }
-        for transfer in transfers() {
+        for transfer in allTransfers() {
             rows.append("release,\(transfer.id),\(iso.string(from: transfer.createdAt)),,\(transfer.statusRaw),\(money(transfer.amount))")
         }
-        for payment in paymentOrders() {
+        for payment in allPaymentOrders() {
             rows.append("payment,\(payment.id),\(iso.string(from: payment.createdAt)),\(payment.coversThroughDay),\(payment.statusRaw),\(money(payment.amount))")
         }
         let url = FileManager.default.temporaryDirectory.appending(path: "FitnessVault-history.csv")

@@ -64,7 +64,7 @@ struct MockBankingService: BankingService {
         try await state.move(amount, toMain: false, id: transferID)
     }
 
-    func initiatePayment(amount: Pence, externalID: UUID, reference: String) async throws -> PaymentInitiationResult {
+    func initiatePayment(amount: Pence, externalID: UUID, reference: String, payeeAccountUID: String) async throws -> PaymentInitiationResult {
         let id = "mock-order-\(externalID.uuidString.prefix(8))"
         await state.createPayment(id)
         return .accepted(paymentOrderUID: id)

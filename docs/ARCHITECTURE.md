@@ -10,6 +10,8 @@
 | Ledger | `Domain/Ledger.swift` | Append-only lines with stable IDs. Reconciles towards calculated totals, applies the monthly cap and skips final days. |
 | Settlement | `Domain/MoneyMovement.swift` | Pure rules for releases, payments, money-flow states and monthly funding. |
 | Health | `Services/Health/` | `HealthDataProviding` protocol, plus `HealthKitService` (live) and `MockHealthService`. |
+| Investing | `Services/Investing/` | `InvestingService` protocol, plus `Trading212Client` (demo/live, Keychain credentials) and `MockInvestingService`. Order requests are never retried after an unknown outcome. |
+| Month-end and gold | `App/AppModel+Gold.swift`, `Domain/Investing.swift` | Closes finished months once, creates one `GoldAllocation` per month, and drives funding, ordering and reconciliation. |
 | Banking | `Services/Banking/` | `BankingService` protocol, plus `StarlingClient` and `MockBankingService`. |
 | Persistence | `Persistence/` | SwiftData: `MonthlyVault`, `DailyActivity`, `RewardLedgerEntry`, `Meal` (retired, kept so existing stores open), `HealthSyncState`, `BankTransfer`, `PaymentOrder`, `AuditEvent`. Settings are `AppSettings` (Codable) in `UserDefaults`; secrets go in the Keychain. |
 | Notifications | `Services/Platform/Notifications.swift` | Local notifications only. |

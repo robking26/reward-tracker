@@ -63,6 +63,11 @@ struct MoneyVaultView: View {
                     PaymentHistory(payments: model.payments)
                 }
 
+                VStack(alignment: .leading, spacing: Spacing.s) {
+                    SectionHeader("Gold investment")
+                    GoldSection()
+                }
+
                 if !model.monthHistory.isEmpty {
                     VStack(alignment: .leading, spacing: Spacing.s) {
                         SectionHeader("Previous months")
@@ -361,7 +366,7 @@ struct MonthHistoryRow: View {
                     .foregroundStyle(Palette.textSecondary)
             }
             ThinProgressBar(progress: summary.progress, height: 4)
-            Text("\(summary.remainingToUnlock.formatted()) unearned, kept in Starling")
+            Text(summary.month < MonthKey(.now) ? "\(summary.remainingToUnlock.formatted()) forfeited from spending, set aside for gold" : "\(summary.remainingToUnlock.formatted()) still to unlock")
                 .font(.caption)
                 .foregroundStyle(Palette.textTertiary)
         }
@@ -378,7 +383,8 @@ struct HowMoneyMoves: View {
                 step("2", "Released", "Earned money moves from your Savings Space to your Starling balance.")
                 step("3", "Awaiting approval", "Each morning one payment to Monzo is created. Starling asks you to approve it in their app. Nothing is sent until you do.")
                 step("4", "Paid", "Shown only after Starling confirms the payment completed.")
-                Text("Money you don't earn stays in Starling. It's never forfeited, and next month only the shortfall is topped up.")
+                step("5", "Gold", "At month-end, whatever wasn't earned is forfeited from spending and set aside for a gold ETC in Trading 212. It's still your money, invested rather than spent, and it never rolls into next month's allowance.")
+                Text("Funding Trading 212 needs your approval in the Starling app, and nothing is shown as invested until Trading 212 confirms the purchase.")
                     .font(.footnote)
                     .foregroundStyle(Palette.textSecondary)
                     .padding(.top, Spacing.xs)

@@ -7,6 +7,18 @@ enum Keychain {
     enum Item: String {
         case starlingSandboxToken = "starling.token.sandbox"
         case starlingProductionToken = "starling.token.production"
+        case trading212DemoKey = "trading212.key.demo"
+        case trading212DemoSecret = "trading212.secret.demo"
+        case trading212LiveKey = "trading212.key.live"
+        case trading212LiveSecret = "trading212.secret.live"
+
+        static func trading212Key(for environment: TradingEnvironment) -> Item {
+            environment == .demo ? .trading212DemoKey : .trading212LiveKey
+        }
+
+        static func trading212Secret(for environment: TradingEnvironment) -> Item {
+            environment == .demo ? .trading212DemoSecret : .trading212LiveSecret
+        }
 
         static func starlingToken(for environment: BankingEnvironment) -> Item {
             environment == .sandbox ? .starlingSandboxToken : .starlingProductionToken

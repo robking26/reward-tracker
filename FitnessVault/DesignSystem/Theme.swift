@@ -56,3 +56,14 @@ extension PaymentStatus {
         }
     }
 }
+
+extension InvestmentStatus {
+    var tint: Color {
+        switch self {
+        case .purchased: Palette.success
+        case .failed: Palette.error
+        case .cashAvailable: Palette.accent
+        default: Palette.warning
+        }
+    }
+}

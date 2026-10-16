@@ -80,6 +80,31 @@ docs/              Architecture and roadmap
 .github/workflows/     iOS build and tests
 ```
 
+## Month-end and gold (Trading 212)
+
+At month-end, Vaultality calculates `forfeited = max(0, allowance − earned)`. It closes the month on the 2nd, after a fresh Apple Health sync, so late activity still counts. From then on the month is locked, and the forfeited amount becomes a **gold allocation** in **Settings → Money & Vault → Gold investment**. It's never added to a future allowance.
+
+Each allocation moves through separate, explicit steps:
+
+| Status | Meaning |
+|---|---|
+| Awaiting funding | Set aside; still in the Starling Savings Space |
+| Funding processing | Moved out of the Space and sent to Trading 212. A Starling payment needs your approval in the Starling app |
+| Cash available | Trading 212 shows the cash. Nothing bought yet |
+| Order submitted / Partially filled | Trading 212 accepted the buy order |
+| Purchased | Trading 212 reports it filled. Any remainder stays as cash in Trading 212 |
+| Needs checking | An order request's outcome is unknown. Nothing else is sent until it's resolved |
+
+**Setting up Trading 212:**
+
+1. In Trading 212, use an Invest or Stocks ISA account and switch to **Practice** for the demo. Create an API key under Settings → API (Beta).
+2. In Vaultality, open **Settings → Trading 212**, keep **Demo**, paste the key (and secret, if shown), then tap **Test Connection**.
+3. Search for a physically backed gold ETC priced in GBP or GBX, then select and **confirm** it.
+4. Optional: save Trading 212's bank details (with your deposit reference) as a payee in Starling, and choose it under **Funding from Starling**. Vaultality then prepares the transfer, and you approve it in Starling.
+5. **Buy automatically** is off by default. **Allow live trading** appears only in the Live environment and needs a confirmed instrument.
+
+Trading 212 market orders take a share quantity, not a £ amount. Vaultality keeps back 2% for price movement and fees, rounds down to 0.01 of a share, and never spends more than the allocation or the free cash. If you don't already hold the ETC, enter the current price shown in Trading 212 when buying, because the API has no price quote. The Trading 212 API is in beta, so check the whole flow in demo before going live.
+
 ## Home-screen widget
 
 The widget comes in three sizes:
