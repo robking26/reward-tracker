@@ -531,6 +531,19 @@ final class AppModel {
             .sorted { $0.earnedPence > $1.earnedPence }
     }
 
+    /// Today's headline Apple Health numbers for the widget.
+    private func widgetMetrics() -> [WidgetMetric] {
+        let metrics = todayMetrics
+        let shown: [(RewardCategory, String, String)] = [
+            (.steps, "Steps", ""), (.exercise, "Exercise", "min"),
+            (.activeEnergy, "Energy", "kcal"), (.flights, "Flights", ""),
+        ]
+        return shown.map { category, title, unit in
+            WidgetMetric(id: category.rawValue, title: title, symbol: category.symbol,
+                         value: MeasureFormat.measurement(category, metrics).value, unit: unit)
+        }
+    }
+
     /// Shares today's numbers with the home-screen widget, refreshing it only when something changed.
     private func publishWidgetSnapshot() {
         let snapshot = WidgetSnapshot(
@@ -539,6 +552,7 @@ final class AppModel {
             steps: todayMetrics.steps,
             breakdown: widgetBreakdown(),
             rings: todayRings,
+            metrics: widgetMetrics(),
             monthEarnedPence: vault.earned.value,
             monthAllocationPence: vault.allocation.value,
             isDemo: settings.demoMode,

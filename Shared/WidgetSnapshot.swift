@@ -27,6 +27,17 @@ struct WidgetCategoryLine: Codable, Hashable, Sendable, Identifiable {
     var earnedPence: Int
 }
 
+/// One Apple Health measurement for today, e.g. Exercise · 32 min.
+struct WidgetMetric: Codable, Hashable, Sendable, Identifiable {
+    /// The reward category it belongs to, so the widget can show what it earned.
+    var id: String
+    var title: String
+    var symbol: String
+    /// Already formatted, e.g. "8,412".
+    var value: String
+    var unit: String
+}
+
 /// What the app shares with its widget. Written by the app after each sync; the widget only reads it.
 struct WidgetSnapshot: Codable, Hashable, Sendable {
     /// The local calendar day the numbers belong to, `yyyy-MM-dd`.
@@ -36,6 +47,8 @@ struct WidgetSnapshot: Codable, Hashable, Sendable {
     /// Every input that earned money today, highest first. Optional so older saved snapshots still load.
     var breakdown: [WidgetCategoryLine]?
     var rings: ActivityRingsSnapshot?
+    /// Today's headline Health numbers, whether or not they earned anything. Optional so older snapshots still load.
+    var metrics: [WidgetMetric]?
     var monthEarnedPence: Int
     var monthAllocationPence: Int
     var isDemo: Bool

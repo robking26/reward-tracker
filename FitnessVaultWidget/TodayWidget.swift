@@ -41,7 +41,7 @@ struct TodayProvider: TimelineProvider {
         if let midnight = Calendar.current.nextDate(after: now, matching: DateComponents(hour: 0, minute: 0), matchingPolicy: .nextTime) {
             entries.append(TodayEntry(date: midnight, snapshot: snapshot))
         }
-        completion(Timeline(entries: entries, policy: .after(now.addingTimeInterval(30 * 60))))
+        completion(Timeline(entries: entries, policy: .after(now.addingTimeInterval(15 * 60))))
     }
 }
 
@@ -193,17 +193,56 @@ struct TodayWidgetView: View {
 
     // MARK: Medium (4×2)
 
+    /// Money on top with smaller rings; below, today's Health numbers and what each one earned.
     private var medium: some View {
-        HStack(spacing: 14) {
-            VStack(alignment: .leading, spacing: 0) {
-                earnedBlock(size: 30)
-                Spacer(minLength: 6)
-                breakdownList(limit: 3, showsDetail: false)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top, spacing: 10) {
+                earnedBlock(size: 28)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                ActivityRingsView(rings: current?.rings, lineWidth: 6, spacing: 1.5)
+                    .frame(width: 52, height: 52)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            ActivityRingsView(rings: current?.rings, lineWidth: 11, spacing: 2.5)
-                .frame(width: 104, height: 104)
+            Spacer(minLength: 6)
+            if current == nil {
+                emptyMessage("Open the app to update today.")
+            } else {
+                HStack(alignment: .top, spacing: 8) {
+                    ForEach(mediumMetrics) { metric in
+                        metricCell(metric)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+            }
         }
+    }
+
+    /// Today's metrics, or steps alone from a snapshot saved before metrics were shared.
+    private var mediumMetrics: [WidgetMetric] {
+        if let metrics = current?.metrics, !metrics.isEmpty { return metrics }
+        return [WidgetMetric(id: "steps", title: "Steps", symbol: "figure.walk", value: stepsText, unit: "")]
+    }
+
+    private func metricCell(_ metric: WidgetMetric) -> some View {
+        let earned = breakdown.first { $0.id == metric.id }?.earnedPence ?? 0
+        return VStack(alignment: .leading, spacing: 1) {
+            Label(metric.title, systemImage: metric.symbol)
+                .labelStyle(CompactLabelStyle())
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(WidgetPalette.textSecondary)
+                .lineLimit(1)
+            (Text(metric.value).font(.subheadline.weight(.semibold))
+                + Text(metric.unit.isEmpty ? "" : " " + metric.unit).font(.caption2).foregroundStyle(WidgetPalette.textTertiary))
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            Text(earned > 0 ? "+" + WidgetMoney.format(pence: earned) : "–")
+                .font(.caption2.weight(.semibold))
+                .monospacedDigit()
+                .foregroundStyle(earned > 0 ? WidgetPalette.accent : WidgetPalette.textTertiary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: Large (4×4)
@@ -367,6 +406,16 @@ struct TodayWidgetView: View {
     }
 }
 
+/// Icon and title tight together, so four fit across a medium widget.
+private struct CompactLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 3) {
+            configuration.icon
+            configuration.title
+        }
+    }
+}
+
 extension WidgetSnapshot {
     static let placeholder = WidgetSnapshot(
         day: WidgetSnapshot.dayString(for: .now), earnedTodayPence: 842, steps: 8_412,
@@ -381,6 +430,12 @@ extension WidgetSnapshot {
         rings: ActivityRingsSnapshot(
             move: RingProgress(value: 420, goal: 600), exercise: RingProgress(value: 32, goal: 30),
             stand: RingProgress(value: 8, goal: 12), moveUnit: "kcal"),
+        metrics: [
+            WidgetMetric(id: "steps", title: "Steps", symbol: "figure.walk", value: "8,412", unit: ""),
+            WidgetMetric(id: "exercise", title: "Exercise", symbol: "stopwatch", value: "32", unit: "min"),
+            WidgetMetric(id: "activeEnergy", title: "Energy", symbol: "flame.fill", value: "520", unit: "kcal"),
+            WidgetMetric(id: "flights", title: "Flights", symbol: "figure.stairs", value: "8", unit: ""),
+        ],
         monthEarnedPence: 12_345, monthAllocationPence: 40_000, isDemo: false, updatedAt: .now)
 }
 

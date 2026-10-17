@@ -25,6 +25,15 @@ struct FitnessVaultApp: App {
                     await model.start()
                     BackgroundRefresh.schedule(at: model.nextSettlement)
                 }
+                // While the app is on screen, read Apple Health every minute. Stops as soon as it isn't.
+                .task(id: scenePhase == .active) {
+                    guard scenePhase == .active else { return }
+                    while !Task.isCancelled {
+                        try? await Task.sleep(for: .seconds(60))
+                        guard !Task.isCancelled else { return }
+                        await model.syncHealth()
+                    }
+                }
         }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
