@@ -47,31 +47,12 @@ struct ActivityMetricLink: View {
                 timeframe: showsRate ? model.settings.rates.rateDescription(for: category) : period.timeframe,
                 measurement: measure.value,
                 unit: measure.unit,
-                progress: period == .day ? DailyGoals.progress(category, metrics, settings: model.settings) : nil,
                 earned: model.earned(category, in: days))
         }
         .buttonStyle(CardButtonStyle())
     }
 
 }
-
-/// Reference goals for the compact progress bars. They don't affect earnings, which have no thresholds.
-enum DailyGoals {
-    static func progress(_ category: RewardCategory, _ metrics: DailyMetrics, settings: AppSettings) -> Double? {
-        func ratio(_ value: Int, _ goal: Int) -> Double { goal > 0 ? min(1, Double(value) / Double(goal)) : 0 }
-        switch category {
-        case .steps: return ratio(metrics.steps, settings.rates.stepsForCap)
-        case .exercise: return ratio(metrics.exerciseSeconds, 30 * 60)
-        case .strength: return ratio(metrics.strengthSeconds, 45 * 60)
-        case .activeEnergy: return ratio(metrics.activeKilocalories, 600)
-        case .swimming: return ratio(metrics.swimmingMetres, 1_500)
-        case .running: return ratio(metrics.runningMetres, 5_000)
-        case .flights: return ratio(metrics.flightsClimbed, 10)
-        case .mealPhoto, .proteinTarget, .calorieTarget: return nil
-        }
-    }
-}
-
 
 extension Array where Element == DailyMetrics {
     /// Sums several days into one set of totals.

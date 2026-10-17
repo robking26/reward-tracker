@@ -18,7 +18,7 @@ enum PreviewFixtures {
 
 #Preview("Metric card") {
     MetricCard(title: "Steps", symbol: "figure.walk", timeframe: "Today", measurement: "8,412", unit: "steps",
-               progress: 0.84, earned: Pence(168))
+               earned: Pence(168))
         .frame(width: 180)
         .padding()
         .pageBackground()

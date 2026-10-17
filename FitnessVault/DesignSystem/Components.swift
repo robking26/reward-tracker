@@ -153,14 +153,13 @@ struct StatusBadge: View {
 
 // MARK: - Metric card
 
-/// A compact two-column dashboard card: title, timeframe, progress, measurement, earnings and chevron.
+/// A compact two-column dashboard card: title, timeframe, measurement, earnings and chevron.
 struct MetricCard: View {
     let title: String
     let symbol: String
     let timeframe: String
     let measurement: String
     let unit: String
-    let progress: Double?
     let earned: Pence?
     /// Shown in place of the earned amount, e.g. "Not rewarded".
     var earnedCaption: String? = nil
@@ -191,10 +190,6 @@ struct MetricCard: View {
                 .foregroundStyle(Palette.textTertiary)
 
             Spacer(minLength: 0)
-
-            if let progress {
-                ThinProgressBar(progress: progress, height: 4, tint: Palette.textSecondary)
-            }
 
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 HStack(alignment: .firstTextBaseline, spacing: Spacing.xxs) {
