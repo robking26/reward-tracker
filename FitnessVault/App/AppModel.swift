@@ -50,6 +50,7 @@ final class AppModel {
     /// Today's Activity rings from Apple Health, if available.
     private(set) var todayRings: ActivityRingsSnapshot?
     private var lastWidgetSnapshot: WidgetSnapshot?
+    private var isObservingHealth = false
     /// Month-end gold allocations, newest first.
     var goldAllocations: [GoldAllocation] = []
     /// The latest problem with Trading 212 or gold funding, shown in Money & Vault.
@@ -109,11 +110,19 @@ final class AppModel {
     func start() async {
         reload()
         await refreshHealthAccess()
+        observeHealthChanges()
+        await syncHealth()
+        await settleIfDue()
+    }
+
+    /// Registers the Apple Health observers. Called at launch, including when iOS wakes the app in
+    /// the background for new Health data, so the observers are in place to receive it.
+    func observeHealthChanges() {
+        guard !isObservingHealth else { return }
+        isObservingHealth = true
         health.startObservingChanges { [weak self] in
             await self?.syncHealthAfterChange()
         }
-        await syncHealth()
-        await settleIfDue()
     }
 
     func refreshHealthAccess() async {

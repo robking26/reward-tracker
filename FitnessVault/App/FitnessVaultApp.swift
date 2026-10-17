@@ -11,7 +11,9 @@ struct FitnessVaultApp: App {
     init() {
         let container = Persistence.makeContainer()
         self.container = container
-        _model = State(initialValue: AppModel(container: container))
+        let model = AppModel(container: container)
+        model.observeHealthChanges()
+        _model = State(initialValue: model)
     }
 
     var body: some Scene {
