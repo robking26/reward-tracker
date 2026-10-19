@@ -24,6 +24,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Xcode 26 so code using iOS 26 frameworks (Foundation Models) is compiled; the app still targets iOS 17.
+      - name: Select Xcode 26
+        run: sudo xcode-select -s /Applications/Xcode_26.3.app
+
       - name: Show Xcode version
         run: xcodebuild -version
 
@@ -31,7 +35,7 @@ jobs:
         id: simulator
         run: |
           UDID=$(xcrun simctl list devices available -j \
-            | jq -r '[.devices | to_entries[] | select(.key | contains("iOS")) | .value[] | select(.name | startswith("iPhone"))][0].udid')
+            | jq -r '[.devices | to_entries[] | select(.key | contains("iOS-26")) | .value[] | select(.name | startswith("iPhone"))][0].udid')
           if [ -z "$UDID" ] || [ "$UDID" = "null" ]; then
             echo "No iPhone simulator available" >&2
             xcrun simctl list devices available
