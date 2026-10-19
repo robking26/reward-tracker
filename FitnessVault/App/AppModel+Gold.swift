@@ -37,6 +37,8 @@ extension AppModel {
     /// Closes every finished month that hasn't been closed: locks its days, records final earnings and
     /// sets aside `max(0, allowance − earned)` for gold. Safe to call repeatedly; each month closes once.
     func closeFinishedMonths() {
+        // Dormant since Vaultality 2.0: fines stay in Starling instead (D-005).
+        guard settings.goldInvestingEnabled else { return }
         let state = syncState()
         for record in vaults() where record.closedAt == nil {
             guard let month = record.monthKey, month < currentMonth,

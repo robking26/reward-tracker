@@ -83,6 +83,9 @@ final class MonthEndSettlementTests: XCTestCase {
         let defaults = UserDefaults(suiteName: "test.\(UUID().uuidString)")!
         let settings = SettingsStore(defaults: defaults)
         settings.settings.demoMode = true
+        // These tests exercise the dormant v1 month-end gold flow.
+        settings.settings.goldInvestingEnabled = true
+        settings.settings.activityEarningsEnd = nil
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "Europe/London")!
         return AppModel(container: Persistence.makeContainer(inMemory: true), settingsStore: settings,
