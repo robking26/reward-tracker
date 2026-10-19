@@ -80,9 +80,15 @@ Camera, document scanner and notification behaviour still need checking on the i
 - [ ] Generate new dishes from favourites with the on-device model (needs Apple Intelligence; later)
 
 ## Phase 5 — Accountability
-- [ ] Daily reconciliation job and pending-verification flow
-- [ ] Month view: fines, explanations, transfer estimate, audit trail
-- [ ] Review the trial with the user, then wire "£500 − fines" into the Starling → Monzo payout (approval in Starling)
+- [x] Weighted scoring, daily reconciliation and pending verification (from Phase 1, D-012, D-014)
+- [x] Live projection: confirmed and possible score, fine at stake, month to date, transfer estimate (A5)
+- [x] Append-only fine ledger: every fine and every correction, never deleted (A8)
+- [x] Month close on the 3rd of the next month; closed months are frozen (D-029)
+- [x] Month view: every day's score and fine explained, commitment history, corrections until close
+- [x] Simulated month-end transfer with an idempotency key per month; nothing is sent to any bank (D-030)
+- [x] Trial review: bands, averages, misses by kind, unanswered misses, observations
+- [x] Going live after the review (14+ scored days): you move the money by hand and confirm it in the app
+- [ ] Automatic Starling → Monzo payment of "£500 − fines": only after a separate technical and safety review (brief §32)
 
 ## Phase 6 — Contextual intelligence
 - [ ] Home/office mode, location consent, travel times, weather, social-event preparation, post-event recovery, outing ideas

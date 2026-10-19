@@ -2,6 +2,18 @@
 
 Newest first. Each entry records what was decided, why, and who made the call ("User" means answered by the user; "Team" means a default chosen because the question wasn't blocking).
 
+## D-030 · No automatic payments for fines (Team, from brief §22 and §32)
+- **Trial:** a closed month produces a statement and a *simulated* transfer description. No code path sends a fine-related payment to Starling.
+- **Going live:** after the trial review, which needs at least 14 scored days and your confirmation, fines become real. The app shows the amount and a reference, and you move "£500 − fines" from Starling to Monzo yourself, then confirm it here. That confirmation is recorded once in the audit trail.
+- **Automation:** automating this payment needs a separate technical and safety review first. Each month's plan already carries an idempotency key (`vaultality-month-YYYY-MM`), so a future integration could never pay a month twice.
+- **Going back:** you can return to the trial at any time.
+
+## D-029 · Months close on the 3rd (Team, from A4 and D-014)
+- **Why the 3rd:** the last day of a month can be confirmed on the 1st and counts as missed after that, so the month closes on the 3rd of the next month.
+- **What's frozen:** the record becomes final. Days aren't recalculated, and commitment corrections are refused with a clear message.
+- **The statement:** it stores the allocation, the fines (capped again as a safeguard), what's transferable, the days scored, the average and the amount the cap stopped.
+- **The ledger:** every time a day's fine is set or changed, an entry is appended with the before and after amounts and the reason. Nothing in the ledger is edited or deleted.
+
 ## D-028 · Kitchen lives under Today, not a fifth tab (Team)
 The brief fixes four tabs. Tonight's dinner, the defrost prompt and "Not happening" sit in a Dinner card on Today; the full kitchen (meals, list, stock, recipes, spending) opens from that card. Food never creates commitments or fines (A6).
 

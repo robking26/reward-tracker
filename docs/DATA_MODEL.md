@@ -134,6 +134,18 @@ A unique `fingerprint` (shop, day, total), `merchant`, `date`, `month`, `totalPe
 ### `ShoppingItem`
 Fields: `key`, `name`, `department`, `quantityText`, `estimatePence`, `reasons`, `checkFirst`, `manual` and `ticked`.
 
+## Accountability (Phase 5)
+
+### `FineLedgerEntry`
+Append-only. Fields: `day`, `month`, `beforePence`, `afterPence`, `scorePercent?`, `reason`, `isSimulation` and `at`.
+
+### `MonthStatement`
+One per month (unique `month`). Fields: `allocationPence`, `finesPence`, `transferablePence`, `daysScored`, `daysWithFines`, `averageScore?`, `capSavedPence`, `status`, `idempotencyKey`, `closedAt` and `confirmedAt?`.
+
+`status` is one of `simulated`, `awaitingManualTransfer` or `manuallyTransferred`.
+
+Month closes, manual transfer confirmations and fine-mode changes also go into the existing `AuditEvent` trail.
+
 ## Planned (later phases)
 
 `SocialEvent` (Phase 6).

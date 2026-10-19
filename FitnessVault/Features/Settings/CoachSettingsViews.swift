@@ -232,6 +232,10 @@ struct AccountabilitySettingsView: View {
                 Text("Fines come out of your \(coach.settings.monthlyAllocation.formatted(wholePounds: true)) and stay in Starling; they're never spent or moved. Never fined: weight, food, calories, binges, illness, injury, rest, sleep, or anything outside your control. During the trial nothing real happens; real money only after you review the rules.")
             }
 
+            Section {
+                NavigationLink("Month view, ledger and trial review") { AccountabilityView() }
+            }
+
             Section("Your day") {
                 MinutePicker(title: "Wake", minutes: $store.settings.coach.wakeMinute)
                 MinutePicker(title: "Work starts", minutes: $store.settings.coach.workStartMinute)

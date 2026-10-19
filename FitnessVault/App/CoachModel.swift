@@ -233,7 +233,9 @@ final class CoachModel {
     func transition(_ item: Commitment, _ action: CommitmentAction, actor: ChangeActor = .user, reason: String? = nil) -> Bool {
         let from = item.state
         do {
-            let to = try CommitmentRules.apply(action, to: from)
+            // A closed month's record is frozen (D-029).
+            let closed = item.dayKey.map { $0 < today && isClosed($0.monthKey) } ?? false
+            let to = try CommitmentRules.apply(action, to: from, monthClosed: closed)
             item.stateRaw = to.rawValue
             item.updatedAt = now()
             switch action {
@@ -355,6 +357,7 @@ final class CoachModel {
         }
         months.insert(today.monthKey)
         for month in months { recomputeDayRecords(for: month) }
+        closeMonthsIfDue()
     }
 
     /// System transitions during reconciliation; no reload per item.
@@ -369,6 +372,8 @@ final class CoachModel {
 
     /// Recalculates every finished day of `month` in date order, so the monthly cap applies in sequence.
     func recomputeDayRecords(for month: MonthKey) {
+        // A closed month never changes: its statement is final (D-029).
+        guard !isClosed(month) else { return }
         let prefix = month.description
         let all = allCommitments().filter { $0.day.hasPrefix(prefix) }
         let byDay = Dictionary(grouping: all, by: \.day)
@@ -391,8 +396,15 @@ final class CoachModel {
                 record.explanation = "Waiting for you to confirm what got done."
                 continue
             }
+            let wasFinalised = record.finalisedAt != nil
+            let before = record.fine
             let outcome = DayReconciliation.finalise(items.map(\.scored), schedule: coach.fineSchedule,
                                                      monthToDateFines: monthToDate, allocation: settings.monthlyAllocation)
+            if let change = FineLedger.change(wasFinalised: wasFinalised, before: before, after: outcome.fine,
+                                              scorePercent: outcome.scorePercent) {
+                context.insert(FineLedgerEntry(day: day, change: change, scorePercent: outcome.scorePercent,
+                                               isSimulation: coach.finesAreSimulated, at: now()))
+            }
             record.scorePercent = outcome.scorePercent
             record.finePence = outcome.fine.value
             record.uncappedFinePence = outcome.uncappedFine.value

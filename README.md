@@ -11,7 +11,7 @@ It has four tabs:
 - **Calendar**: your calendars, read-only, plus your commitments and the free time the coach can see. Work focus blocks are protected, and Becky's shared events never make you busy.
 - **Progress**: consistency over the last 14 days (no streaks), money kept this month, house-sale progress, and movement from Apple Health.
 
-**Money:** each month £500 sits in Starling. You keep it minus fines for agreed commitments you miss. The daily fine bands are below, and the monthly cap is £100. Food, weight, illness, injury and rest are never fined. **During the trial no real money moves**: fines are simulated until the rules have been reviewed. Activity earned money until 18 October 2026, and those earlier earnings still pay out as before.
+**Money:** each month £500 sits in Starling. You keep it minus fines for agreed commitments you miss. The daily fine bands are below, and the monthly cap is £100. Food, weight, illness, injury and rest are never fined. **During the trial no real money moves**: fines are simulated until the rules have been reviewed. Activity earned money until 18 October 2026, and those earlier earnings still pay out as before. Tap the commitments card on Today to see each day's score and fine explained, the ledger of every change, and the trial review. A month closes on the 3rd of the next month. After a review of at least 14 scored days, you can make fines real; you then move the money from Starling to Monzo yourself, because the app never sends payments for fines.
 
 | Day's score | Fine |
 |---|---|

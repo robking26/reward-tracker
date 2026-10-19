@@ -92,7 +92,12 @@ struct TodayView: View {
                         EssentialsCard(items: coach.essentialsDue)
                     }
 
-                    AccountabilityCard()
+                    NavigationLink {
+                        AccountabilityView()
+                    } label: {
+                        AccountabilityCard()
+                    }
+                    .buttonStyle(CardButtonStyle())
                 }
                 .padding(.horizontal, Spacing.page)
                 .padding(.bottom, Spacing.xl)

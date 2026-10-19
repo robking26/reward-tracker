@@ -37,6 +37,7 @@ Automated tests run on every push (GitHub Actions, iOS simulator). Deterministic
 | `CoachAITests`, `ToolParsingTests` | Model routing, validated tools, honesty guard, fallback, compact context |
 | `TrainingTests`, `TrainingModelTests` | Phase 3 programme, progression, knee rules and the workout logger |
 | `KitchenDomainTests` | Ingredient and recipe parsing, nutrition confidence, exclusions, macro tweaks, meal planning, batch-cook fit, defrost reminders, dinner rescue, inventory presence, shopping list, budget, receipts, kitchen intents, starter recipes |
+| `AccountabilityDomainTests`, `AccountabilityModelTests` | Month close timing, ledger entries, statement maths (cap, no debt), simulated and manual transfer plans, frozen closed months, one statement per month, trial review |
 | `KitchenModelTests` | Seeding and weekly plan, conversational corrections, list ticking, freezer portions, defrost, receipts and the ceiling, task chains |
 
 ## Manual device checklist (Phase 1)
@@ -59,3 +60,9 @@ Automated tests run on every push (GitHub Actions, iOS simulator). Deterministic
 - [ ] Scan an Aldi receipt; scanning the same receipt again is refused
 - [ ] Plan a freezer meal for tomorrow: the defrost reminder arrives at 20:30
 - [ ] Say "We've run out of milk" and "We've got three portions of curry left" to the coach
+
+## Manual device checklist (Phase 5)
+- [ ] Tap the commitments card on Today: the month view opens with the transfer estimate
+- [ ] Open a scored day: each commitment shows its weight, state and history; a missed item can be corrected
+- [ ] The ledger shows the original fine and the correction
+- [ ] On 3 November, October closes: the statement says "Trial: no money moves" and corrections to October are refused
