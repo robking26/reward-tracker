@@ -372,7 +372,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Vaultality";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Vaultality reads steps, workouts, exercise minutes, active energy, swimming distance and flights climbed to calculate the money you've earned.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Vaultality reads steps, workouts, exercise minutes, active energy, swimming distance and flights climbed to plan around your recovery and show your progress.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
@@ -405,7 +405,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Vaultality";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Vaultality reads steps, workouts, exercise minutes, active energy, swimming distance and flights climbed to calculate the money you've earned.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Vaultality reads steps, workouts, exercise minutes, active energy, swimming distance and flights climbed to plan around your recovery and show your progress.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;

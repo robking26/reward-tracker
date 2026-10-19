@@ -95,6 +95,8 @@ final class Routine {
     var minuteOfDay: Int?
     var durationMinutes: Int
     var isEnabled: Bool
+    /// When the user last agreed to it. Days before this never get the routine (no retrospective commitments).
+    var enabledAt: Date?
     var reason: String?
     var createdAt: Date
 
@@ -108,6 +110,7 @@ final class Routine {
         self.minuteOfDay = minuteOfDay
         self.durationMinutes = durationMinutes
         self.isEnabled = isEnabled
+        enabledAt = isEnabled ? .now : nil
         self.reason = reason
         createdAt = .now
     }

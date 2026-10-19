@@ -296,6 +296,15 @@ final class CoachIntentTests: XCTestCase {
         XCTAssertEqual(CoachIntentParser.parse("I'm ill"), .unwell(.illness))
     }
 
+    func testQuickReplies() {
+        XCTAssertEqual(CoachIntentParser.parse("In an hour"), .moveLater(minutes: 60))
+        XCTAssertEqual(CoachIntentParser.parse("This evening"), .moveToEvening)
+        XCTAssertEqual(CoachIntentParser.parse("Something unavoidable came up"), .unavoidable)
+        XCTAssertEqual(CoachIntentParser.parse("Yes"), .yes)
+        XCTAssertEqual(CoachIntentParser.parse("No thanks"), .no)
+        XCTAssertEqual(CoachIntentParser.parse("I don't fancy it"), .dontFancy)
+    }
+
     func testUnknownFallsThrough() {
         XCTAssertEqual(CoachIntentParser.parse("Find us something to do Friday"), .unknown("Find us something to do Friday"))
     }

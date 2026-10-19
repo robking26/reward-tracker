@@ -14,6 +14,16 @@ enum PreviewFixtures {
         Task { await model.start() }
         return model
     }
+
+    static func coach() -> CoachModel {
+        let defaults = UserDefaults(suiteName: "preview.coach.\(UUID().uuidString)") ?? .standard
+        let settings = SettingsStore(defaults: defaults)
+        settings.settings.demoMode = true
+        let coach = CoachModel(container: Persistence.makeContainer(inMemory: true), settingsStore: settings,
+                               defaults: defaults)
+        Task { await coach.start() }
+        return coach
+    }
 }
 
 #Preview("Metric card") {

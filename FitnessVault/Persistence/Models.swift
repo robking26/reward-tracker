@@ -267,6 +267,9 @@ enum Persistence {
     static let schema = Schema([
         MonthlyVault.self, DailyActivity.self, RewardLedgerEntry.self, Meal.self,
         HealthSyncState.self, BankTransfer.self, PaymentOrder.self, AuditEvent.self, GoldAllocation.self,
+        // Vaultality 2.0 coaching
+        Commitment.self, CommitmentEvent.self, Routine.self, DayRecord.self, CoachMessage.self,
+        MemoryRecord.self, TaskItem.self,
     ])
 
     static func makeContainer(inMemory: Bool = false) -> ModelContainer {

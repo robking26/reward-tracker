@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(AppModel.self) private var model
+    @Environment(CoachModel.self) private var coach
     @Environment(\.dismiss) private var dismiss
     @State private var exportURL: URL?
     @State private var exportError: String?
@@ -10,6 +11,27 @@ struct SettingsView: View {
         @Bindable var store = model.settingsStore
         NavigationStack {
             Form {
+                Section {
+                    NavigationLink { RoutinesView() } label: {
+                        Label("Routines", systemImage: "repeat").foregroundStyle(Palette.textPrimary)
+                    }
+                    NavigationLink { CalendarsSettingsView() } label: {
+                        StatusRow(title: "Calendars", symbol: "calendar", status: coach.calendarAccess.title,
+                                  isGood: coach.calendarAccess == .granted && !coach.hasNoWorkCalendar)
+                    }
+                    NavigationLink { MemoryView() } label: {
+                        Label("Coach memory", systemImage: "brain").foregroundStyle(Palette.textPrimary)
+                    }
+                    NavigationLink { AccountabilitySettingsView() } label: {
+                        Label("Accountability and your day", systemImage: "scalemass").foregroundStyle(Palette.textPrimary)
+                    }
+                    NavigationLink { PrivacyView() } label: {
+                        Label("Privacy & data", systemImage: "hand.raised").foregroundStyle(Palette.textPrimary)
+                    }
+                } header: {
+                    Text("Coach")
+                }
+
                 Section {
                     NavigationLink {
                         MoneyVaultView()
@@ -32,17 +54,20 @@ struct SettingsView: View {
                     StatusRow(title: "Monzo payee", symbol: "arrow.right.circle",
                               status: model.settings.starling.payeeName ?? "Not chosen",
                               isGood: model.settings.starling.payeeAccountUID != nil)
-                    NavigationLink {
-                        Trading212ConnectionView()
-                    } label: {
-                        StatusRow(title: "Trading 212", symbol: "chart.line.uptrend.xyaxis",
-                                  status: model.settings.demoMode ? "Demo" : (model.isTrading212Connected ? model.settings.trading212.environment.title : "Not connected"),
-                                  isGood: model.isTrading212Connected)
+                    // Gold investing is dormant since Vaultality 2.0 (D-005).
+                    if model.settings.goldInvestingEnabled {
+                        NavigationLink {
+                            Trading212ConnectionView()
+                        } label: {
+                            StatusRow(title: "Trading 212", symbol: "chart.line.uptrend.xyaxis",
+                                      status: model.settings.demoMode ? "Demo" : (model.isTrading212Connected ? model.settings.trading212.environment.title : "Not connected"),
+                                      isGood: model.isTrading212Connected)
+                        }
                     }
                 } header: {
                     Text("Money")
                 } footer: {
-                    Text("Allowance, payouts, gold investments, payment history, previous months and reward rates.")
+                    Text("Allowance, payouts, payment history and previous months. Activity earned money until 18 October 2026; from 19 October your £500 is kept minus fines for missed commitments (in trial).")
                 }
 
                 Section("Apple Health") {
@@ -98,7 +123,7 @@ struct SettingsView: View {
 
                 Section("About") {
                     LabeledContent("Version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0")
-                    Text("Vaultality: healthy habits unlock wealth. Activity recorded in Apple Health unlocks your own monthly allowance from a Starling Savings Space to Monzo; whatever isn't earned is set aside for a gold investment. It only reads from Apple Health, and your Health data stays on this iPhone. Banking tokens are kept in the Keychain on this device only. Payments always need your approval in the Starling app.")
+                    Text("Vaultality: your coach for the next action. It plans around your calendar, health and goals, and helps you keep the commitments you agree to. Your coaching data and Health data stay on this iPhone. Banking tokens are kept in the Keychain on this device only. Payments always need your approval in the Starling app.")
                         .font(.footnote)
                         .foregroundStyle(Palette.textSecondary)
                 }

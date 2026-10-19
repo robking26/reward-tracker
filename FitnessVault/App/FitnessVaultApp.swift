@@ -6,6 +6,7 @@ import SwiftUI
 struct FitnessVaultApp: App {
     private let container: ModelContainer
     @State private var model: AppModel
+    @State private var coach: CoachModel
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -14,16 +15,19 @@ struct FitnessVaultApp: App {
         let model = AppModel(container: container)
         model.observeHealthChanges()
         _model = State(initialValue: model)
+        _coach = State(initialValue: CoachModel(container: container, settingsStore: model.settingsStore))
     }
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environment(model)
+                .environment(coach)
                 .modelContainer(container)
                 .preferredColorScheme(.dark)
                 .tint(Palette.accent)
                 .task {
+                    await coach.start()
                     await model.start()
                     BackgroundRefresh.schedule(at: model.nextSettlement)
                 }
@@ -34,6 +38,7 @@ struct FitnessVaultApp: App {
                         try? await Task.sleep(for: .seconds(60))
                         guard !Task.isCancelled else { return }
                         await model.syncHealth()
+                        await coach.refresh()
                     }
                 }
         }
@@ -41,6 +46,7 @@ struct FitnessVaultApp: App {
             switch phase {
             case .active:
                 Task {
+                    await coach.refresh()
                     await model.syncHealth()
                     await model.settleIfDue()
                 }

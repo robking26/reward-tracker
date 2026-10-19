@@ -13,6 +13,11 @@ enum CoachIntent: Equatable, Sendable {
     case back
     case bored
     case dontFancy
+    case unavoidable
+    case moveLater(minutes: Int)
+    case moveToEvening
+    case yes
+    case no
     case unwell(ExcuseReason)
     case addTask(String)
     case ranOut(String)
@@ -48,6 +53,19 @@ enum CoachIntentParser {
         if matches(text, ["exhausted", "wiped out", "need to rest", "need rest", "knackered", "shattered"]) {
             return .unwell(.restOrRecovery)
         }
+
+        if matches(text, ["something unavoidable came up", "something came up", "a meeting came up", "meeting came up",
+                          "can't make it", "cant make it", "it's out of my control", "its out of my control", "outside my control"]) {
+            return .unavoidable
+        }
+        if matches(text, ["in an hour", "in 1 hour", "an hour later"]) { return .moveLater(minutes: 60) }
+        if matches(text, ["in half an hour", "in 30 minutes", "in 30 mins"]) { return .moveLater(minutes: 30) }
+        if matches(text, ["in 15 minutes", "in 15 mins", "in a bit"]) { return .moveLater(minutes: 15) }
+        if matches(text, ["this evening", "tonight", "after work"]) { return .moveToEvening }
+        if matches(text, ["yes", "yeah", "yep", "ok", "okay", "sure", "go on", "deal", "sounds good", "let's do it", "lets do it"]) {
+            return .yes
+        }
+        if matches(text, ["no", "nope", "no thanks", "not today"]) { return .no }
 
         if matches(text, ["what's next", "whats next", "what next", "what now", "what should i do", "what do i do", "next"]) {
             return .whatsNext
