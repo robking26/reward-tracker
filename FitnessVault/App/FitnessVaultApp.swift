@@ -7,6 +7,7 @@ struct FitnessVaultApp: App {
     private let container: ModelContainer
     @State private var model: AppModel
     @State private var coach: CoachModel
+    @State private var training: TrainingModel
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -15,7 +16,9 @@ struct FitnessVaultApp: App {
         let model = AppModel(container: container)
         model.observeHealthChanges()
         _model = State(initialValue: model)
-        _coach = State(initialValue: CoachModel(container: container, settingsStore: model.settingsStore))
+        let coach = CoachModel(container: container, settingsStore: model.settingsStore)
+        _coach = State(initialValue: coach)
+        _training = State(initialValue: TrainingModel(container: container, coach: coach))
     }
 
     var body: some Scene {
@@ -23,6 +26,7 @@ struct FitnessVaultApp: App {
             RootView()
                 .environment(model)
                 .environment(coach)
+                .environment(training)
                 .modelContainer(container)
                 .preferredColorScheme(.dark)
                 .tint(Palette.accent)

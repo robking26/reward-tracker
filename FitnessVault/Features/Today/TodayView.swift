@@ -5,9 +5,13 @@ import SwiftUI
 struct TodayView: View {
     @Environment(CoachModel.self) private var coach
     @Environment(AppModel.self) private var model
+    @Environment(TrainingModel.self) private var training
     @Binding var showingSettings: Bool
     var openCoach: () -> Void
     @State private var showingAdd = false
+    @State private var showingWorkout = false
+    @State private var workoutCommitment: Commitment?
+    @State private var showingKneeCheck = false
 
     var body: some View {
         NavigationStack {
@@ -17,6 +21,26 @@ struct TodayView: View {
 
                     ForEach(coach.needsVerification, id: \.id) { item in
                         VerifyCard(item: item)
+                    }
+
+                    if training.isActive {
+                        Button {
+                            showingWorkout = true
+                        } label: {
+                            NoticeBanner(symbol: "dumbbell.fill", title: "Workout in progress",
+                                         message: "Tap to carry on where you left off.", tint: Palette.accent)
+                        }
+                        .buttonStyle(CardButtonStyle())
+                    }
+
+                    if training.needsNextDayKneeCheck {
+                        Button {
+                            showingKneeCheck = true
+                        } label: {
+                            NoticeBanner(symbol: "figure.walk", title: "How's the knee this morning?",
+                                         message: "Pain can show up the day after. Ten seconds to log it.", tint: Palette.accent)
+                        }
+                        .buttonStyle(CardButtonStyle())
                     }
 
                     if coach.shouldOfferBriefing {
@@ -32,7 +56,10 @@ struct TodayView: View {
                     }
 
                     if let current = coach.currentAction {
-                        CurrentActionCard(item: current, openCoach: openCoach)
+                        CurrentActionCard(item: current, openCoach: openCoach) {
+                            workoutCommitment = current
+                            showingWorkout = true
+                        }
                     } else {
                         NothingNowCard(openCoach: openCoach)
                     }
@@ -91,6 +118,18 @@ struct TodayView: View {
             .sheet(isPresented: $showingAdd) {
                 AddCommitmentView()
             }
+            .fullScreenCover(isPresented: $showingWorkout) {
+                WorkoutFlowView(commitment: workoutCommitment)
+            }
+            .sheet(isPresented: $showingKneeCheck) {
+                NavigationStack {
+                    KneeCheckView(timing: .nextDay) { pain, swelling, sharp in
+                        training.logSymptom(timing: .nextDay, pain: pain, swelling: swelling, sharp: sharp)
+                    }
+                }
+                .presentationDetents([.medium, .large])
+                .presentationBackground(Palette.background)
+            }
         }
     }
 
@@ -116,6 +155,8 @@ struct CurrentActionCard: View {
     @Environment(CoachModel.self) private var coach
     let item: Commitment
     var openCoach: () -> Void
+    /// Opens the workout logger for gym commitments.
+    var startWorkout: (() -> Void)? = nil
     @State private var feedback = 0
 
     var body: some View {
@@ -148,6 +189,10 @@ struct CurrentActionCard: View {
             }
 
             Button {
+                if item.kind == .workout, let startWorkout {
+                    startWorkout()
+                    return
+                }
                 if item.state == .inProgress {
                     coach.transition(item, .complete)
                 } else {
@@ -155,7 +200,8 @@ struct CurrentActionCard: View {
                 }
                 feedback += 1
             } label: {
-                Text(item.state == .inProgress ? "Done" : "Start")
+                Text(item.kind == .workout && startWorkout != nil ? (item.state == .inProgress ? "Back to workout" : "Start workout")
+                     : (item.state == .inProgress ? "Done" : "Start"))
                     .font(.headline)
                     .frame(maxWidth: .infinity, minHeight: 50)
             }

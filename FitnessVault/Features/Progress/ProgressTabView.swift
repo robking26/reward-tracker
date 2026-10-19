@@ -8,6 +8,8 @@ struct ProgressTabView: View {
     @Environment(AppModel.self) private var model
     @Binding var showingSettings: Bool
     @State private var period: ActivityPeriod = .week
+    @State private var bodySamples: [BodySample] = []
+    @State private var swims: [SwimSample] = []
 
     private let columns = [GridItem(.flexible(), spacing: Spacing.s), GridItem(.flexible(), spacing: Spacing.s)]
 
@@ -16,8 +18,15 @@ struct ProgressTabView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.xl) {
                     StatusNotices()
+                    BodyTrendCard(samples: bodySamples)
                     ConsistencyCard()
+                    WorkoutsPerWeekCard()
+                    StrengthCard()
+                    WalkingCard()
+                    KneeCard()
+                    SwimCard(swims: swims)
                     HouseSaleCard()
+                    PhotosCard()
 
                     VStack(alignment: .leading, spacing: Spacing.s) {
                         SectionHeader("Movement")
@@ -46,8 +55,19 @@ struct ProgressTabView: View {
             .refreshable {
                 await model.syncHealth()
                 await coach.refresh()
+                await loadHealthTrends()
             }
+            .task { await loadHealthTrends() }
         }
+    }
+}
+
+extension ProgressTabView {
+    /// Body measurements and swims for the last 90 days, read from Apple Health when the tab opens.
+    func loadHealthTrends() async {
+        let since = Date.now.addingTimeInterval(-90 * 86_400)
+        bodySamples = (try? await model.health.bodySamples(since: since)) ?? []
+        swims = (try? await model.health.swims(since: since)) ?? []
     }
 }
 

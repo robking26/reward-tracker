@@ -92,6 +92,9 @@ struct CoachSettings: Codable, Hashable, Sendable {
     var gymTravelMinutes = 15
     /// Read the coach's reply aloud after a dictated message (never in the office).
     var speakReplies = true
+    /// Daily step target and when it was last reviewed (K1: weekly at most).
+    var stepTarget: Int? = nil
+    var stepTargetReviewed: DayKey? = nil
 
     init() {}
 
@@ -113,6 +116,8 @@ struct CoachSettings: Codable, Hashable, Sendable {
         calendarRoles = (try? c.decodeIfPresent([String: CalendarRole].self, forKey: .calendarRoles)) ?? d.calendarRoles
         gymTravelMinutes = (try? c.decodeIfPresent(Int.self, forKey: .gymTravelMinutes)) ?? d.gymTravelMinutes
         speakReplies = (try? c.decodeIfPresent(Bool.self, forKey: .speakReplies)) ?? d.speakReplies
+        stepTarget = try? c.decodeIfPresent(Int.self, forKey: .stepTarget)
+        stepTargetReviewed = try? c.decodeIfPresent(DayKey.self, forKey: .stepTargetReviewed)
     }
 
     /// The day's shape for the availability engine.

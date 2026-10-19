@@ -15,6 +15,10 @@ enum PreviewFixtures {
         return model
     }
 
+    static func training() -> TrainingModel {
+        TrainingModel(container: Persistence.makeContainer(inMemory: true), coach: nil, restAlerts: RecordingRestAlerts())
+    }
+
     static func coach() -> CoachModel {
         let defaults = UserDefaults(suiteName: "preview.coach.\(UUID().uuidString)") ?? .standard
         let settings = SettingsStore(defaults: defaults)

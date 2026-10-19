@@ -270,6 +270,8 @@ enum Persistence {
         // Vaultality 2.0 coaching
         Commitment.self, CommitmentEvent.self, Routine.self, DayRecord.self, CoachMessage.self,
         MemoryRecord.self, TaskItem.self,
+        // Phase 3 training
+        WorkoutSession.self, SetLog.self, SymptomLog.self,
     ])
 
     static func makeContainer(inMemory: Bool = false) -> ModelContainer {

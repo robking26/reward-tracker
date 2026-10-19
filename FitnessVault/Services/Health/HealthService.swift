@@ -14,6 +14,20 @@ struct HealthDayReading: Hashable, Sendable {
     var flightsClimbed = 0
 }
 
+/// A body measurement from Apple Health (smart scales or manual entries). Trends, not truths (O-A).
+struct BodySample: Hashable, Sendable {
+    var date: Date
+    var kilograms: Double?
+    var bodyFatPercent: Double?
+}
+
+/// A swimming workout recorded by the Apple Watch (SW1).
+struct SwimSample: Hashable, Sendable {
+    var date: Date
+    var minutes: Int
+    var metres: Int
+}
+
 enum HealthAccess: Equatable, Sendable {
     /// HealthKit isn't available on this device.
     case unavailable
@@ -33,4 +47,8 @@ protocol HealthDataProviding: AnyObject, Sendable {
     func activityRings(on day: DayKey) async throws -> ActivityRingsSnapshot?
     /// Calls `onChange` when Health data changes, including in the background where iOS allows it.
     func startObservingChanges(_ onChange: @escaping @Sendable () async -> Void)
+    /// Body weight and body-fat readings since `start`, oldest first.
+    func bodySamples(since start: Date) async throws -> [BodySample]
+    /// Swimming workouts since `start`, oldest first.
+    func swims(since start: Date) async throws -> [SwimSample]
 }

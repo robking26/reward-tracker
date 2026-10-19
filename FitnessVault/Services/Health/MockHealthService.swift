@@ -57,5 +57,37 @@ final class MockHealthService: HealthDataProviding, @unchecked Sendable {
             moveUnit: "kcal")
     }
 
+    func bodySamples(since start: Date) async throws -> [BodySample] {
+        // A gentle downward trend from 95.3 kg and 30% body fat, with day-to-day noise.
+        var samples: [BodySample] = []
+        var day = DayKey(start, calendar: calendar)
+        let today = DayKey(now(), calendar: calendar)
+        var index = 0
+        while day <= today {
+            let noise = Double((index * 37) % 9 - 4) / 10
+            samples.append(BodySample(date: day.startDate(calendar: calendar).addingTimeInterval(6 * 3_600),
+                                      kilograms: 95.3 - Double(index) * 0.05 + noise,
+                                      bodyFatPercent: index % 7 == 0 ? 30 - Double(index) * 0.03 : nil))
+            day = day.adding(days: 1, calendar: calendar)
+            index += 1
+        }
+        return samples
+    }
+
+    func swims(since start: Date) async throws -> [SwimSample] {
+        var result: [SwimSample] = []
+        var day = DayKey(start, calendar: calendar)
+        let today = DayKey(now(), calendar: calendar)
+        while day <= today {
+            let reading = Self.reading(for: day, partial: false)
+            if reading.swimmingMetres > 0 {
+                result.append(SwimSample(date: day.startDate(calendar: calendar).addingTimeInterval(18 * 3_600),
+                                         minutes: reading.swimmingMetres / 40, metres: reading.swimmingMetres))
+            }
+            day = day.adding(days: 1, calendar: calendar)
+        }
+        return result
+    }
+
     func startObservingChanges(_ onChange: @escaping @Sendable () async -> Void) {}
 }

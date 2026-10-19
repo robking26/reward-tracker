@@ -32,6 +32,8 @@ final class HealthKitService: HealthDataProviding, @unchecked Sendable {
         var types = Set<HKObjectType>(cumulativeTypes.map { HKQuantityType($0.0) as HKObjectType })
         types.insert(HKObjectType.workoutType())
         types.insert(HKObjectType.activitySummaryType())
+        types.insert(HKQuantityType(.bodyMass))
+        types.insert(HKQuantityType(.bodyFatPercentage))
         return types
     }
 
@@ -133,6 +135,36 @@ final class HealthKitService: HealthDataProviding, @unchecked Sendable {
         let descriptor = HKSampleQueryDescriptor(
             predicates: [.workout(predicate)], sortDescriptors: [SortDescriptor(\.startDate)])
         return try await descriptor.result(for: store)
+    }
+
+    func bodySamples(since start: Date) async throws -> [BodySample] {
+        guard HKHealthStore.isHealthDataAvailable() else { return [] }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: nil)
+        let weights = try await HKSampleQueryDescriptor(
+            predicates: [.quantitySample(type: HKQuantityType(.bodyMass), predicate: predicate)],
+            sortDescriptors: [SortDescriptor(\.startDate)]).result(for: store)
+        let fats = try await HKSampleQueryDescriptor(
+            predicates: [.quantitySample(type: HKQuantityType(.bodyFatPercentage), predicate: predicate)],
+            sortDescriptors: [SortDescriptor(\.startDate)]).result(for: store)
+        let kilo = HKUnit.gramUnit(with: .kilo)
+        let samples = weights.map { BodySample(date: $0.startDate, kilograms: $0.quantity.doubleValue(for: kilo)) }
+            + fats.map { BodySample(date: $0.startDate, bodyFatPercent: $0.quantity.doubleValue(for: .percent()) * 100) }
+        return samples.sorted { $0.date < $1.date }
+    }
+
+    func swims(since start: Date) async throws -> [SwimSample] {
+        guard HKHealthStore.isHealthDataAvailable() else { return [] }
+        let predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            HKQuery.predicateForSamples(withStart: start, end: nil),
+            HKQuery.predicateForWorkouts(with: .swimming),
+        ])
+        let workouts = try await HKSampleQueryDescriptor(predicates: [.workout(predicate)],
+                                                         sortDescriptors: [SortDescriptor(\.startDate)]).result(for: store)
+        let distance = HKQuantityType(.distanceSwimming)
+        return workouts.map { workout in
+            let metres = workout.statistics(for: distance)?.sumQuantity()?.doubleValue(for: .meter()) ?? 0
+            return SwimSample(date: workout.startDate, minutes: Int(workout.duration / 60), metres: Int(metres))
+        }
     }
 
     /// Metres covered in a running workout (indoor runs included when the Watch recorded distance).
