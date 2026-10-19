@@ -40,15 +40,17 @@ Phase 0 docs/CI
 - [x] 1c Widgets show the next action and commitments (no money); sensitive titles hidden on the Lock Screen *(device)*
 
 ## Phase 2 — Coaching engine
-- [ ] Foundation Models provider behind `CoachLanguageModel`, with tools for add task, propose commitment, transition commitment and remember fact
-- [ ] Memory retrieval: relevant records summarised into a small prompt
-- [ ] Morning briefing on "I'm ready", one suggestion at a time
-- [ ] Recommendation engine (deterministic candidates → validation → wording), with reason and alternative
-- [ ] Dependency-aware task planning and opportunity tasks (H1–H3)
-- [ ] Replanning on calendar changes without fines (S3, scenario B)
-- [ ] Launch mode and pause/resume voice notes (C3–C4)
-- [ ] Scheduled contextual notifications with three escalation levels (NO1–NO2)
-- [ ] Spoken replies (home mode only)
+On-device items still need checking on the iPhone (see `TEST_PLAN.md`).
+
+- [x] Foundation Models provider behind `CoachLanguageModel`, with tools for add task, propose commitment, transition commitment and remember fact
+- [x] Memory retrieval: relevant records summarised into a small prompt
+- [x] Morning briefing on "I'm ready", one suggestion at a time
+- [x] Recommendation engine (deterministic candidates → validation → wording), with reason and alternative
+- [~] Dependency-aware task planning and opportunity tasks (H1–H3): ordered steps and gap-sized picks done; AI task breakdown still to do
+- [x] Replanning on calendar changes without fines (S3, scenario B)
+- [x] Launch mode and pause/resume voice notes (C3–C4)
+- [x] Scheduled contextual notifications with three escalation levels (NO1–NO2)
+- [x] Spoken replies (home mode only)
 
 ## Phase 3 — Fitness and health
 - [ ] Exercise library, upper/lower program generator, progression rule (W1–W3)
