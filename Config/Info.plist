@@ -8,6 +8,8 @@
 	</array>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>Vaultality reads your calendars to plan around meetings, focus time and shared plans. It never adds, changes or deletes events.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Vaultality uses the microphone only while you dictate a message to your coach.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>

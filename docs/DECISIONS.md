@@ -2,6 +2,27 @@
 
 Newest first. Each entry records what was decided, why, and who made the call ("User" means answered by the user; "Team" means a default chosen because the question wasn't blocking).
 
+## D-023 · Progress photos stay inside the app (Team)
+Photos are copied into the app's own folder with complete file protection: unreadable while the phone is locked, kept out of the photo library, never uploaded. Each photo can be viewed, shared or deleted. "Delete all coach data" doesn't remove photos; they're managed in Progress.
+
+## D-022 · Apple Watch role (Team, from W5)
+- **iPhone:** stays the set logger.
+- **Watch:** mirrors the rest countdown through WatchConnectivity, taps your wrist when rest is over, and can skip rest or end the workout. It runs an `HKWorkoutSession` (strength training) so it stays awake between sets and saves the session to Apple Health.
+- **Starting:** starting a workout on the iPhone asks iOS to open the watch app (`startWatchApp`). That's best effort, so the watch app can also be opened by hand.
+- **Cost:** the watch app needs its own App ID (`com.robking.FitnessVault.watchkitapp`), which counts towards the free team's App ID limit.
+
+## D-021 · Rest timer everywhere (Team)
+Logging a set starts the rest countdown in three places, so it's visible while you're in another app between sets:
+- in the app;
+- a rest-timer Live Activity on the Lock Screen and in the Dynamic Island, which counts down by itself and ends with the workout;
+- a local "Rest's up" notification.
+
+## D-020 · When a workout counts as done (Team)
+- Ending a workout with at least one working set marks the agreed gym commitment done.
+- What was done is logged as is, with no catch-up sets (scenario I).
+- Progression only moves on sessions that hit the full target.
+- Warm-up sets never count as working sets.
+
 ## D-019 · How the AI acts (Team)
 - Known commands go to the rule-based parser: instant, offline, never sent to the model.
 - Everything else goes to Apple's on-device model, with a **fresh session per message**. The prompt is a compact summary the app builds (today, calendar, free time, score, up to six relevant memories, the last six messages), because the model's context window is small.

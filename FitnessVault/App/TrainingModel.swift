@@ -105,6 +105,7 @@ final class TrainingModel {
         session = created
         self.plan = plan
         if let commitment, commitment.state == .approved { coach?.transition(commitment, .start, reason: "Workout started") }
+        restAlerts.workoutStarted(title: plan.title)
         pendingCommitmentID = nil
         save()
     }

@@ -5,5 +5,6 @@ import WidgetKit
 struct FitnessVaultWidgetBundle: WidgetBundle {
     var body: some Widget {
         TodayWidget()
+        RestTimerLiveActivity()
     }
 }
