@@ -24,8 +24,9 @@ Status key:
 | Travel time | Planned (Phase 6) | MapKit `MKDirections.calculateETA` | Free. Traffic-aware estimates where Apple has them. |
 | Location | Planned (Phase 6) | Core Location, when-in-use. Home and office regions only with consent. | |
 | Gym occupancy | Not possible as a live source | User feedback ("it was busy") builds time-of-day estimates, always labelled as estimates | No public Nuffield Health API is known. Values are never invented. |
-| OCR (receipts, recipes) | Planned (Phase 4) | Vision `RecognizeTextRequest`, VisionKit document camera, PDFKit | On device. |
-| Nutrition data | Planned (Phase 4) | UK CoFID (McCance & Widdowson) subset bundled under the Open Government Licence; Open Food Facts for packaged items | Always shown as estimates. |
+| OCR (receipts, recipes) | Built, unverified on device (Phase 4) | Vision `VNRecognizeTextRequest`, VisionKit document camera, PhotosPicker, PDFKit text layer with page rendering as a fallback | On device; nothing is uploaded. At most 6 PDF pages are read at a time. |
+| Nutrition data | Built (Phase 4) | About 70 common foods with typical UK values per 100 g, bundled in the app | Always shown as estimates with a confidence level (D-025). Open Food Facts for packaged items is a possible later addition. |
+| Supermarket prices | Not available | Typical Aldi shelf prices bundled for estimates | Aldi and Co-op have no public price API. Prices are labelled as typical, not live. |
 | Notifications | Built: scheduled commitment reminders (Phase 2), unverified on device | `UNUserNotificationCenter` calendar triggers for agreed commitments only; normal alerts at home, silent (passive) in the office | Local only (no push on a free team). The iOS limit is 64 pending notifications. |
 | Live Activities | Built, unverified on device (Phase 3) | ActivityKit rest timer on the Lock Screen and in the Dynamic Island | Updated locally without a push server; ends with the workout. |
 | App Intents | Planned (Phase 7) | "I'm ready", "What's next", "Done" for Siri and Shortcuts | |

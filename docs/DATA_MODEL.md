@@ -103,6 +103,37 @@ A backlog task: `title`, `area` (household, houseSale, personal, work), `parentI
 - `activityEarningsEndDay`: the cutover day.
 - `goldInvestingEnabled`.
 
+## Training (Phase 3)
+
+- `WorkoutSession`: one gym session, with its plan as JSON so changes made during the session are kept.
+- `SetLog`: one logged set (weight, reps, warm-up, pain).
+- `SymptomLog`: a knee check-in, during activity, the next day or any time.
+
+Body measurements come from Apple Health and aren't copied into the store. Progress photos are files with complete protection (D-023).
+
+## Kitchen (Phase 4)
+
+All new entities, so stores migrate lightweight.
+
+### `Recipe`
+Fields: `title`, `role` (lunch, dinner, both, breakfast), `servings`, ingredients as JSON (`RecipeIngredient`: name, amount, unit, catalogue ID, original line), `steps`, prep, cook and washing-up minutes, `usesSlowCooker`, `isFakeaway`, `freezable`, `favourite`, `source`, `archived`, `timesCooked` and `lastCookedAt`.
+
+Nutrition per portion (kcal, protein, carbs, fat) is stored with a confidence level. A confirmed confidence means the user entered the figures.
+
+### `MealPlanEntry`
+One meal: `day`, `slot` (lunch or dinner), `recipeID?`, `title`, `portions`, `fromFreezer`, `defrosted`, `cooked`, `note`.
+
+### `InventoryItem`
+Keyed by catalogue ID, `name:<text>` for anything else, or `meal:<title>` for cooked portions.
+
+Fields: `location`, `source`, `addedAt`, `confirmedAt`, `outAt`, `portions?` and `usedSinceAdded`. Presence is computed when it's read, never stored (D-026).
+
+### `ReceiptRecord`
+A unique `fingerprint` (shop, day, total), `merchant`, `date`, `month`, `totalPence`, lines as JSON, `needsReview` and `manual`.
+
+### `ShoppingItem`
+Fields: `key`, `name`, `department`, `quantityText`, `estimatePence`, `reasons`, `checkFirst`, `manual` and `ticked`.
+
 ## Planned (later phases)
 
-`WorkoutSession`, `ExerciseSet`, `ExercisePlan`, `SymptomLog`, `BodyMetric`, `ProgressPhoto` (file-protected), `Recipe`, `Ingredient`, `InventoryItem`, `Receipt`, `ShoppingList`, `SocialEvent`. Each is added in its phase with optional attributes, so migration stays lightweight.
+`SocialEvent` (Phase 6).

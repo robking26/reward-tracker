@@ -2,6 +2,36 @@
 
 Newest first. Each entry records what was decided, why, and who made the call ("User" means answered by the user; "Team" means a default chosen because the question wasn't blocking).
 
+## D-028 · Kitchen lives under Today, not a fifth tab (Team)
+The brief fixes four tabs. Tonight's dinner, the defrost prompt and "Not happening" sit in a Dinner card on Today; the full kitchen (meals, list, stock, recipes, spending) opens from that card. Food never creates commitments or fines (A6).
+
+## D-027 · Meal planning rules (Team, from F2–F5)
+- **Lunch:** one batch-cooked lunch Monday to Friday. The recipe rotates weekly over the lunch recipes, counted from Monday 5 January 2026.
+- **Dinner:** two identical portions. No dinner twice in a week or within 10 days of last being eaten.
+- **Exclusions:** recipes with mushrooms, courgette or cauliflower are kept but never suggested.
+- **Slow cooker:** only on days the calendar says you're working from home (or not working). An unknown work location counts as office.
+- **Late evenings:** an evening gym session, swim or social plan gets something ready in 30 minutes, or a freezer meal.
+- **Fakeaways:** Friday and the weekend first. Midweek only after the freezer.
+- **Batch cook:** prep scales at 30% per extra batch; oven and hob time overlap; a slow cooker runs unattended; 10 minutes to portion. Freezer extras are dropped until it fits an hour. If the lunch alone doesn't fit, the app says so.
+
+## D-026 · Inventory is an estimate (Team, from I4)
+- **Your word counts most:** "it's in" is trusted for 2 days, then "probably".
+- **Receipts:** a receipt only ever gives "probably" (first half of the item's shelf life), then "maybe", then "probably gone".
+- **Use and run-outs:** eating a planned meal lowers its ingredients one step. "We've run out" always wins.
+- **Staples:** oil, salt, spices and stock are assumed present unless you say they've run out.
+- **Never tracked:** there are no replacement alerts for toothbrush heads or razors.
+
+## D-025 · Nutrition and prices are typical values (Team, from F7, I1)
+- **Nutrition:** about 70 common foods carry typical UK values per 100 g, bundled in the app, with no network.
+- **How sure:** each recipe shows how many ingredients were counted ("rough estimate", "estimate", "close estimate"), and you can enter your own figures.
+- **Prices:** typical Aldi shelf prices, used only for the list estimate and the ceiling warning. No live prices exist without an Aldi API.
+
+## D-024 · Receipts (Team, from I3)
+- **Reading:** on-device text recognition only.
+- **Duplicates:** the same shop, day and total counts as the same receipt and is refused.
+- **Review:** a receipt is flagged when the lines don't add up to the total or the date is missing.
+- **Inventory:** takeaway receipts count towards the £400 but don't change the inventory.
+
 ## D-023 · Progress photos stay inside the app (Team)
 Photos are copied into the app's own folder with complete file protection: unreadable while the phone is locked, kept out of the photo library, never uploaded. Each photo can be viewed, shared or deleted. "Delete all coach data" doesn't remove photos; they're managed in Progress.
 

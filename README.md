@@ -6,7 +6,7 @@ Vaultality is a native iPhone app that acts as a personal coach. It knows your g
 
 It has four tabs:
 
-- **Today**: the one thing to do now, with Start, Done, Not now, Change plan, Something's blocking me and Talk to coach. Below it: what's coming up, what's still due, and what's at stake.
+- **Today**: the one thing to do now, with Start, Done, Not now, Change plan, Something's blocking me and Talk to coach. Below it: what's coming up, tonight's dinner, what's still due, and what's at stake. The Dinner card opens the **Kitchen**: this week's meals, the Aldi list, what's probably in, your recipes, and spending against the £400 household ceiling.
 - **Coach**: a chat that acts on the same data as Today. Type or dictate. It works offline, with no AI service, and Apple's on-device model arrives in Phase 2.
 - **Calendar**: your calendars, read-only, plus your commitments and the free time the coach can see. Work focus blocks are protected, and Becky's shared events never make you busy.
 - **Progress**: consistency over the last 14 days (no streaks), money kept this month, house-sale progress, and movement from Apple Health.
@@ -46,7 +46,8 @@ It has four tabs:
    - "Something's blocking me", "My knee hurts", "I'm ill"
    - "Park this" and "I'm back"
    - "Put cleaning the attic on my list"
-   - "We've run out of chicken"
+   - "We've run out of chicken", "We've got three portions of curry left", "Add bin bags to the shopping list"
+   - "What's for dinner?", "I forgot to defrost", "There's nothing in for dinner"
 5. **The next morning:** anything you didn't mark gets a "Did you do this?" card on Today. If it's still unanswered by the end of that day, it counts as missed. You can correct it until the month closes.
 6. **Memory:** open **Settings → Coach memory** to see everything the coach knows about you. You can correct it, mark items as sensitive, delete them or export them. **Settings → Privacy & data** can delete everything.
 
@@ -98,7 +99,7 @@ FitnessVault/
   Domain/          Pure, tested logic: Pence, reward engine, ledger, settlement
   Persistence/     SwiftData entities and settings
   Services/        Health (HealthKit + mock), Banking (Starling + mock), Platform
-  Features/        Activity, Vault, Settings
+  Features/        Today, Coach, Calendar, Progress, Workout, Kitchen, Settings
   Preview Content/ Preview-only fixtures (DEBUG only)
 FitnessVaultWidget/ Large home-screen widget (WidgetKit)
 Shared/           Code used by both the app and the widget

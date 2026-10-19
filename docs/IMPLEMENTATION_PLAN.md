@@ -65,10 +65,19 @@ On-device items still need checking on the iPhone and watch.
 - [x] Progress: weight and body-fat trends, strength, consistency, photos (file-protected)
 
 ## Phase 4 — Nutrition and household
-- [ ] Recipe import (camera, screenshot, PDF), extraction, estimates with uncertainty
-- [ ] Meal plan (lunch rotation, varied shared dinners, exclusions), batch-cook fit check
-- [ ] Inventory (probabilistic), conversational corrections, defrost reminders
-- [ ] Aldi list by department, £400 ceiling, receipts with duplicate protection
+Camera, document scanner and notification behaviour still need checking on the iPhone.
+
+- [x] Recipe import (camera, screenshot, PDF, file, typed), extraction, estimates with uncertainty, corrections (F7)
+- [x] Macro tweaks that keep the dish; flavour changes need approval (F7)
+- [x] Meal plan: same lunch Mon–Fri on a 4-week rotation, varied dinners for two, exclusions, slow cooker only on home days, fakeaway Fridays (F2–F4)
+- [x] Batch-cook fit check: one hour, drops freezer extras rather than pretending (F5)
+- [x] Freezer meals and probabilistic inventory with conversational corrections (F6, I4)
+- [x] Defrost reminders the evening before, safe advice when forgotten (I5)
+- [x] Aldi list by department with pack sizes and estimates; £400 ceiling as a ceiling, not a target (I1–I2)
+- [x] Receipts: scan or type, review, duplicate protection (I3)
+- [x] Dinner rescue when dinner isn't happening (scenario G)
+- [x] Household task chains (H1)
+- [ ] Generate new dishes from favourites with the on-device model (needs Apple Intelligence; later)
 
 ## Phase 5 — Accountability
 - [ ] Daily reconciliation job and pending-verification flow

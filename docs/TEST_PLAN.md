@@ -12,7 +12,7 @@ Automated tests run on every push (GitHub Actions, iOS simulator). Deterministic
 | D | Knee symptoms | Phase 3: pain report blocks progression and swaps lower-body load | |
 | E | Social weekend | Phase 6 | |
 | F | Five-minute gap | **Phase 1:** availability returns work-gap windows only for micro tasks. Phase 2: 2–3 feasible tasks. | |
-| G | Dinner not prepared | Phase 4 | |
+| G | Dinner not prepared | **Phase 4:** `KitchenDomainTests.testDinnerRescueOffersLowFrictionOptions`, `KitchenModelTests.testDefrostReminderAndForgottenDefrost`: options come from what's probably in, the freezer, a Co-op top-up or a takeaway within budget. A forgotten defrost gets the safe microwave route. | Tap "Forgot" on the Dinner card |
 | H | Equipment busy | Phase 3 | |
 | I | Incomplete workout | Phase 3: completed sets persist, no catch-up | |
 | J | Evening routine outstanding | **Phase 1:** projection never shows 100% confirmed while applicable items are open; no fine before reconciliation | |
@@ -35,6 +35,9 @@ Automated tests run on every push (GitHub Actions, iOS simulator). Deterministic
 | `RecommendationEngineTests`, `ReplannerTests`, `NotificationPlannerTests`, `MemoryRetrieverTests` | Phase 2 engines |
 | `CoachPlanningTests` | Briefing, replanning, reminders, launch mode through `CoachModel` |
 | `CoachAITests`, `ToolParsingTests` | Model routing, validated tools, honesty guard, fallback, compact context |
+| `TrainingTests`, `TrainingModelTests` | Phase 3 programme, progression, knee rules and the workout logger |
+| `KitchenDomainTests` | Ingredient and recipe parsing, nutrition confidence, exclusions, macro tweaks, meal planning, batch-cook fit, defrost reminders, dinner rescue, inventory presence, shopping list, budget, receipts, kitchen intents, starter recipes |
+| `KitchenModelTests` | Seeding and weekly plan, conversational corrections, list ticking, freezer portions, defrost, receipts and the ceiling, task chains |
 
 ## Manual device checklist (Phase 1)
 - [ ] Calendar permission prompt appears from Settings → Privacy, not on launch
@@ -48,3 +51,11 @@ Automated tests run on every push (GitHub Actions, iOS simulator). Deterministic
 - [ ] Reminders arrive for an agreed walk: 5 minutes before, then 5 and 20 minutes after; silent on office days
 - [ ] With Apple Intelligence on, "Find us something to do Friday" gets a model reply; with it off, the coach explains
 - [ ] Dictate a message at home: the reply is spoken
+
+## Manual device checklist (Phase 4)
+- [ ] Today shows tonight's dinner; "Eaten" on a freezable dinner adds its spare portions to the freezer
+- [ ] Kitchen → Recipes → Add a recipe: scan a cookbook page, then a screenshot, then a PDF; check what was read before saving
+- [ ] Kitchen → List → Build from meals: grouped in Aldi order; ticking marks things as in
+- [ ] Scan an Aldi receipt; scanning the same receipt again is refused
+- [ ] Plan a freezer meal for tomorrow: the defrost reminder arrives at 20:30
+- [ ] Say "We've run out of milk" and "We've got three portions of curry left" to the coach
