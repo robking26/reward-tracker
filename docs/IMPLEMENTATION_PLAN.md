@@ -28,15 +28,16 @@ Phase 0 docs/CI
 - [x] 1a `Availability`: work protection, focus blocks, lunch, shared events non-blocking, door-to-door padding (S1–S2, N4)
 - [x] 1a `CalendarClassifier`: roles, focus detection, free events, office/home day hints (D-009)
 - [x] 1a unit tests for scenarios J, K and the scoring parts of B and O
-- [ ] 1b SwiftData entities: Commitment, CommitmentEvent, Routine, DayRecord, CoachMessage, MemoryRecord, TaskItem
-- [ ] 1b Seed memory from the brief (profile, objectives, preferences, house-sale backlog, suggested routines disabled)
-- [ ] 1b Money cutover: no activity earnings from 19 Oct 2026, gold off, earlier earnings still settle
-- [ ] 1b `CoachModel`: commitments for today, routines → commitments, transitions with history, reconciliation, projection
-- [ ] 1c Four tabs (N1); the old dashboard moves to Progress → Activity
-- [ ] 1c Today: current action card, quick actions, next commitment, next opportunity, essentials, projection, coach line
-- [ ] 1c Coach: persistent chat, quick replies, deterministic intents (what's next, done, not now, park, I'm back, add task, blocked), dictation *(device)*
-- [ ] 1c Calendar: EventKit read-only day and week views, role assignment, missing-work-calendar state *(device)*
-- [ ] 1c Settings: privacy and permissions, calendars, coach memory inspector (edit, delete, export), delete all coach data
+- [x] 1b SwiftData entities: Commitment, CommitmentEvent, Routine, DayRecord, CoachMessage, MemoryRecord, TaskItem
+- [x] 1b Seed memory from the brief (profile, objectives, preferences, house-sale backlog, suggested routines disabled)
+- [x] 1b Money cutover: no activity earnings from 19 Oct 2026, gold off, earlier earnings still settle
+- [x] 1b `CoachModel`: commitments for today, routines → commitments, transitions with history, reconciliation, projection
+- [x] 1c Four tabs (N1); the old dashboard moves to Progress → Activity
+- [x] 1c Today: current action card, quick actions, next commitment, next opportunity, essentials, projection, coach line
+- [x] 1c Coach: persistent chat, quick replies, deterministic intents (what's next, done, not now, park, I'm back, add task, blocked), dictation *(device)*
+- [x] 1c Calendar: EventKit read-only day and week views, role assignment, missing-work-calendar state *(device)*
+- [x] 1c Settings: privacy and permissions, calendars, coach memory inspector (edit, delete, export), delete all coach data
+- [x] 1c Widgets show the next action and commitments (no money); sensitive titles hidden on the Lock Screen *(device)*
 
 ## Phase 2 — Coaching engine
 - [ ] Foundation Models provider behind `CoachLanguageModel`, with tools for add task, propose commitment, transition commitment and remember fact
