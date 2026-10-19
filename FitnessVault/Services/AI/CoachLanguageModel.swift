@@ -26,7 +26,7 @@ protocol CoachLanguageModel: AnyObject {
 
 enum CoachAI {
     /// Apple's on-device model where the SDK and device support it; otherwise none (rule-based coach only).
-    @MainActor
+    /// Nonisolated so it can be a default argument.
     static func makeDefault() -> CoachLanguageModel? {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {

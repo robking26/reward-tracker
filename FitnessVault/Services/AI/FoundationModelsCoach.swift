@@ -7,6 +7,8 @@ import FoundationModels
 @available(iOS 26.0, *)
 @MainActor
 final class FoundationModelsCoach: CoachLanguageModel {
+    nonisolated init() {}
+
     var status: CoachAIStatus {
         switch SystemLanguageModel.default.availability {
         case .available:
