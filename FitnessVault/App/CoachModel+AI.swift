@@ -42,20 +42,25 @@ extension CoachModel {
         if items.isEmpty {
             lines.append("Nothing agreed today.")
         } else {
-            lines.append("Today's commitments: " + items.map { item in
-                "\(item.scheduledStart.map { time($0) } ?? "any time") \(item.title) (\(item.state.title.lowercased()))"
-            }.joined(separator: "; ") + ".")
+            let described: [String] = items.map { item in
+                let when: String = item.scheduledStart.map { time($0) } ?? "any time"
+                return "\(when) \(item.title) (\(item.state.title.lowercased()))"
+            }
+            lines.append("Today's commitments: \(described.joined(separator: "; ")).")
         }
         if let current = currentAction { lines.append("Current: \(current.title).") }
 
         let timed = events.filter { !$0.event.isAllDay }.prefix(8)
         if !timed.isEmpty {
-            lines.append("Calendar: " + timed.map { "\(time($0.event.start))–\(time($0.event.end)) \($0.event.title) (\($0.kind.label.lowercased()))" }
-                .joined(separator: "; ") + ".")
+            let described: [String] = timed.map { item in
+                "\(time(item.event.start))–\(time(item.event.end)) \(item.event.title) (\(item.kind.label.lowercased()))"
+            }
+            lines.append("Calendar: \(described.joined(separator: "; ")).")
         }
         let free = windows.filter { $0.kind != .workGap && $0.minutes >= 15 }.prefix(4)
         if !free.isEmpty {
-            lines.append("Free outside work: " + free.map { "\(time($0.interval.start))–\(time($0.interval.end))" }.joined(separator: ", ") + ".")
+            let described: [String] = free.map { window in "\(time(window.interval.start))–\(time(window.interval.end))" }
+            lines.append("Free outside work: \(described.joined(separator: ", ")).")
         }
         if let confirmed = projection.score.confirmedPercent, let possible = projection.score.possiblePercent {
             lines.append("Done so far: \(confirmed)% (up to \(possible)%).")

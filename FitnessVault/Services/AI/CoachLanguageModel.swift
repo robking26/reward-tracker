@@ -91,7 +91,7 @@ final class CoachToolbox {
             let bedtime = coach.today.startDate(calendar: coach.calendar).addingTimeInterval(TimeInterval(coach.coach.bedtimeMinute * 60))
             guard parsed.addingTimeInterval(TimeInterval(minutes * 60)) <= bedtime else { return "Not done: that runs past bedtime." }
             let interval = DateInterval(start: parsed, duration: TimeInterval(minutes * 60))
-            if let clash = coach.events.first(where: { $0.kind.blocksUser && DateInterval(start: $0.event.start, end: max($0.event.start, $0.event.end)).intersection(with: interval).map { $0.duration > 0 } ?? false }) {
+            if let clash = coach.events.first(where: { Self.overlaps($0, interval) }) {
                 return "Not done: it clashes with \(clash.event.title) (\(clash.kind.label.lowercased()))."
             }
             start = parsed
@@ -143,8 +143,20 @@ final class CoachToolbox {
     func freeTime(minutes: Int) -> String {
         let fits = coach.windows.filter { $0.kind != .workGap && $0.minutes >= max(5, minutes) }
         guard !fits.isEmpty else { return "No free stretch of \(minutes) minutes left today outside work." }
-        return fits.prefix(4).map { "\(coach.time($0.interval.start))–\(coach.time($0.interval.end))\($0.kind == .lunch ? " (lunch)" : "")" }
-            .joined(separator: ", ")
+        var parts: [String] = []
+        for window in fits.prefix(4) {
+            let label = window.kind == .lunch ? " (lunch)" : ""
+            parts.append("\(coach.time(window.interval.start))–\(coach.time(window.interval.end))\(label)")
+        }
+        return parts.joined(separator: ", ")
+    }
+
+    /// A blocking calendar event that overlaps `interval` by more than an instant.
+    private static func overlaps(_ item: ClassifiedEvent, _ interval: DateInterval) -> Bool {
+        guard item.kind.blocksUser, item.event.end > item.event.start else { return false }
+        let event = DateInterval(start: item.event.start, end: item.event.end)
+        guard let shared = event.intersection(with: interval) else { return false }
+        return shared.duration > 0
     }
 
     func listTasks() -> String {

@@ -20,7 +20,7 @@ concurrency:
 jobs:
   build-and-test:
     runs-on: macos-15
-    timeout-minutes: 40
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -47,15 +47,20 @@ jobs:
       # Unsigned simulator build: no Apple account or certificates needed in CI.
       - name: Build and run unit tests
         run: |
-          status=0
+          # Progress is streamed so a slow build or a stuck test is visible, and each test has a time limit.
+          set +e
           xcodebuild test \
             -project FitnessVault.xcodeproj \
             -scheme FitnessVault \
             -destination "id=${{ steps.simulator.outputs.udid }}" \
             -resultBundlePath TestResults.xcresult \
+            -test-timeouts-enabled YES \
+            -default-test-execution-time-allowance 60 \
+            -maximum-test-execution-time-allowance 120 \
             CODE_SIGNING_ALLOWED=NO \
-            > xcodebuild.log 2>&1 || status=$?
-          grep -E "Test Suite|Test Case .* (passed|failed)|Executed|\*\* (BUILD|TEST)" xcodebuild.log || true
+            2>&1 | tee xcodebuild.log \
+            | grep --line-buffered -E "Test Suite|Test Case .* (passed|failed|started)|Executed|\*\* (BUILD|TEST)|error:|SwiftCompile normal [a-z0-9_]+ .*Coach|Testing started"
+          status=${PIPESTATUS[0]}
           exit $status
 
       - name: Show compile errors
