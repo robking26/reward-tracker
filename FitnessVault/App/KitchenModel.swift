@@ -97,6 +97,7 @@ final class KitchenModel {
                                   freezable: starter.freezable, source: .starter))
         }
         save()
+        reload()
     }
 
     var activeRecipes: [Recipe] { recipes.filter { !$0.archived } }
@@ -239,7 +240,7 @@ final class KitchenModel {
         var note: String?
         if entry.fromFreezer {
             adjustFreezer(title: entry.title, by: -entry.portions)
-        } else if let recipe = recipe(entry.recipeID) {
+        } else if let recipe = self.recipe(entry.recipeID) {
             recipe.lastCookedAt = now()
             recipe.timesCooked += 1
             let used = Set(recipe.ingredients.compactMap(\.foodID))
@@ -406,7 +407,7 @@ final class KitchenModel {
         }
         var needs: [ShoppingNeed] = []
         for (id, portions) in portionsByRecipe {
-            guard let recipe = recipe(id) else { continue }
+            guard let recipe = self.recipe(id) else { continue }
             let factor = Double(portions) / Double(max(1, recipe.servings))
             needs += recipe.ingredients.map { ShoppingNeed($0.scaled(factor), forMeal: recipe.title) }
         }
@@ -544,7 +545,7 @@ final class KitchenModel {
         }
         let defrost = DefrostPlanner.reminders(for: soon.filter { !$0.defrosted }.compactMap(\.planned), now: now(), calendar: calendar)
         let slowCooker = soon.compactMap { entry -> PlannedNotification? in
-            guard entry.slot == .dinner, let recipe = recipe(entry.recipeID), recipe.usesSlowCooker, let day = entry.dayKey else { return nil }
+            guard entry.slot == .dinner, let recipe = self.recipe(entry.recipeID), recipe.usesSlowCooker, let day = entry.dayKey else { return nil }
             let wake = coach?.coach.wakeMinute ?? 355
             let date = day.startDate(calendar: calendar).addingTimeInterval(TimeInterval((wake + 75) * 60))
             guard date > now() else { return nil }
