@@ -6,6 +6,10 @@ struct CoachView: View {
     @Binding var showingSettings: Bool
     @State private var draft = ""
     @State private var dictation = Dictation()
+    @State private var speech = SpeechOutput()
+    /// The message being sent was dictated, so the reply may be spoken.
+    @State private var usedVoice = false
+    @State private var awaitingSpokenReply = false
     @FocusState private var inputFocused: Bool
 
     var body: some View {
@@ -17,7 +21,19 @@ struct CoachView: View {
                             MessageBubble(message: message)
                                 .id(message.id)
                         }
-                        if let last = coach.messages.last, last.role == .coach, !last.quickReplies.isEmpty {
+                        if coach.isThinking {
+                            HStack(spacing: Spacing.xs) {
+                                ProgressView()
+                                Text("Thinking on this iPhone…")
+                                    .font(.footnote)
+                                    .foregroundStyle(Palette.textSecondary)
+                            }
+                            .padding(.horizontal, Spacing.s)
+                            .padding(.vertical, 10)
+                            .background(Palette.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                            .accessibilityLabel("The coach is thinking")
+                        }
+                        if !coach.isThinking, let last = coach.messages.last, last.role == .coach, !last.quickReplies.isEmpty {
                             QuickReplies(replies: last.quickReplies) { reply in
                                 send(reply)
                             }
@@ -28,7 +44,10 @@ struct CoachView: View {
                 }
                 .scrollDismissesKeyboard(.interactively)
                 .onAppear { scrollToEnd(proxy, animated: false) }
-                .onChange(of: coach.messages.count) { scrollToEnd(proxy, animated: true) }
+                .onChange(of: coach.messages.count) {
+                    scrollToEnd(proxy, animated: true)
+                    speakIfAppropriate()
+                }
             }
             .safeAreaInset(edge: .bottom) { inputBar }
             .pageBackground()
@@ -40,8 +59,12 @@ struct CoachView: View {
                 }
             }
             .onChange(of: dictation.transcript) { _, text in
-                if dictation.isRecording || !text.isEmpty { draft = text }
+                if dictation.isRecording || !text.isEmpty {
+                    draft = text
+                    usedVoice = true
+                }
             }
+            .onDisappear { speech.stop() }
         }
     }
 
@@ -97,10 +120,21 @@ struct CoachView: View {
 
     private func send(_ text: String) {
         if dictation.isRecording { dictation.stop() }
+        speech.stop()
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
+        awaitingSpokenReply = usedVoice
+        usedVoice = false
         coach.send(trimmed)
         draft = ""
+    }
+
+    /// Speaks the coach's reply to a dictated message, at home only (V1, S2).
+    private func speakIfAppropriate() {
+        guard awaitingSpokenReply, let last = coach.messages.last, last.role == .coach else { return }
+        awaitingSpokenReply = false
+        guard coach.coach.speakReplies, coach.workLocation != .office else { return }
+        speech.speak(last.text)
     }
 
     private func scrollToEnd(_ proxy: ScrollViewProxy, animated: Bool) {

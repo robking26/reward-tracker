@@ -290,6 +290,7 @@ struct PrivacyView: View {
                 LabeledContent("Calendars", value: coach.calendarAccess.title)
                 LabeledContent("Microphone and speech", value: "Asked when you first dictate")
                 LabeledContent("Location", value: "Not used yet")
+                LabeledContent("Coach AI", value: coach.aiStatus.title)
                 Button("Open iPhone Settings") {
                     if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
                 }
@@ -300,7 +301,7 @@ struct PrivacyView: View {
             }
 
             Section {
-                Text("Your coach, memory, calendar view and conversation stay on this iPhone. The coach doesn't send your messages, health or calendar details to any AI service. Dictation runs on the iPhone when supported. Banking tokens are kept in the Keychain on this device only.")
+                Text("Your coach, memory, calendar view and conversation stay on this iPhone. The coach's AI is Apple's on-device model, so your messages, health and calendar details aren't sent to any AI service. Dictation runs on the iPhone when supported. Banking tokens are kept in the Keychain on this device only.")
                     .font(.footnote)
                     .foregroundStyle(Palette.textSecondary)
             } header: {

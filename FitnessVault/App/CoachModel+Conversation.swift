@@ -16,6 +16,15 @@ extension CoachModel {
         let text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
         context.insert(CoachMessage(role: .user, text: text))
+        // Known commands are handled by rules, instantly and offline. Anything else goes to the on-device model.
+        if case .unknown = CoachIntentParser.parse(text), awaitingResumeNote == nil,
+           let model = languageModel, model.status.isAvailable {
+            save()
+            reload()
+            isThinking = true
+            pendingReply = Task { await self.replyWithModel(text, model: model) }
+            return
+        }
         let reply = respond(to: text)
         context.insert(CoachMessage(role: .coach, text: reply.text, quickReplies: reply.quickReplies,
                                     relatedCommitmentID: reply.relatedCommitmentID, toolSummary: reply.toolSummary))
@@ -61,7 +70,8 @@ extension CoachModel {
         case .addTask(let title): return addTask(title)
         case .ranOut(let item): return ranOut(item)
         case .unknown:
-            return CoachReply(text: "I can't do that one yet. I can tell you what's next, mark things done, move or excuse a commitment, park and resume, and add things to your list.",
+            let why = aiStatus.isAvailable ? "" : " (\(aiStatus.title), so I'm on simple commands only)"
+            return CoachReply(text: "I can't do that one\(why). I can tell you what's next, mark things done, move or excuse a commitment, park and resume, and add things to your list.",
                               quickReplies: ["What's next?", "Done"])
         }
     }

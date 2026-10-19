@@ -19,6 +19,8 @@ final class CoachModel {
     private let demoCalendar: CalendarProviding
     let defaults: UserDefaults
     let reminders: ReminderScheduling
+    /// Apple's on-device model when available; nil means the rule-based coach only (scenario N).
+    let languageModel: CoachLanguageModel?
     @ObservationIgnored private var calendarObserver: NSObjectProtocol? = nil
     @ObservationIgnored private var lastWidgetSnapshot: CoachWidgetSnapshot? = nil
     /// The last reminder plan sent to iOS, so unchanged plans aren't rescheduled.
@@ -27,6 +29,8 @@ final class CoachModel {
     var launch: LaunchState? = nil
     /// True while the on-device model is writing a reply.
     var isThinking = false
+    /// The reply being written by the model, so tests (and callers) can wait for it.
+    @ObservationIgnored var pendingReply: Task<Void, Never>? = nil
 
     // MARK: Derived state (read by views)
 
@@ -68,6 +72,7 @@ final class CoachModel {
          demoCalendar: CalendarProviding? = nil,
          defaults: UserDefaults = .standard,
          reminders: ReminderScheduling? = nil,
+         languageModel: CoachLanguageModel? = CoachAI.makeDefault(),
          calendar: Calendar = .current,
          now: @escaping () -> Date = { .now }) {
         self.container = container
@@ -77,6 +82,7 @@ final class CoachModel {
         self.demoCalendar = demoCalendar ?? DemoCalendarService(calendar: calendar)
         self.defaults = defaults
         self.reminders = reminders ?? LocalReminderScheduler()
+        self.languageModel = languageModel
         self.calendar = calendar
         self.now = now
         let today = DayKey(now(), calendar: calendar)

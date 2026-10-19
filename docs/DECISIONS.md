@@ -2,6 +2,43 @@
 
 Newest first. Each entry records what was decided, why, and who made the call ("User" means answered by the user; "Team" means a default chosen because the question wasn't blocking).
 
+## D-019 · How the AI acts (Team)
+- Known commands go to the rule-based parser: instant, offline, never sent to the model.
+- Everything else goes to Apple's on-device model, with a **fresh session per message**. The prompt is a compact summary the app builds (today, calendar, free time, score, up to six relevant memories, the last six messages), because the model's context window is small.
+- The model acts only through validated tools:
+  - add task, suggest a commitment, update the current commitment, remember, find free time, list tasks;
+  - a suggestion is always *proposed*, so it counts only after the user says yes;
+  - an excuse needs a legitimate reason;
+  - there are no money tools.
+- "What changed" under a reply comes from the tools, never from the model's wording. A reply that claims a change no tool made gets a visible note.
+
+## D-018 · Gym ramp and recovery (Team, trial rule)
+- The weekly gym target is 2 sessions for the first two weeks from 19 Oct 2026, 3 for the next two, then 4.
+- No gym suggestion after two consecutive days of workouts. Upper and lower alternate.
+- Gym sessions are planned door to door: travel both ways, 10 minutes of changing, and 60 minutes of training. They never run into dinner (19:00–20:00) or wind-down.
+
+## D-017 · Reminder levels (Team)
+Only agreed commitments with a time get reminders, three at most:
+
+| Level | When |
+|---|---|
+| Heads-up | 15 minutes before for gym and swim, 5 minutes before for everything else |
+| "15 minutes before it gets difficult" | Grace period minus 15 minutes after the start |
+| "Is there a genuine blocker?" | At the end of the grace period: 30 minutes for gym, swim, household, rehab and self-care; 20 for walks |
+
+- No reminders during meetings, focus blocks, personal events, or before wake and after bedtime.
+- Silent in the office.
+- Rehab reminders are worded generically so the Lock Screen stays discreet.
+- The plan is rescheduled only when it changes.
+
+## D-016 · A calendar clash is excused automatically (Team)
+When a new or moved calendar event overlaps an agreed commitment:
+- the commitment is excused for "Something unavoidable came up", so it's never fined (S3);
+- the coach offers the first same-day slot that fits;
+- if the gym no longer fits anywhere, it offers a 30-minute walk instead.
+
+Each clash is handled once.
+
 ## D-014 · Unresolved commitments after the grace period (Team, trial rule)
 At midnight, open commitments become **pending verification**, never missed straight away (NO2: silence isn't proof). The next morning Today asks about them. Anything still unanswered by the end of the following day is recorded as **missed (assumed)**: it's flagged, explained, and can be corrected until the month closes. Without this, ignoring the question would be the easiest way to avoid a fine. Review it after the trial month.
 

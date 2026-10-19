@@ -90,6 +90,8 @@ struct CoachSettings: Codable, Hashable, Sendable {
     var calendarRoles: [String: CalendarRole] = [:]
     /// Door to door, one way, until real travel times arrive in Phase 6.
     var gymTravelMinutes = 15
+    /// Read the coach's reply aloud after a dictated message (never in the office).
+    var speakReplies = true
 
     init() {}
 
@@ -110,6 +112,7 @@ struct CoachSettings: Codable, Hashable, Sendable {
         finesAreSimulated = (try? c.decodeIfPresent(Bool.self, forKey: .finesAreSimulated)) ?? d.finesAreSimulated
         calendarRoles = (try? c.decodeIfPresent([String: CalendarRole].self, forKey: .calendarRoles)) ?? d.calendarRoles
         gymTravelMinutes = (try? c.decodeIfPresent(Int.self, forKey: .gymTravelMinutes)) ?? d.gymTravelMinutes
+        speakReplies = (try? c.decodeIfPresent(Bool.self, forKey: .speakReplies)) ?? d.speakReplies
     }
 
     /// The day's shape for the availability engine.

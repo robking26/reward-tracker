@@ -31,7 +31,7 @@ final class CoachPlanningTests: XCTestCase {
         let demo = DemoCalendarService(calendar: london)
         let reminders = RecordingReminderScheduler()
         let coach = CoachModel(container: Persistence.makeContainer(inMemory: true), settingsStore: settings,
-                               liveCalendar: demo, demoCalendar: demo, defaults: defaults, reminders: reminders,
+                               liveCalendar: demo, demoCalendar: demo, defaults: defaults, reminders: reminders, languageModel: nil,
                                calendar: london, now: { clock.date })
         await coach.start()
         return Harness(coach: coach, calendar: demo, reminders: reminders, clock: clock)

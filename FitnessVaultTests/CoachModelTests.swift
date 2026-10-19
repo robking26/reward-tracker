@@ -29,7 +29,7 @@ final class CoachModelTests: XCTestCase {
         let demoCalendar = DemoCalendarService(calendar: london)
         let coach = CoachModel(container: Persistence.makeContainer(inMemory: true), settingsStore: settings,
                                liveCalendar: live ?? DemoCalendarService(calendar: london), demoCalendar: demoCalendar,
-                               defaults: defaults, reminders: RecordingReminderScheduler(), calendar: london,
+                               defaults: defaults, reminders: RecordingReminderScheduler(), languageModel: nil, calendar: london,
                                now: { clock.date })
         return (coach, demoCalendar)
     }

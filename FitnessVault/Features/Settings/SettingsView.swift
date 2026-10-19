@@ -28,8 +28,15 @@ struct SettingsView: View {
                     NavigationLink { PrivacyView() } label: {
                         Label("Privacy & data", systemImage: "hand.raised").foregroundStyle(Palette.textPrimary)
                     }
+                    Toggle("Speak replies to voice messages", isOn: $store.settings.coach.speakReplies)
+                    StatusRow(title: "Coach AI", symbol: "sparkles", status: coach.aiStatus.isAvailable ? "On this iPhone" : "Simple commands only",
+                              isGood: coach.aiStatus.isAvailable)
                 } header: {
                     Text("Coach")
+                } footer: {
+                    Text(coach.aiStatus.isAvailable
+                         ? "The coach uses Apple's on-device model. Nothing you say is sent to an AI service. Replies are only spoken at home."
+                         : "\(coach.aiStatus.title). The coach still handles everyday commands, plans and reminders without it.")
                 }
 
                 Section {
