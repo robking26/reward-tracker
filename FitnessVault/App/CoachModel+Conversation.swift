@@ -41,7 +41,9 @@ extension CoachModel {
 
         switch CoachIntentParser.parse(text) {
         case .whatsNext: return whatsNext()
-        case .ready: return briefing()
+        case .ready: return hasBriefedToday ? (proposals.isEmpty ? whatsNext() : nextProposalReply()) : startBriefing()
+        case .nextStep: return nextLaunchStep()
+        case .imIn: return endLaunch()
         case .done: return markCurrentDone()
         case .start: return startCurrent()
         case .notNow: return notNow()
@@ -89,26 +91,6 @@ extension CoachModel {
         return CoachReply(text: "Nothing else agreed today. Protect your evening.")
     }
 
-    /// Phase 1 briefing: today at a glance, one thing at a time (B1, B3). The full engine arrives in Phase 2.
-    func briefing() -> CoachReply {
-        var lines: [String] = []
-        if !needsVerification.isEmpty {
-            lines.append("First, \(needsVerification.count == 1 ? "one thing" : "\(needsVerification.count) things") from earlier need checking on Today.")
-        }
-        if hasNoWorkCalendar {
-            lines.append("I can't see a work calendar, so I'll treat 8 to 4 as busy.")
-        } else if let meeting = events.first(where: { $0.kind == .workMeeting && $0.event.start > now() }) {
-            lines.append("First meeting: \(meeting.event.title) at \(time(meeting.event.start)).")
-        }
-        if workLocation != .unknown { lines.append(workLocation.title + ".") }
-        if let current = currentAction {
-            lines.append("Up first: \(current.title)\(current.scheduledStart.map { " at \(time($0))" } ?? "").")
-            return CoachReply(text: lines.joined(separator: " "), quickReplies: ["Start", "What's next?"], relatedCommitmentID: current.id)
-        }
-        lines.append("Nothing agreed yet today.")
-        return CoachReply(text: lines.joined(separator: " "), quickReplies: ["What's next?"])
-    }
-
     func markCurrentDone() -> CoachReply {
         guard let current = currentAction else {
             return CoachReply(text: "There's nothing open to mark done. Want to add something?", quickReplies: ["What's next?"])
@@ -127,8 +109,7 @@ extension CoachModel {
             return CoachReply(text: "You're already on \(current.title). Tell me when it's done.", quickReplies: ["Done", "Park this"])
         }
         guard transition(current, .start) else { return failure() }
-        return CoachReply(text: "Go. \(firstStep(for: current))", quickReplies: ["Done", "Park this"],
-                          toolSummary: "Started: \(current.title)", relatedCommitmentID: current.id)
+        return beginLaunch(for: current)
     }
 
     func notNow() -> CoachReply {
@@ -250,14 +231,18 @@ extension CoachModel {
     func acceptProposal() -> CoachReply {
         guard let proposal = proposals.first else { return whatsNext() }
         guard transition(proposal, .approve) else { return failure() }
-        return CoachReply(text: "Agreed: \(proposal.title)\(proposal.scheduledStart.map { " at \(time($0))" } ?? "").",
-                          toolSummary: "Committed: \(proposal.title)", relatedCommitmentID: proposal.id)
+        // One at a time (B3): agree, then ask about the next suggestion.
+        var reply = nextProposalReply(prefix: "Agreed.")
+        reply.toolSummary = "Committed: \(proposal.title)"
+        return reply
     }
 
     func declineProposal() -> CoachReply {
         guard let proposal = proposals.first else { return CoachReply(text: "OK.") }
         guard transition(proposal, .cancel, reason: "Declined") else { return failure() }
-        return CoachReply(text: "No problem. Not on the plan.", toolSummary: "Declined: \(proposal.title)")
+        var reply = nextProposalReply(prefix: "No problem.")
+        reply.toolSummary = "Not on the plan: \(proposal.title)"
+        return reply
     }
 
     func addTask(_ title: String) -> CoachReply {
@@ -290,19 +275,6 @@ extension CoachModel {
             .sorted { ($0.priority, -$0.sortIndex) > ($1.priority, -$1.sortIndex) }
             .prefix(3)
             .map { $0 }
-    }
-
-    func firstStep(for item: Commitment) -> String {
-        switch item.kind {
-        case .workout: "Kit on, bottle filled, out the door."
-        case .walk: "Trainers on. Get outside."
-        case .swim: "Grab your swim bag."
-        case .rehab: "Find a clear bit of floor. First exercise."
-        case .selfCare: "Phone down. Start with your teeth."
-        case .household: "Just the first bit."
-        case .meal: "Get the pan out."
-        case .work, .social, .other: "First step only."
-        }
     }
 
     func time(_ date: Date) -> String {

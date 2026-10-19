@@ -20,7 +20,7 @@ enum PreviewFixtures {
         let settings = SettingsStore(defaults: defaults)
         settings.settings.demoMode = true
         let coach = CoachModel(container: Persistence.makeContainer(inMemory: true), settingsStore: settings,
-                               defaults: defaults)
+                               defaults: defaults, reminders: RecordingReminderScheduler())
         Task { await coach.start() }
         return coach
     }

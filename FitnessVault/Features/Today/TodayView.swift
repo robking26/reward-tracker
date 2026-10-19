@@ -19,14 +19,27 @@ struct TodayView: View {
                         VerifyCard(item: item)
                     }
 
+                    if coach.shouldOfferBriefing {
+                        Button {
+                            coach.send("I'm ready")
+                            openCoach()
+                        } label: {
+                            NoticeBanner(symbol: "sunrise", title: "I'm ready",
+                                         message: "Finish your morning routine first. Then tap here and I'll take you through today, one thing at a time.",
+                                         tint: Palette.accent)
+                        }
+                        .buttonStyle(CardButtonStyle())
+                    }
+
                     if let current = coach.currentAction {
                         CurrentActionCard(item: current, openCoach: openCoach)
                     } else {
                         NothingNowCard(openCoach: openCoach)
                     }
 
-                    ForEach(coach.proposals, id: \.id) { item in
-                        ProposalCard(item: item)
+                    // One suggestion at a time (B3).
+                    if let proposal = coach.proposals.first {
+                        ProposalCard(item: proposal)
                     }
 
                     if let error = coach.lastError {

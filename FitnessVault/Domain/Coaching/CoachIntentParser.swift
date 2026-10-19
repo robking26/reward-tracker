@@ -17,6 +17,8 @@ enum CoachIntent: Equatable, Sendable {
     case moveLater(minutes: Int)
     case moveToEvening
     case yes
+    case nextStep
+    case imIn
     case no
     case unwell(ExcuseReason)
     case addTask(String)
@@ -62,6 +64,12 @@ enum CoachIntentParser {
         if matches(text, ["in half an hour", "in 30 minutes", "in 30 mins"]) { return .moveLater(minutes: 30) }
         if matches(text, ["in 15 minutes", "in 15 mins", "in a bit"]) { return .moveLater(minutes: 15) }
         if matches(text, ["this evening", "tonight", "after work"]) { return .moveToEvening }
+        if matches(text, ["next step", "then what", "and then", "what's the next step", "whats the next step"]) {
+            return .nextStep
+        }
+        if matches(text, ["i'm in", "im in", "i'm going", "im going", "on my way", "i've started", "ive started", "i'm on my way"]) {
+            return .imIn
+        }
         if matches(text, ["yes", "yeah", "yep", "ok", "okay", "sure", "go on", "deal", "sounds good", "let's do it", "lets do it"]) {
             return .yes
         }

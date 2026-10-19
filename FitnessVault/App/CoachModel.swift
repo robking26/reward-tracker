@@ -18,8 +18,15 @@ final class CoachModel {
     private let liveCalendar: CalendarProviding
     private let demoCalendar: CalendarProviding
     let defaults: UserDefaults
+    let reminders: ReminderScheduling
     @ObservationIgnored private var calendarObserver: NSObjectProtocol? = nil
     @ObservationIgnored private var lastWidgetSnapshot: CoachWidgetSnapshot? = nil
+    /// The last reminder plan sent to iOS, so unchanged plans aren't rescheduled.
+    @ObservationIgnored var lastReminderSignature: String? = nil
+    /// Step-by-step start in progress (C3).
+    var launch: LaunchState? = nil
+    /// True while the on-device model is writing a reply.
+    var isThinking = false
 
     // MARK: Derived state (read by views)
 
@@ -60,6 +67,7 @@ final class CoachModel {
          liveCalendar: CalendarProviding? = nil,
          demoCalendar: CalendarProviding? = nil,
          defaults: UserDefaults = .standard,
+         reminders: ReminderScheduling? = nil,
          calendar: Calendar = .current,
          now: @escaping () -> Date = { .now }) {
         self.container = container
@@ -68,6 +76,7 @@ final class CoachModel {
         self.liveCalendar = liveCalendar ?? EventKitCalendarService()
         self.demoCalendar = demoCalendar ?? DemoCalendarService(calendar: calendar)
         self.defaults = defaults
+        self.reminders = reminders ?? LocalReminderScheduler()
         self.calendar = calendar
         self.now = now
         let today = DayKey(now(), calendar: calendar)
@@ -92,6 +101,7 @@ final class CoachModel {
         refreshCalendar()
         save()
         reload()
+        replanForCalendarChanges()
     }
 
     private func observeCalendarChanges() {
@@ -102,6 +112,7 @@ final class CoachModel {
             Task { @MainActor in
                 self?.refreshCalendar()
                 self?.reload()
+                self?.replanForCalendarChanges()
             }
         }
     }
@@ -425,6 +436,7 @@ final class CoachModel {
                                        notBefore: now(), calendar: calendar)
         messages = (try? context.fetch(FetchDescriptor<CoachMessage>(sortBy: [SortDescriptor(\.createdAt)]))) ?? []
         publishWidgetSnapshot()
+        scheduleReminders()
     }
 
     /// Commitment kinds that are kept off the Lock Screen by name (WG1).
