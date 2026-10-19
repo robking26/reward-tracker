@@ -23,6 +23,13 @@ enum CoachIntent: Equatable, Sendable {
     case unwell(ExcuseReason)
     case addTask(String)
     case ranOut(String)
+    /// "We've got three portions of curry left": a conversational inventory correction (I4).
+    case haveLeft(portions: Int?, item: String)
+    case addToShopping(String)
+    case whatsForDinner
+    case forgotDefrost
+    case defrosted
+    case dinnerNotReady
     case unknown(String)
 }
 
@@ -32,6 +39,40 @@ enum CoachIntentParser {
         guard !text.isEmpty else { return .unknown(raw) }
 
         // Commands that carry content come first, so "add done laundry" isn't read as "done".
+        if let item = capture(text, prefixes: ["put ", "add ", "can you add "],
+                              suffixes: [" on the shopping list", " on my shopping list", " to the shopping list", " to my shopping list",
+                                         " to the shopping", " to shopping", " on the shopping"]) {
+            return .addToShopping(item)
+        }
+        if text.hasPrefix("we need "), !text.hasPrefix("we need to "), let item = capture(text, prefixes: ["we need "], suffixes: []) {
+            return .addToShopping(item)
+        }
+        if contains(text, ["forgot to defrost", "forgot to take", "didn't defrost", "didnt defrost", "not defrosted", "isn't defrosted",
+                           "isnt defrosted", "still frozen"]) {
+            return .forgotDefrost
+        }
+        if matches(text, ["it's defrosted", "its defrosted", "it's defrosting", "its defrosting", "moved it to the fridge",
+                          "it's in the fridge", "its in the fridge", "defrosted"]) {
+            return .defrosted
+        }
+        if contains(text, ["nothing for dinner", "nothing in for dinner", "nothing in for tea", "nothing for tea", "no dinner",
+                           "dinner isn't ready", "dinner isnt ready", "haven't got anything for dinner", "havent got anything for dinner",
+                           "don't have the ingredients", "dont have the ingredients", "missing ingredients", "can't be bothered to cook",
+                           "cant be bothered to cook"]) {
+            return .dinnerNotReady
+        }
+        if matches(text, ["what's for dinner", "whats for dinner", "what's for tea", "whats for tea", "what are we having for dinner",
+                          "what are we having tonight", "what's for dinner tonight", "dinner tonight"]) {
+            return .whatsForDinner
+        }
+        if let groups = RegexHelper.firstMatch(#"^(?:we've got|we have got|we've|we have|there's|there are|there is|got) (\w+) (?:portions?|bags?|tubs?|packs?|tins?|boxes?) of (.+?)(?: left)?(?: in the freezer)?$"#, in: text),
+           groups.count == 2, let count = number(groups[0]) {
+            return .haveLeft(portions: count, item: groups[1])
+        }
+        if let item = capture(text, prefixes: ["we've got ", "we have got ", "we have ", "we've still got ", "there's still "], suffixes: []),
+           FoodCatalogue.match(item) != nil {
+            return .haveLeft(portions: nil, item: item.replacingOccurrences(of: " left", with: ""))
+        }
         if let task = capture(text, prefixes: ["put ", "add ", "remind me to ", "i need to ", "can you add "],
                               suffixes: [" on my list", " on the list", " to my list", " to the list", " to my to do list"]) {
             return .addTask(task)
@@ -98,6 +139,19 @@ enum CoachIntentParser {
             return .start
         }
         return .unknown(raw)
+    }
+
+    /// "three" → 3, "3" → 3.
+    static func number(_ word: String) -> Int? {
+        if let value = Int(word) { return value }
+        let words = ["no": 0, "none": 0, "one": 1, "a": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
+                     "eight": 8, "nine": 9, "ten": 10, "a couple": 2, "couple": 2]
+        return words[word]
+    }
+
+    /// The phrase appears anywhere in the message.
+    private static func contains(_ text: String, _ phrases: [String]) -> Bool {
+        phrases.contains { text.contains($0) }
     }
 
     /// Lowercased, curly apostrophes straightened, trailing punctuation and spaces removed.

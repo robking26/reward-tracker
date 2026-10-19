@@ -31,6 +31,8 @@ final class CoachModel {
     var isThinking = false
     /// The reply being written by the model, so tests (and callers) can wait for it.
     @ObservationIgnored var pendingReply: Task<Void, Never>? = nil
+    /// Meals, freezer and shopping (Phase 4). Set by `KitchenModel`; nil means kitchen replies fall back to memory.
+    @ObservationIgnored weak var kitchen: KitchenModel? = nil
 
     // MARK: Derived state (read by views)
 

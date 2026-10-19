@@ -1,0 +1,125 @@
+import Foundation
+
+/// A few simple, original recipes so the planner works on day one. They follow the brief: lunches built on chicken,
+/// turkey mince and pork with rice and veg; dinners for two that are one-pan where possible; no mushrooms, courgette
+/// or cauliflower (F2–F4). Replace or add to them by importing your own.
+struct StarterRecipe: Sendable {
+    var title: String
+    var role: MealRole
+    var servings: Int
+    var ingredients: [String]
+    var steps: [String]
+    var prepMinutes: Int
+    var cookMinutes: Int
+    var slowCooker: Bool = false
+    var fakeaway: Bool = false
+    var freezable: Bool = false
+}
+
+enum StarterRecipes {
+    static let all: [StarterRecipe] = [
+        // Work lunches: batch-cooked, microwave-friendly, high protein
+        StarterRecipe(title: "Sweet chilli chicken rice", role: .lunch, servings: 5,
+                      ingredients: ["1 kg chicken breast", "350 g rice", "3 peppers", "1 onion", "500 g frozen mixed veg",
+                                    "150 ml sweet chilli sauce", "3 tbsp soy sauce", "1 tbsp oil"],
+                      steps: ["Cook the rice in a large saucepan.", "Fry the diced chicken in the frying pan until cooked through.",
+                              "Add the sliced peppers, onion and frozen veg; cook 5 minutes.", "Stir in the sweet chilli and soy.",
+                              "Mix with the rice, portion into 5 tubs and cool quickly. Fridge for up to 3 days, freeze the rest."],
+                      prepMinutes: 15, cookMinutes: 25, freezable: true),
+        StarterRecipe(title: "Turkey burrito bowls", role: .lunch, servings: 5,
+                      ingredients: ["1 kg turkey mince", "350 g rice", "2 tins kidney beans", "1 tin chopped tomatoes", "2 peppers",
+                                    "1 onion", "2 tbsp fajita seasoning", "200 g salsa"],
+                      steps: ["Cook the rice in a saucepan.", "Brown the turkey mince with the onion in a large frying pan.",
+                              "Add peppers, seasoning, tomatoes and beans; simmer 10 minutes.",
+                              "Portion over rice with salsa on top. Fridge 3 days, freeze the rest."],
+                      prepMinutes: 10, cookMinutes: 25, freezable: true),
+        StarterRecipe(title: "Pork and pepper fried rice", role: .lunch, servings: 5,
+                      ingredients: ["1 kg pork loin steaks", "350 g rice", "500 g frozen mixed veg", "2 peppers", "4 eggs",
+                                    "4 tbsp soy sauce", "3 garlic cloves", "1 tbsp oil"],
+                      steps: ["Cook and cool the rice.", "Fry the sliced pork in the wok until browned.",
+                              "Add garlic, peppers and veg; then the rice and soy.", "Push aside, scramble in the eggs, mix through.",
+                              "Portion into 5 tubs. Fridge 3 days, freeze the rest."],
+                      prepMinutes: 15, cookMinutes: 20, freezable: true),
+        StarterRecipe(title: "Chicken tikka rice bowls", role: .lunch, servings: 5,
+                      ingredients: ["1 kg chicken breast", "350 g rice", "150 g curry paste", "300 g greek yoghurt", "1 onion",
+                                    "300 g spinach", "500 g frozen mixed veg"],
+                      steps: ["Coat the chicken in the paste and half the yoghurt.", "Roast on a baking tray at 200°C for 25 minutes.",
+                              "Cook the rice in a saucepan, stirring in the spinach and veg at the end.",
+                              "Portion with a spoon of yoghurt on the side. Fridge 3 days, freeze the rest."],
+                      prepMinutes: 10, cookMinutes: 25, freezable: true),
+
+        // Shared dinners: two identical portions
+        StarterRecipe(title: "Chicken fajita tray bake", role: .dinner, servings: 2,
+                      ingredients: ["400 g chicken breast", "2 peppers", "1 onion", "1 tbsp fajita seasoning", "1 tbsp oil",
+                                    "4 tortilla wraps", "100 g greek yoghurt", "100 g salsa", "40 g cheddar"],
+                      steps: ["Heat the oven to 200°C.", "Toss sliced chicken, peppers and onion with the seasoning and oil on one tray.",
+                              "Roast 20–25 minutes.", "Serve in warm wraps with yoghurt, salsa and cheese."],
+                      prepMinutes: 10, cookMinutes: 25),
+        StarterRecipe(title: "Slow cooker turkey chilli", role: .dinner, servings: 4,
+                      ingredients: ["500 g turkey mince", "1 onion", "2 peppers", "2 tins chopped tomatoes", "1 tin kidney beans",
+                                    "1 tbsp fajita seasoning", "1 stock cube", "250 g rice"],
+                      steps: ["In the morning: brown the mince and onion in a pan (or skip and add raw).",
+                              "Put everything except the rice in the slow cooker. Low for 6–8 hours.",
+                              "Cook the rice in the evening. Freeze the extra two portions."],
+                      prepMinutes: 15, cookMinutes: 20, slowCooker: true, freezable: true),
+        StarterRecipe(title: "Sausage and bean one-pot", role: .dinner, servings: 2,
+                      ingredients: ["6 sausages", "1 onion", "1 pepper", "1 tin chopped tomatoes", "1 tin baked beans",
+                                    "1 tsp smoked paprika", "300 g potatoes"],
+                      steps: ["Brown the sausages in a large pot.", "Add onion, pepper and diced potato; cook 5 minutes.",
+                              "Add tomatoes, beans and paprika; simmer 20 minutes."],
+                      prepMinutes: 10, cookMinutes: 30, freezable: true),
+        StarterRecipe(title: "Salmon, potato and green bean tray bake", role: .dinner, servings: 2,
+                      ingredients: ["2 salmon fillets", "500 g baby potatoes", "200 g green beans", "1 lemon", "1 tbsp oil",
+                                    "100 g greek yoghurt"],
+                      steps: ["Roast halved potatoes on a tray at 200°C for 20 minutes.", "Add salmon and beans with lemon slices.",
+                              "Roast 12–15 minutes more. Serve with lemony yoghurt."],
+                      prepMinutes: 10, cookMinutes: 35),
+        StarterRecipe(title: "Air fryer chicken katsu", role: .dinner, servings: 2,
+                      ingredients: ["400 g chicken breast", "60 g panko breadcrumbs", "1 egg", "200 g rice", "300 ml katsu curry sauce",
+                                    "200 g stir-fry vegetables"],
+                      steps: ["Dip flattened chicken in egg then panko.", "Air fryer at 200°C for 14 minutes, turning once.",
+                              "Cook the rice and warm the sauce in a saucepan.", "Serve with quickly fried stir-fry veg."],
+                      prepMinutes: 15, cookMinutes: 15, fakeaway: true),
+        StarterRecipe(title: "Beef ragu pasta", role: .dinner, servings: 4,
+                      ingredients: ["500 g 5% beef mince", "1 onion", "2 carrots", "2 garlic cloves", "2 tins chopped tomatoes",
+                                    "1 stock cube", "300 g pasta", "40 g cheddar"],
+                      steps: ["Brown the mince with onion, carrot and garlic in a big pan.", "Add tomatoes and stock; simmer 25 minutes.",
+                              "Cook the pasta. Serve two portions; freeze two."],
+                      prepMinutes: 10, cookMinutes: 35, freezable: true),
+        StarterRecipe(title: "Lemon chicken orzo", role: .dinner, servings: 2,
+                      ingredients: ["400 g chicken thighs", "180 g orzo", "1 lemon", "2 garlic cloves", "1 stock cube",
+                                    "100 g spinach", "30 g feta"],
+                      steps: ["Brown the chicken in a deep frying pan.", "Add garlic, orzo, stock (600 ml water) and lemon zest.",
+                              "Simmer 12 minutes, stirring. Stir in spinach and lemon juice; crumble feta over."],
+                      prepMinutes: 10, cookMinutes: 20),
+        StarterRecipe(title: "Pork souvlaki flatbreads", role: .dinner, servings: 2,
+                      ingredients: ["400 g pork loin steaks", "1 lemon", "1 tsp oregano", "4 flatbreads", "1 cucumber", "2 tomatoes",
+                                    "150 g greek yoghurt", "1 red onion"],
+                      steps: ["Toss diced pork with lemon, oregano and a little oil.", "Air fryer at 200°C for 12 minutes.",
+                              "Serve in warm flatbreads with chopped salad and garlic yoghurt."],
+                      prepMinutes: 15, cookMinutes: 12),
+        StarterRecipe(title: "Chicken curry (freezer favourite)", role: .dinner, servings: 4,
+                      ingredients: ["800 g chicken thighs", "1 onion", "100 g curry paste", "1 tin chopped tomatoes", "1 tin light coconut milk",
+                                    "200 g spinach", "250 g rice"],
+                      steps: ["Soften the onion in a large pot.", "Add the chicken and paste; cook 5 minutes.",
+                              "Add tomatoes and coconut milk; simmer 25 minutes. Stir in spinach.",
+                              "Serve two portions with rice; cool and freeze two."],
+                      prepMinutes: 10, cookMinutes: 35, freezable: true),
+        StarterRecipe(title: "Prawn and veg noodles", role: .dinner, servings: 2,
+                      ingredients: ["250 g king prawns", "250 g egg noodles", "300 g stir-fry vegetables", "3 tbsp soy sauce",
+                                    "2 tbsp sweet chilli sauce", "1 lime"],
+                      steps: ["Cook the noodles.", "Stir-fry the prawns and veg in the wok for 5 minutes.",
+                              "Toss through the noodles with the sauces and lime."],
+                      prepMinutes: 5, cookMinutes: 10),
+        StarterRecipe(title: "Smash burgers and wedges", role: .dinner, servings: 2,
+                      ingredients: ["400 g 5% beef mince", "2 brioche buns", "40 g cheddar", "1 little gem", "2 tomatoes",
+                                    "400 g potato wedges"],
+                      steps: ["Air fry the wedges for 18 minutes.", "Smash balls of mince into a hot frying pan; 2 minutes a side, cheese on.",
+                              "Build the burgers with lettuce and tomato."],
+                      prepMinutes: 10, cookMinutes: 20, fakeaway: true),
+        StarterRecipe(title: "Overnight protein oats", role: .breakfast, servings: 2,
+                      ingredients: ["100 g oats", "300 g greek yoghurt", "200 ml milk", "150 g frozen berries", "1 tsp honey"],
+                      steps: ["Mix everything in two tubs the night before.", "Fridge overnight; eat cold or microwave 2 minutes."],
+                      prepMinutes: 5, cookMinutes: 0),
+    ]
+}

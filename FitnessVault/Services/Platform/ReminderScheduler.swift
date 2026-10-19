@@ -10,7 +10,15 @@ protocol ReminderScheduling: AnyObject {
 
 @MainActor
 final class LocalReminderScheduler: ReminderScheduling {
+    /// Only pending reminders with this prefix are replaced, so the coach and the kitchen don't clear each other's.
+    private let prefix: String
+
+    init(prefix: String = NotificationPlanner.prefix) {
+        self.prefix = prefix
+    }
+
     func replace(with plan: [PlannedNotification]) {
+        let prefix = self.prefix
         Task {
             let center = UNUserNotificationCenter.current()
             // Ask at the first moment it matters: when there's an agreed commitment to remind about.
@@ -18,7 +26,7 @@ final class LocalReminderScheduler: ReminderScheduling {
                 _ = try? await center.requestAuthorization(options: [.alert, .sound, .badge])
             }
             let pending = await center.pendingNotificationRequests()
-            let ours = pending.map(\.identifier).filter { $0.hasPrefix(NotificationPlanner.prefix) }
+            let ours = pending.map(\.identifier).filter { $0.hasPrefix(prefix) }
             center.removePendingNotificationRequests(withIdentifiers: ours)
             for item in plan {
                 let content = UNMutableNotificationContent()

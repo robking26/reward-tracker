@@ -8,6 +8,7 @@ struct FitnessVaultApp: App {
     @State private var model: AppModel
     @State private var coach: CoachModel
     @State private var training: TrainingModel
+    @State private var kitchen: KitchenModel
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -20,6 +21,7 @@ struct FitnessVaultApp: App {
         _coach = State(initialValue: coach)
         let training = TrainingModel(container: container, coach: coach)
         _training = State(initialValue: training)
+        _kitchen = State(initialValue: KitchenModel(container: container, coach: coach))
         // The watch can skip rest or end the workout; the iPhone stays the logger.
         WatchBridge.shared.onCommand = { command in
             switch command {
@@ -35,11 +37,13 @@ struct FitnessVaultApp: App {
                 .environment(model)
                 .environment(coach)
                 .environment(training)
+                .environment(kitchen)
                 .modelContainer(container)
                 .preferredColorScheme(.dark)
                 .tint(Palette.accent)
                 .task {
                     await coach.start()
+                    kitchen.start()
                     await model.start()
                     BackgroundRefresh.schedule(at: model.nextSettlement)
                 }
@@ -59,6 +63,7 @@ struct FitnessVaultApp: App {
             case .active:
                 Task {
                     await coach.refresh()
+                    kitchen.refresh()
                     await model.syncHealth()
                     await model.settleIfDue()
                 }

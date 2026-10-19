@@ -69,6 +69,12 @@ extension CoachModel {
         case .no: return declineProposal()
         case .addTask(let title): return addTask(title)
         case .ranOut(let item): return ranOut(item)
+        case .haveLeft(let portions, let item): return haveLeft(portions, item)
+        case .addToShopping(let item): return addToShopping(item)
+        case .whatsForDinner: return whatsForDinner()
+        case .forgotDefrost: return dinnerRescue(defrostForgotten: true)
+        case .defrosted: return markDefrosted()
+        case .dinnerNotReady: return dinnerRescue(defrostForgotten: false)
         case .unknown:
             let why = aiStatus.isAvailable ? "" : " (\(aiStatus.title), so I'm on simple commands only)"
             return CoachReply(text: "I can't do that one\(why). I can tell you what's next, mark things done, move or excuse a commitment, park and resume, and add things to your list.",
@@ -263,14 +269,6 @@ extension CoachModel {
         save()
         return CoachReply(text: "On the list under \(area.title.lowercased()). I'll bring it up when there's a good gap.",
                           toolSummary: "Added to your list: \(cleaned)")
-    }
-
-    func ranOut(_ item: String) -> CoachReply {
-        let record = MemoryRecord(store: .inventory, key: item.capitalized, value: "Run out (you said so)", source: .userStated)
-        context.insert(record)
-        save()
-        return CoachReply(text: "Noted: no \(item). Shopping lists arrive in a later update, and this will be on it.",
-                          toolSummary: "Remembered: out of \(item)")
     }
 
     // MARK: Helpers

@@ -86,6 +86,8 @@ struct TodayView: View {
 
                     ComingUpCard()
 
+                    DinnerCard()
+
                     if !coach.essentialsDue.isEmpty {
                         EssentialsCard(items: coach.essentialsDue)
                     }
