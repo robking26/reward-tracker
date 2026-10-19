@@ -53,14 +53,16 @@ On-device items still need checking on the iPhone (see `TEST_PLAN.md`).
 - [x] Spoken replies (home mode only)
 
 ## Phase 3 — Fitness and health
-- [ ] Exercise library, upper/lower program generator, progression rule (W1–W3)
-- [ ] Set logger with rest countdown, busy-equipment swaps, reorder, extend, end (W4)
-- [ ] Rehab block placement and symptom logging, including next day (R1–R3)
-- [ ] Walking baseline and gradual targets (K1–K3)
-- [ ] Swimming tracking and kit readiness (SW1–SW3)
-- [ ] watchOS app: rest timers, haptics, workout session, HealthKit save *(device)*
-- [ ] Rest timer Live Activity *(device)*
-- [ ] Progress: weight and body-fat trends, strength, consistency, photos (file-protected)
+On-device items still need checking on the iPhone and watch.
+
+- [x] Exercise library, upper/lower program generator, progression rule (W1–W3)
+- [x] Set logger with rest countdown, busy-equipment swaps, reorder, extend, end (W4)
+- [x] Rehab block placement and symptom logging, including next day (R1–R3)
+- [x] Walking baseline and gradual targets (K1–K3)
+- [x] Swimming tracking and kit readiness (SW1–SW3)
+- [x] watchOS app: rest timers, haptics, workout session, HealthKit save *(device)*
+- [x] Rest timer Live Activity *(device)*
+- [x] Progress: weight and body-fat trends, strength, consistency, photos (file-protected)
 
 ## Phase 4 — Nutrition and household
 - [ ] Recipe import (camera, screenshot, PDF), extraction, estimates with uncertainty
