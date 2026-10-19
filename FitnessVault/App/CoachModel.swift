@@ -2,6 +2,7 @@ import EventKit
 import Foundation
 import Observation
 import SwiftData
+import WidgetKit
 
 /// Owns everything coaching: today's commitments, routines, reconciliation, the consolidated calendar,
 /// the conversation and memory. Shares the SwiftData store with `AppModel`. Every change to a
@@ -18,6 +19,7 @@ final class CoachModel {
     private let demoCalendar: CalendarProviding
     let defaults: UserDefaults
     @ObservationIgnored private var calendarObserver: NSObjectProtocol? = nil
+    @ObservationIgnored private var lastWidgetSnapshot: CoachWidgetSnapshot? = nil
 
     // MARK: Derived state (read by views)
 
@@ -422,6 +424,31 @@ final class CoachModel {
                                        blocks: busyBlocks(on: today, events: events, commitments: commitments),
                                        notBefore: now(), calendar: calendar)
         messages = (try? context.fetch(FetchDescriptor<CoachMessage>(sortBy: [SortDescriptor(\.createdAt)]))) ?? []
+        publishWidgetSnapshot()
+    }
+
+    /// Commitment kinds that are kept off the Lock Screen by name (WG1).
+    static let sensitiveKinds: Set<CommitmentKind> = [.rehab]
+
+    /// Shares the next action and today's count with the widget, refreshing it only when something changed.
+    private func publishWidgetSnapshot() {
+        let current = currentAction
+        let applicable = commitments.filter { $0.state.isApplicable }
+        let snapshot = CoachWidgetSnapshot(
+            day: today.description,
+            nextTitle: current?.title,
+            nextSymbol: current?.kind.symbol,
+            nextStart: current?.scheduledStart,
+            nextIsSensitive: current.map { Self.sensitiveKinds.contains($0.kind) } ?? false,
+            nextInProgress: current?.state == .inProgress,
+            stillDue: essentialsDue.filter { !Self.sensitiveKinds.contains($0.kind) }.map(\.title),
+            done: applicable.filter { $0.state == .completed }.count,
+            total: applicable.count,
+            updatedAt: now())
+        if let lastWidgetSnapshot, lastWidgetSnapshot.hasSameContent(as: snapshot) { return }
+        CoachWidgetStore.save(snapshot)
+        lastWidgetSnapshot = snapshot
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetSnapshotStore.widgetKind)
     }
 
     func save() {

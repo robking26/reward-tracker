@@ -23,11 +23,11 @@ Phase 0 docs/CI
 - [x] CI on Xcode 26.3 with an iOS 26 simulator, so Foundation Models code is compiled
 
 ## Phase 1 — Core native foundation
-- [ ] 1a `CommitmentRules` state machine (A4, D-012/013/014)
-- [ ] 1a `DayScoring`: weighted score, live projection, fine bands, monthly cap (A2, A5, A6)
-- [ ] 1a `Availability`: work protection, focus blocks, lunch, shared events non-blocking, door-to-door padding (S1–S2, N4)
-- [ ] 1a `CalendarClassifier`: roles, focus detection, free events, office/home day hints (D-009)
-- [ ] 1a unit tests for scenarios J, K and the scoring parts of B and O
+- [x] 1a `CommitmentRules` state machine (A4, D-012/013/014)
+- [x] 1a `DayScoring`: weighted score, live projection, fine bands, monthly cap (A2, A5, A6)
+- [x] 1a `Availability`: work protection, focus blocks, lunch, shared events non-blocking, door-to-door padding (S1–S2, N4)
+- [x] 1a `CalendarClassifier`: roles, focus detection, free events, office/home day hints (D-009)
+- [x] 1a unit tests for scenarios J, K and the scoring parts of B and O
 - [ ] 1b SwiftData entities: Commitment, CommitmentEvent, Routine, DayRecord, CoachMessage, MemoryRecord, TaskItem
 - [ ] 1b Seed memory from the brief (profile, objectives, preferences, house-sale backlog, suggested routines disabled)
 - [ ] 1b Money cutover: no activity earnings from 19 Oct 2026, gold off, earlier earnings still settle

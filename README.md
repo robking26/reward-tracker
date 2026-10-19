@@ -1,16 +1,30 @@
 # Vaultality
 
-**Healthy habits unlock wealth.**
+**Your coach for the next action.**
 
-Vaultality is a native iOS app. Each month a £500 fitness allowance sits in a Starling Savings Space, and activity recorded in Apple Health unlocks it. Money you earn is paid to your Monzo account, and each payment needs your approval in the Starling app. Whatever isn't earned by month-end is set aside for a gold ETC investment through Trading 212. It never rolls into the next month's allowance.
+Vaultality is a native iPhone app that acts as a personal coach. It knows your goals, calendar, routines and Apple Health activity. It takes the work out of deciding what to do, when, and how to start. Version 2.0 is being built in phases; see [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) for what's done.
 
-The app is a single dashboard: this month's allowance, today's earnings and your activity cards. Everything about money (payouts, Starling, Trading 212, gold investments, previous months and reward rates) lives in **Settings → Money & Vault**.
+It has four tabs:
+
+- **Today**: the one thing to do now, with Start, Done, Not now, Change plan, Something's blocking me and Talk to coach. Below it: what's coming up, what's still due, and what's at stake.
+- **Coach**: a chat that acts on the same data as Today. Type or dictate. It works offline, with no AI service, and Apple's on-device model arrives in Phase 2.
+- **Calendar**: your calendars, read-only, plus your commitments and the free time the coach can see. Work focus blocks are protected, and Becky's shared events never make you busy.
+- **Progress**: consistency over the last 14 days (no streaks), money kept this month, house-sale progress, and movement from Apple Health.
+
+**Money:** each month £500 sits in Starling. You keep it minus fines for agreed commitments you miss. The daily fine bands are below, and the monthly cap is £100. Food, weight, illness, injury and rest are never fined. **During the trial no real money moves**: fines are simulated until the rules have been reviewed. Activity earned money until 18 October 2026, and those earlier earnings still pay out as before.
+
+| Day's score | Fine |
+|---|---|
+| 80% or more | Nothing |
+| 60–79% | £5 |
+| 40–59% | £10 |
+| Below 40% | £15 |
 
 > The original web tracker (`index.html`) is still in the repo so the existing site keeps working.
 
 ## Requirements
 
-- Xcode 16 or later (the project uses folder-synchronised groups)
+- Xcode 26 or later. CI builds with Xcode 26.3; Apple's on-device model needs the iOS 26 SDK.
 - iOS 17 or later on a real iPhone. HealthKit has no real data in the Simulator.
 - An Apple Developer team, for the HealthKit capability
 
@@ -20,7 +34,21 @@ The app is a single dashboard: this month's allowance, today's earnings and your
 2. Signing is preset to Rob's personal team (`P9VHAY42J5`) and the bundle identifier `com.robking.FitnessVault`. If you're signing with a different Apple ID, choose your team under **Signing & Capabilities**.
 3. Run on your iPhone. On first launch, tap **Allow Access** to connect Apple Health.
 4. To try the app without Health data or a bank, open **Settings → Development → Demo mode**. Demo mode uses generated activity and a pretend bank, and it can never move real money.
-5. Run the tests with **⌘U**. They cover all the reward, ledger, cap and settlement maths.
+5. Run the tests with **⌘U**. They cover commitments, scoring, fines and the cap, availability, calendar classification, the coach's commands, and the earlier reward, ledger and settlement maths.
+
+## Using the coach
+
+1. **Calendars:** open **Settings → Calendars**, allow access, and label each calendar as Work, Personal, Shared with Becky, or Don't use. Unlabelled calendars are ignored. If your Outlook work calendar isn't listed, add the work account under iPhone **Settings → Calendar → Accounts** (if your employer allows it). Otherwise the coach treats 8–4 on weekdays as protected work time.
+2. **Routines:** open **Settings → Routines** and switch on the ones you agree to: lunchtime walk, knee rehab, evening self-care, washing up. An agreed routine counts every scheduled day without asking, so only switch on what you mean.
+3. **Every morning:** after your own routine, tap **I'm ready** on Today or say it to the coach.
+4. **During the day:** use the buttons on Today, or just tell the coach:
+   - "What's next?", "Done", "Not now", "In an hour"
+   - "Something's blocking me", "My knee hurts", "I'm ill"
+   - "Park this" and "I'm back"
+   - "Put cleaning the attic on my list"
+   - "We've run out of chicken"
+5. **The next morning:** anything you didn't mark gets a "Did you do this?" card on Today. If it's still unanswered by the end of that day, it counts as missed. You can correct it until the month closes.
+6. **Memory:** open **Settings → Coach memory** to see everything the coach knows about you. You can correct it, mark items as sensitive, delete them or export them. **Settings → Privacy & data** can delete everything.
 
 ## Connecting Starling (sandbox first)
 
@@ -47,7 +75,7 @@ Tokens are stored only in the iPhone's Keychain, marked device-only. They are ne
 - **Settlement** runs once a day after the settlement time (08:00 by default). It pays only finished days that were synced after they ended. It makes at most one payment, and never while another payment is unresolved.
 - **Unearned money** stays in the Space. Next month the Vault tab shows how much carried forward, and suggests a top-up only for the shortfall.
 
-## Reward rates (defaults)
+## Reward rates (until 18 October 2026)
 
 | Activity | Reward |
 |---|---|
@@ -80,7 +108,9 @@ docs/              Architecture and roadmap
 .github/workflows/     iOS build and tests
 ```
 
-## Month-end and gold (Trading 212)
+## Month-end and gold (Trading 212), switched off
+
+Since Vaultality 2.0, fines stay in Starling and gold investing is switched off. The code is kept; this section describes how it worked.
 
 At month-end, Vaultality calculates `forfeited = max(0, allowance − earned)`. It closes the month on the 2nd, after a fresh Apple Health sync, so late activity still counts. From then on the month is locked, and the forfeited amount becomes a **gold allocation** in **Settings → Money & Vault → Gold investment**. It's never added to a future allowance.
 
@@ -105,19 +135,19 @@ Each allocation moves through separate, explicit steps:
 
 Trading 212 market orders take a share quantity, not a £ amount. Vaultality keeps back 2% for price movement and fees, rounds down to 0.01 of a share, and never spends more than the allocation or the free cash. If you don't already hold the ETC, enter the current price shown in Trading 212 when buying, because the API has no price quote. The Trading 212 API is in beta, so check the whole flow in demo before going live.
 
-## Home-screen widget
+## Widgets
 
-The widget comes in three sizes:
+The widgets show what's next, today's commitments and your activity. They never show money or fines.
 
-- **Small (2×2):** earned today, steps and mini rings.
-- **Medium (4×2):** earned today and the top three inputs, with the Activity rings alongside.
-- **Large (4×4):** earned today, the rings, up to six inputs that earned money (with their measurements) and this month's progress.
-- **Lock Screen:** a circle (today's earnings inside a ring of the month's progress), a rectangle (earnings, steps and mini rings) or a single line above the clock. To add one, press and hold the Lock Screen, tap **Customise → Lock Screen**, tap the widget area and choose **Vaultality**.
+| Size | Shows |
+|---|---|
+| Small (2×2) | Next action, commitments done, small rings |
+| Medium (4×2) | Next action, rings, then steps, exercise, energy and flights |
+| Large (4×4) | Next action, rings, what's still due, activity, and when it last updated |
+| Lock Screen | Commitments done (circle), next action and steps (rectangle), or one line |
 
-- **Add it:** on the Home Screen, long-press an empty spot, tap **Edit → Add Widget**, search for **Vaultality**, swipe to the size you want and tap **Add Widget**.
-- **How it updates:** the widget can't read Apple Health itself. It shows the numbers the app saved at its last sync, with the time of that sync, and refreshes whenever you open the app.
-- **After midnight:** until the app syncs again, the widget asks you to open it rather than showing yesterday's numbers as today's.
-- **Activity rings:** these need the Activity summary permission in Apple Health. Open the app and tap **Allow Access** when it asks.
+- On the Lock Screen, sensitive commitments such as knee rehab show as "Next commitment" rather than by name.
+- **How it updates:** the widget shows what the app last saved. It refreshes when the app syncs (every minute while the app is open, and when iOS wakes it for new Health data), and iOS asks it to check about every 15 minutes.
 
 ## Automatic checks
 

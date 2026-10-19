@@ -102,3 +102,45 @@ enum WidgetMoney {
             : amount.formatted(style)
     }
 }
+
+/// What the coach shares with the widget: the next action and today's commitment count.
+/// Sensitive commitments (e.g. knee rehab) are flagged so the Lock Screen can stay discreet (WG1).
+struct CoachWidgetSnapshot: Codable, Hashable, Sendable {
+    var day: String
+    var nextTitle: String?
+    var nextSymbol: String?
+    var nextStart: Date?
+    var nextIsSensitive: Bool
+    var nextInProgress: Bool
+    /// Up to three other things still due today, non-sensitive titles only.
+    var stillDue: [String]
+    var done: Int
+    var total: Int
+    var updatedAt: Date
+
+    func isForToday(_ now: Date = .now, calendar: Calendar = .current) -> Bool {
+        day == WidgetSnapshot.dayString(for: now, calendar: calendar)
+    }
+
+    func hasSameContent(as other: CoachWidgetSnapshot) -> Bool {
+        var a = self, b = other
+        a.updatedAt = .distantPast
+        b.updatedAt = .distantPast
+        return a == b
+    }
+}
+
+enum CoachWidgetStore {
+    private static let key = "widget.coach.v1"
+    private static var defaults: UserDefaults? { UserDefaults(suiteName: WidgetSnapshotStore.appGroup) }
+
+    static func load() -> CoachWidgetSnapshot? {
+        guard let data = defaults?.data(forKey: key) else { return nil }
+        return try? JSONDecoder().decode(CoachWidgetSnapshot.self, from: data)
+    }
+
+    static func save(_ snapshot: CoachWidgetSnapshot) {
+        guard let data = try? JSONEncoder().encode(snapshot) else { return }
+        defaults?.set(data, forKey: key)
+    }
+}
