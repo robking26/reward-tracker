@@ -293,7 +293,8 @@ struct PrivacyView: View {
                 LabeledContent("Apple Health", value: model.healthAccess == .requested ? "Requested (read-only)" : "Not set up")
                 LabeledContent("Calendars", value: coach.calendarAccess.title)
                 LabeledContent("Microphone and speech", value: "Asked when you first dictate")
-                LabeledContent("Location", value: "Not used yet")
+                LabeledContent("Location", value: coach.coach.locationConsent ? "While using the app" : "Off")
+                LabeledContent("Weather", value: coach.coach.weatherEnabled ? "Open-Meteo, about 1 km" : "Off")
                 LabeledContent("Coach AI", value: coach.aiStatus.title)
                 Button("Open iPhone Settings") {
                     if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }

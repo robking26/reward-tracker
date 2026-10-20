@@ -91,7 +91,18 @@ Camera, document scanner and notification behaviour still need checking on the i
 - [ ] Automatic Starling → Monzo payment of "£500 − fines": only after a separate technical and safety review (brief §32)
 
 ## Phase 6 — Contextual intelligence
-- [ ] Home/office mode, location consent, travel times, weather, social-event preparation, post-event recovery, outing ideas
+Location, Maps and weather behaviour still need checking on the iPhone.
+
+- [x] Home/office mode: your choice for the day, then the calendar, then (with consent) where the phone is (S2, D-031)
+- [x] Location only with consent, when in use; home, office and gym places; Nuffield found with Apple Maps (L2)
+- [x] Travel-aware workouts: live Apple Maps journey time, padded, else your setting (L1)
+- [x] Gym busyness from your own reports only, always labelled (L3)
+- [x] Weather-aware walks: Open-Meteo forecast for a rounded location; rain moves or skips the walk (K2)
+- [x] Social events: detected in your calendars, a drinking plan chosen beforehand, driving advice, preparation (SO1–SO2)
+- [x] Recovery: 1–3 gentle days after, feeling check-in, a restart day with one easy thing, never fined (SO3)
+- [x] Outing ideas with Becky when you're both free, a free weekend further ahead, and the budget asked at the time (RE1)
+- [x] Eating out: picks from a photographed or pasted menu, labelled as a rough guide (SO1)
+- [x] Calendar-change replanning (from Phase 2)
 
 ## Phase 7 — Platform polish
 - [ ] Widgets (what's next, essentials), Lock Screen, Live Activities, App Intents, haptics, accessibility audit, Swift 6 mode

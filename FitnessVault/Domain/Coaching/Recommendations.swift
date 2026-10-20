@@ -38,6 +38,16 @@ struct RecommendationInput: Sendable {
     var lastWorkoutWasUpper: Bool?
     /// The highest-priority house task that can be done now: title and minutes.
     var houseTask: HouseTaskSuggestion?
+
+    // Phase 6 context. The defaults keep the morning plan as it was when nothing is known.
+    /// Hourly forecast; empty when weather is off or unavailable (never guessed).
+    var forecast: [HourlyWeather] = []
+    var recovery: RecoveryStatus = .clear
+    /// One-way gym travel to plan with, when a live estimate is available.
+    var gymTravelMinutes: Int? = nil
+    var busyness: [BusynessReport] = []
+    /// A social plan this evening: physical suggestions finish an hour before it.
+    var socialEveningStart: Date? = nil
 }
 
 struct HouseTaskSuggestion: Hashable, Sendable {
@@ -63,6 +73,17 @@ enum RecommendationEngine {
 
     static func morning(_ input: RecommendationInput) -> [Recommendation] {
         var windows = protectEvenings(input.windows, day: input.day, settings: input.settings, calendar: input.calendar)
+        if let social = input.socialEveningStart {
+            windows = clip(windows, before: social.addingTimeInterval(-60 * 60))
+        }
+        switch input.recovery {
+        case .recovering(let feeling):
+            return recoveryDay(input, windows: windows, feeling: feeling)
+        case .restarting:
+            return restartDay(input, windows: windows)
+        case .clear:
+            break
+        }
         var result: [Recommendation] = []
 
         func reserve(_ start: Date, minutes: Int) {
@@ -114,24 +135,84 @@ enum RecommendationEngine {
         }
 
         // 5. Evening self-care at wind-down.
-        if !input.existingKinds.contains(.selfCare) {
-            let start = at(input.settings.windDownMinute, input)
-            if start > input.now {
-                result.append(Recommendation(
-                    title: "Evening self-care", kind: .selfCare, start: start, durationMinutes: 15, weight: 2,
-                    objective: .lifestyle, reason: "Phone down, teeth, ready for bed. It protects your sleep.",
-                    alternative: nil, question: "Self-care at \(time(start, input)) tonight?"))
-            }
-        }
+        result += selfCare(input)
 
         return result.sorted { ($0.start ?? .distantFuture) < ($1.start ?? .distantFuture) }
     }
 
+    // MARK: Recovery (SO3)
+
+    /// Recovering: nothing demanding. A gentle walk only once the user feels up to it, and the usual self-care.
+    private static func recoveryDay(_ input: RecommendationInput, windows: [OpportunityWindow],
+                                    feeling: RecoveryFeeling) -> [Recommendation] {
+        var result: [Recommendation] = []
+        if feeling == .gettingThere, !input.existingKinds.contains(.walk),
+           let window = walkWindow(input, windows: windows, minutes: 20) {
+            result.append(Recommendation(
+                title: "Gentle walk", kind: .walk, start: window, durationMinutes: 20, weight: 1, objective: .health,
+                reason: "Fresh air helps. Only if you feel up to it.", alternative: "Or rest. That's fine too.",
+                question: "A short, easy walk at \(time(window, input))?"))
+        }
+        result += selfCare(input)
+        return result
+    }
+
+    /// The first day back: one manageable action, and make the gym easy to attend (SO3).
+    private static func restartDay(_ input: RecommendationInput, windows: [OpportunityWindow]) -> [Recommendation] {
+        var result: [Recommendation] = []
+        if !input.existingKinds.contains(.workout),
+           input.workoutsThisWeek < weeklyWorkoutTarget(on: input.day, calendar: input.calendar),
+           var gym = gymRecommendation(input, windows: windows, activeMinutes: 40) {
+            gym.title = "Easy " + gym.title.prefix(1).lowercased() + gym.title.dropFirst()
+            gym.weight = 3
+            gym.reason = "First day back. Lighter weights, 40 minutes, then home. Just turning up is the win."
+            result.append(gym)
+        } else if !input.existingKinds.contains(.walk), let start = walkWindow(input, windows: windows, minutes: 30) {
+            result.append(Recommendation(
+                title: "Walk", kind: .walk, start: start, durationMinutes: 30, weight: 2, objective: .health,
+                reason: "One easy thing to get going again.", alternative: "Ten minutes still counts.",
+                question: "Walk at \(time(start, input))?"))
+        }
+        result += selfCare(input)
+        return result
+    }
+
+    private static func selfCare(_ input: RecommendationInput) -> [Recommendation] {
+        guard !input.existingKinds.contains(.selfCare) else { return [] }
+        let start = at(input.settings.windDownMinute, input)
+        guard start > input.now else { return [] }
+        return [Recommendation(
+            title: "Evening self-care", kind: .selfCare, start: start, durationMinutes: 15, weight: 2,
+            objective: .lifestyle, reason: "Phone down, teeth, ready for bed. It protects your sleep.",
+            alternative: nil, question: "Self-care at \(time(start, input)) tonight?")]
+    }
+
+    /// A dry daytime start for a walk, or any daytime start when there's no forecast.
+    private static func walkWindow(_ input: RecommendationInput, windows: [OpportunityWindow], minutes: Int) -> Date? {
+        let daytime = windows.filter { window in
+            window.kind != .workGap && window.minutes >= minutes && (9..<18).contains(hour(of: window.interval.start, input))
+        }
+        if !input.forecast.isEmpty {
+            return WeatherAdvisor.firstDryStart(in: daytime, minutes: minutes, forecast: input.forecast, notBefore: input.now)?.start
+        }
+        return daytime.first.map { max($0.interval.start, input.now) }
+    }
+
+    private static func clip(_ windows: [OpportunityWindow], before end: Date) -> [OpportunityWindow] {
+        windows.compactMap { window in
+            guard window.interval.start < end else { return nil }
+            let clipped = DateInterval(start: window.interval.start, end: min(window.interval.end, end))
+            return clipped.duration >= TimeInterval(Availability.minimumWindowMinutes * 60)
+                ? OpportunityWindow(interval: clipped, kind: window.kind) : nil
+        }
+    }
+
     // MARK: Pieces
 
-    private static func gymRecommendation(_ input: RecommendationInput, windows: [OpportunityWindow]) -> Recommendation? {
-        let travel = input.settings.gymTravelMinutes
-        let need = ActivityNeed(activeMinutes: 60, travelMinutesEachWay: travel, preparationMinutes: 10, allowedKinds: [.free])
+    private static func gymRecommendation(_ input: RecommendationInput, windows: [OpportunityWindow],
+                                          activeMinutes: Int = 60) -> Recommendation? {
+        let travel = input.gymTravelMinutes ?? input.settings.gymTravelMinutes
+        let need = ActivityNeed(activeMinutes: activeMinutes, travelMinutesEachWay: travel, preparationMinutes: 10, allowedKinds: [.free])
         let fits = Availability.fits(need, in: windows)
         guard !fits.isEmpty else { return nil }
 
@@ -145,6 +226,10 @@ enum RecommendationEngine {
         }).first {
             chosen = pair.0
             reasonLead = "Becky's at \(pair.1.event.title.lowercased()) at \(time(pair.1.event.start, input)). "
+        } else if let quiet = quietest(fits, input: input) {
+            // The user's own busy/quiet reports, labelled as such (L3).
+            chosen = quiet.window
+            reasonLead = quiet.estimate.label + ". "
         } else if let after = fits.first(where: { $0.interval.end > workEnd && $0.interval.start >= workEnd.addingTimeInterval(-60 * 60) }) {
             chosen = after
         } else {
@@ -169,21 +254,52 @@ enum RecommendationEngine {
             question: "Shall we train at \(time(start, input))?")
     }
 
+    /// The fitting window with the quietest estimate, when the reports clearly prefer one.
+    private static func quietest(_ fits: [OpportunityWindow], input: RecommendationInput)
+        -> (window: OpportunityWindow, estimate: BusynessEstimate)? {
+        let rated = fits.compactMap { window -> (window: OpportunityWindow, estimate: BusynessEstimate)? in
+            GymBusynessEstimator.estimate(at: window.interval.start, reports: input.busyness, calendar: input.calendar)
+                .map { (window: window, estimate: $0) }
+        }
+        guard let best = rated.min(by: { $0.estimate.level.score < $1.estimate.level.score }),
+              best.estimate.level != .busy else { return nil }
+        return best
+    }
+
     private static func walkRecommendation(_ input: RecommendationInput, windows: [OpportunityWindow]) -> Recommendation? {
         if input.isWorkday {
             guard let lunch = windows.first(where: { $0.kind == .lunch && $0.minutes >= 35 }) else { return nil }
             // Five minutes to get ready first (K2).
             let start = lunch.interval.start.addingTimeInterval(5 * 60)
+            // Avoid walking in the rain (K2): find a dry slot later, or skip the walk rather than nag.
+            if WeatherAdvisor.isDry(DateInterval(start: start, duration: 30 * 60), forecast: input.forecast) == false {
+                let later = windows.filter { $0.kind != .workGap && $0.interval.start > start }
+                guard let dry = WeatherAdvisor.firstDryStart(in: later, minutes: 30, forecast: input.forecast, notBefore: start),
+                      hour(of: dry.start, input) < 18 else { return nil }
+                return Recommendation(
+                    title: "Walk", kind: .walk, start: dry.start, durationMinutes: 30, weight: 2, objective: .health,
+                    reason: "Rain's forecast at lunch, but it should be dry at \(time(dry.start, input)).",
+                    alternative: "Ten minutes round the block still counts.",
+                    question: "Walk at \(time(dry.start, input)) instead?")
+            }
             return Recommendation(
                 title: "Lunchtime walk", kind: .walk, start: start, durationMinutes: 30, weight: 2, objective: .health,
                 reason: "Lunch is clear. Getting outside keeps your steps building.",
                 alternative: "Ten minutes round the block still counts.",
                 question: "Walk at \(time(start, input))?")
         }
-        guard let window = windows.first(where: { window in
+        let daytime = windows.filter { window in
             window.kind == .free && window.minutes >= 40 && (9..<17).contains(hour(of: window.interval.start, input))
-        }) else { return nil }
-        let start = window.interval.start
+        }
+        let start: Date
+        if !input.forecast.isEmpty {
+            guard let dry = WeatherAdvisor.firstDryStart(in: daytime, minutes: 40, forecast: input.forecast, notBefore: input.now)
+            else { return nil }
+            start = dry.start
+        } else {
+            guard let window = daytime.first else { return nil }
+            start = window.interval.start
+        }
         return Recommendation(
             title: "Walk", kind: .walk, start: start, durationMinutes: 40, weight: 2, objective: .health,
             reason: "A clear stretch of daylight. Get outside.",

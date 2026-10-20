@@ -33,6 +33,8 @@ final class CoachModel {
     @ObservationIgnored var pendingReply: Task<Void, Never>? = nil
     /// Meals, freezer and shopping (Phase 4). Set by `KitchenModel`; nil means kitchen replies fall back to memory.
     @ObservationIgnored weak var kitchen: KitchenModel? = nil
+    /// Weather, places, travel, social plans and recovery (Phase 6). Nil means no context, as before.
+    @ObservationIgnored weak var situation: SituationModel? = nil
 
     // MARK: Derived state (read by views)
 
@@ -143,7 +145,10 @@ final class CoachModel {
         calendarAccess = calendarProvider.access
         availableCalendars = calendarProvider.calendars()
         events = classifiedEvents(on: today)
-        workLocation = CalendarClassifier.workLocation(from: events)
+        // Your own "working from home today" wins, then the calendar, then where the phone is (Phase 6).
+        let override = coach.modeOverrideDay == today ? coach.modeOverride : nil
+        workLocation = PlaceMode.resolve(override: override, calendar: CalendarClassifier.workLocation(from: events),
+                                         location: situation?.inferredMode)
         isOnLeave = CalendarClassifier.isOnLeave(events)
     }
 

@@ -42,6 +42,18 @@ extension CoachModel {
             opening.append("First meeting: \(meeting.event.title) at \(time(meeting.event.start)).")
         }
         if workLocation != .unknown { opening.append(workLocation.title + ".") }
+        if let weather = situation?.weatherSummary { opening.append(weather + ".") }
+        switch situation?.recoveryStatus(on: today) ?? .clear {
+        case .recovering(let feeling):
+            opening.append("Recovery day. " + (RecoveryPlanner.guidance(feeling).first ?? ""))
+        case .restarting:
+            opening.append("First day back. Let's keep it to one easy thing.")
+        case .clear:
+            break
+        }
+        if let social = situation?.socialEveningStart(on: today) {
+            opening.append("You're out from \(time(social)), so I've kept the evening clear.")
+        }
         return nextProposalReply(prefix: opening.joined(separator: " "))
     }
 
@@ -82,7 +94,12 @@ extension CoachModel {
             windows: windows, events: events, existingKinds: existing, workoutsThisWeek: thisWeek,
             consecutiveWorkoutDays: consecutive,
             lastWorkoutWasUpper: last.map { $0.title.localizedCaseInsensitiveContains("upper") },
-            houseTask: house.map { HouseTaskSuggestion(title: $0.title, minutes: $0.estimatedMinutes) })
+            houseTask: house.map { HouseTaskSuggestion(title: $0.title, minutes: $0.estimatedMinutes) },
+            forecast: situation?.forecast ?? [],
+            recovery: situation?.recoveryStatus(on: today) ?? .clear,
+            gymTravelMinutes: situation?.gymTravelMinutes,
+            busyness: situation?.busynessReports() ?? [],
+            socialEveningStart: situation?.socialEveningStart(on: today))
     }
 
     private func startOfWeek(_ day: DayKey) -> DayKey {

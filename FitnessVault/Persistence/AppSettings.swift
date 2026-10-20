@@ -95,6 +95,16 @@ struct CoachSettings: Codable, Hashable, Sendable {
     /// Daily step target and when it was last reviewed (K1: weekly at most).
     var stepTarget: Int? = nil
     var stepTargetReviewed: DayKey? = nil
+    /// Phase 6. Location is used only after the user turns this on (L2).
+    var locationConsent = false
+    /// Weather from Open-Meteo for a rounded location (about 1 km), or Bolton by default.
+    var weatherEnabled = true
+    var places = SavedPlaces()
+    /// "I'm working from home today": overrides the calendar for that day only.
+    var modeOverride: WorkLocation? = nil
+    var modeOverrideDay: DayKey? = nil
+    /// Keep a record of recovery periods to spot patterns (SO3: only with consent).
+    var trackRecoveryPatterns = false
 
     init() {}
 
@@ -118,6 +128,12 @@ struct CoachSettings: Codable, Hashable, Sendable {
         speakReplies = (try? c.decodeIfPresent(Bool.self, forKey: .speakReplies)) ?? d.speakReplies
         stepTarget = try? c.decodeIfPresent(Int.self, forKey: .stepTarget)
         stepTargetReviewed = try? c.decodeIfPresent(DayKey.self, forKey: .stepTargetReviewed)
+        locationConsent = (try? c.decodeIfPresent(Bool.self, forKey: .locationConsent)) ?? d.locationConsent
+        weatherEnabled = (try? c.decodeIfPresent(Bool.self, forKey: .weatherEnabled)) ?? d.weatherEnabled
+        places = (try? c.decodeIfPresent(SavedPlaces.self, forKey: .places)) ?? d.places
+        modeOverride = try? c.decodeIfPresent(WorkLocation.self, forKey: .modeOverride)
+        modeOverrideDay = try? c.decodeIfPresent(DayKey.self, forKey: .modeOverrideDay)
+        trackRecoveryPatterns = (try? c.decodeIfPresent(Bool.self, forKey: .trackRecoveryPatterns)) ?? d.trackRecoveryPatterns
     }
 
     /// The day's shape for the availability engine.

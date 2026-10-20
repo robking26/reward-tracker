@@ -276,6 +276,8 @@ enum Persistence {
         Recipe.self, MealPlanEntry.self, InventoryItem.self, ReceiptRecord.self, ShoppingItem.self,
         // Phase 5 accountability
         FineLedgerEntry.self, MonthStatement.self,
+        // Phase 6 context
+        SocialPlan.self, RecoveryPeriod.self, GymBusynessRecord.self, OutingSuggestion.self,
     ])
 
     static func makeContainer(inMemory: Bool = false) -> ModelContainer {

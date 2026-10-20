@@ -6,6 +6,7 @@ struct TodayView: View {
     @Environment(CoachModel.self) private var coach
     @Environment(AppModel.self) private var model
     @Environment(TrainingModel.self) private var training
+    @Environment(SituationModel.self) private var situation
     @Binding var showingSettings: Bool
     var openCoach: () -> Void
     @State private var showingAdd = false
@@ -22,6 +23,8 @@ struct TodayView: View {
                     ForEach(coach.needsVerification, id: \.id) { item in
                         VerifyCard(item: item)
                     }
+
+                    RecoveryCard()
 
                     if training.isActive {
                         Button {
@@ -69,6 +72,8 @@ struct TodayView: View {
                         ProposalCard(item: proposal)
                     }
 
+                    SocialCard()
+
                     if let error = coach.lastError {
                         NoticeBanner(symbol: "exclamationmark.circle", title: "Nothing changed", message: error)
                     }
@@ -87,6 +92,8 @@ struct TodayView: View {
                     ComingUpCard()
 
                     DinnerCard()
+
+                    OutingCard()
 
                     if !coach.essentialsDue.isEmpty {
                         EssentialsCard(items: coach.essentialsDue)
@@ -120,6 +127,7 @@ struct TodayView: View {
             }
             .refreshable {
                 await coach.refresh()
+                await situation.refresh()
                 await model.syncHealth()
             }
             .sheet(isPresented: $showingAdd) {
@@ -141,18 +149,24 @@ struct TodayView: View {
     }
 
     private var header: some View {
-        HStack(spacing: Spacing.xs) {
-            Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.wide)))
-            if coach.workLocation != .unknown {
-                Text("·")
-                Text(coach.workLocation.title)
-            } else if coach.isOnLeave {
-                Text("·")
-                Text("Day off")
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            HStack(spacing: Spacing.xs) {
+                Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.wide)))
+                if coach.isOnLeave {
+                    Text("·")
+                    Text("Day off")
+                }
+            }
+            .font(.subheadline)
+            .foregroundStyle(Palette.textSecondary)
+            if coach.isWorkdayToday {
+                ModeAndWeatherLine()
+            } else if let weather = situation.weatherSummary {
+                Text(weather)
+                    .font(.footnote)
+                    .foregroundStyle(Palette.textSecondary)
             }
         }
-        .font(.subheadline)
-        .foregroundStyle(Palette.textSecondary)
     }
 }
 

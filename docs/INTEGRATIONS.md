@@ -20,9 +20,9 @@ Status key:
 | Starling | Built against the docs, sandbox-tested earlier | Personal access token in the Keychain; Space transfers; payments to a payee | Payments need approval in the Starling app. Fines are simulated until a review (D-005). |
 | Monzo | Payee only | Paid via Starling | No Monzo API is used. |
 | Trading 212 | Dormant | — | Switched off (D-005). |
-| Weather | Planned (Phase 6) | Open-Meteo forecast API (free, no key) | WeatherKit isn't available to free developer teams. Coordinates are rounded to about 1 km before sending. |
-| Travel time | Planned (Phase 6) | MapKit `MKDirections.calculateETA` | Free. Traffic-aware estimates where Apple has them. |
-| Location | Planned (Phase 6) | Core Location, when-in-use. Home and office regions only with consent. | |
+| Weather | Built, unverified on device (Phase 6) | Open-Meteo hourly forecast (temperature, chance of rain, rain in mm), `timeformat=unixtime` | Free, no key, no account. WeatherKit isn't available to free developer teams. The coordinate is rounded to 2 decimal places, or Bolton is used. |
+| Travel time | Built, unverified on device (Phase 6) | MapKit `MKDirections.calculateETA` (driving); `MKLocalSearch` finds "Nuffield Health Bolton" | Free. Traffic-aware where Apple has data. Used only with location consent. |
+| Location | Built, unverified on device (Phase 6) | Core Location when in use, a single request per refresh, accuracy 100 m | Off until turned on in Settings → Places, weather and travel. No history is stored; places are saved only when you tap "Use where I am now". |
 | Gym occupancy | Not possible as a live source | User feedback ("it was busy") builds time-of-day estimates, always labelled as estimates | No public Nuffield Health API is known. Values are never invented. |
 | OCR (receipts, recipes) | Built, unverified on device (Phase 4) | Vision `VNRecognizeTextRequest`, VisionKit document camera, PhotosPicker, PDFKit text layer with page rendering as a fallback | On device; nothing is uploaded. At most 6 PDF pages are read at a time. |
 | Nutrition data | Built (Phase 4) | About 70 common foods with typical UK values per 100 g, bundled in the app | Always shown as estimates with a confidence level (D-025). Open Food Facts for packaged items is a possible later addition. |

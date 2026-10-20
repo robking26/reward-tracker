@@ -25,6 +25,9 @@ struct SettingsView: View {
                     NavigationLink { AccountabilitySettingsView() } label: {
                         Label("Accountability and your day", systemImage: "scalemass").foregroundStyle(Palette.textPrimary)
                     }
+                    NavigationLink { PlacesSettingsView() } label: {
+                        Label("Places, weather and travel", systemImage: "location").foregroundStyle(Palette.textPrimary)
+                    }
                     NavigationLink { PrivacyView() } label: {
                         Label("Privacy & data", systemImage: "hand.raised").foregroundStyle(Palette.textPrimary)
                     }

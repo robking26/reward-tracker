@@ -10,7 +10,7 @@ Automated tests run on every push (GitHub Actions, iOS simulator). Deterministic
 | B | Unexpected Outlook meeting over the gym | **Phase 1–2:** availability recomputed; the clash is excused (no fine) and a same-day slot is offered, or a walk if the gym no longer fits (`CoachPlanningTests`, `ReplannerTests`) | Add a meeting to a calendar visible in iOS |
 | C | Avoidance | **Phase 1–2:** "don't fancy it" isn't an excuse, even through the AI tools; the coach offers ten minutes as a minimum; reminders escalate in three levels (`NotificationPlannerTests`) | |
 | D | Knee symptoms | Phase 3: pain report blocks progression and swaps lower-body load | |
-| E | Social weekend | Phase 6 | |
+| E | Social weekend | **Phase 6:** `ContextDomainTests.testSocialDetection`, `testDrinkingPlansAndRecoveryLength`, `SituationModelTests.testGoingOutPlansRecoveryForTheDayAfter`: detected plans, driving advice, recovery days, no gambling, never "safe" | Add "Golf" to a personal calendar on Saturday |
 | F | Five-minute gap | **Phase 1:** availability returns work-gap windows only for micro tasks. Phase 2: 2–3 feasible tasks. | |
 | G | Dinner not prepared | **Phase 4:** `KitchenDomainTests.testDinnerRescueOffersLowFrictionOptions`, `KitchenModelTests.testDefrostReminderAndForgottenDefrost`: options come from what's probably in, the freezer, a Co-op top-up or a takeaway within budget. A forgotten defrost gets the safe microwave route. | Tap "Forgot" on the Dinner card |
 | H | Equipment busy | Phase 3 | |
@@ -38,6 +38,7 @@ Automated tests run on every push (GitHub Actions, iOS simulator). Deterministic
 | `TrainingTests`, `TrainingModelTests` | Phase 3 programme, progression, knee rules and the workout logger |
 | `KitchenDomainTests` | Ingredient and recipe parsing, nutrition confidence, exclusions, macro tweaks, meal planning, batch-cook fit, defrost reminders, dinner rescue, inventory presence, shopping list, budget, receipts, kitchen intents, starter recipes |
 | `AccountabilityDomainTests`, `AccountabilityModelTests` | Month close timing, ledger entries, statement maths (cap, no debt), simulated and manual transfer plans, frozen closed months, one statement per month, trial review |
+| `ContextDomainTests`, `ContextRecommendationTests`, `SituationModelTests` | Weather parsing and dry slots, rounded location, home/office priority, travel padding, busyness estimates, social detection and plans, recovery windows, outings, menu picks; rain, recovery, restart, social evening, travel and busyness in the morning plan; mode, busyness and recovery through the coach |
 | `KitchenModelTests` | Seeding and weekly plan, conversational corrections, list ticking, freezer portions, defrost, receipts and the ceiling, task chains |
 
 ## Manual device checklist (Phase 1)
@@ -66,3 +67,11 @@ Automated tests run on every push (GitHub Actions, iOS simulator). Deterministic
 - [ ] Open a scored day: each commitment shows its weight, state and history; a missed item can be corrected
 - [ ] The ledger shows the original fine and the correction
 - [ ] On 3 November, October closes: the statement says "Trial: no money moves" and corrections to October are refused
+
+## Manual device checklist (Phase 6)
+- [ ] Settings → Places, weather and travel: turn on location, save home, find Nuffield; a drive time appears
+- [ ] Today shows the weather and a home/office chip; changing it changes how notifications sound
+- [ ] On a rainy lunchtime, the briefing moves or skips the walk
+- [ ] Add "Drinks with friends" to tonight; plan it from the card on Today; the next day is a recovery day
+- [ ] Say "I'm hungover": the agreed gym session is excused with no fine; "Back to normal" gives one easy thing
+- [ ] Say "The gym was rammed" after a few visits; later suggestions avoid that time

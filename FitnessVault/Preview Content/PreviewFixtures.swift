@@ -26,6 +26,11 @@ enum PreviewFixtures {
         return kitchen
     }
 
+    static func situation() -> SituationModel {
+        SituationModel(container: Persistence.makeContainer(inMemory: true), coach: nil, weather: FixedWeatherService(hours: []),
+                       location: FixedLocationService(nil), travel: FixedTravelService(minutes: 15, place: nil))
+    }
+
     static func coach() -> CoachModel {
         let defaults = UserDefaults(suiteName: "preview.coach.\(UUID().uuidString)") ?? .standard
         let settings = SettingsStore(defaults: defaults)

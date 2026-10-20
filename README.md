@@ -48,6 +48,7 @@ It has four tabs:
    - "Put cleaning the attic on my list"
    - "We've run out of chicken", "We've got three portions of curry left", "Add bin bags to the shopping list"
    - "What's for dinner?", "I forgot to defrost", "There's nothing in for dinner"
+   - "I'm working from home today", "The gym was rammed", "Going out tonight", "I'm hungover", "Back to normal"
 5. **The next morning:** anything you didn't mark gets a "Did you do this?" card on Today. If it's still unanswered by the end of that day, it counts as missed. You can correct it until the month closes.
 6. **Memory:** open **Settings → Coach memory** to see everything the coach knows about you. You can correct it, mark items as sensitive, delete them or export them. **Settings → Privacy & data** can delete everything.
 

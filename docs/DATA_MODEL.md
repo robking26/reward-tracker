@@ -146,6 +146,11 @@ One per month (unique `month`). Fields: `allocationPence`, `finesPence`, `transf
 
 Month closes, manual transfer confirmations and fine-mode changes also go into the existing `AuditEvent` trail.
 
-## Planned (later phases)
+## Context (Phase 6)
 
-`SocialEvent` (Phase 6).
+- `SocialPlan` (unique `eventID`): `title`, `start`, `end`, `kind`, `drinking`, `driving`, `days`, `going`, `preparedSteps`.
+- `RecoveryPeriod`: `startDay`, `days`, `feeling?`, `endedDay?`, `reason`. Deleted a week after it ends unless pattern tracking is on.
+- `GymBusynessRecord`: `date`, `level` (quiet, normal or busy), from the user's own reports.
+- `OutingSuggestion`: `ideaID`, `day`, `accepted?`, `budget?`.
+
+`CoachSettings` gained `locationConsent`, `weatherEnabled`, `places` (home, office, gym), `modeOverride` with `modeOverrideDay`, and `trackRecoveryPatterns`.

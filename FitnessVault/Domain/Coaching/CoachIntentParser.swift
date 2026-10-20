@@ -30,6 +30,13 @@ enum CoachIntent: Equatable, Sendable {
     case forgotDefrost
     case defrosted
     case dinnerNotReady
+    // Phase 6 context
+    case workMode(WorkLocation)
+    case gymBusyness(BusynessLevel)
+    case feelingRough
+    case backToNormal
+    case goingOut
+    case drinkingPlan(DrinkingPlan)
     case unknown(String)
 }
 
@@ -37,6 +44,32 @@ enum CoachIntentParser {
     static func parse(_ raw: String) -> CoachIntent {
         let text = normalise(raw)
         guard !text.isEmpty else { return .unknown(raw) }
+
+        if contains(text, ["working from home", "i'm wfh", "im wfh", "wfh today", "at home today"]) { return .workMode(.home) }
+        if contains(text, ["in the office today", "i'm in the office", "im in the office", "office today", "going into the office",
+                           "at the office today"]) {
+            return .workMode(.office)
+        }
+        if let groups = RegexHelper.firstMatch(#"gym(?: was| is|'s| were| has been)(?: really| very| so| pretty| quite)? (busy|rammed|packed|heaving|quiet|dead|empty)"#, in: text),
+           let word = groups.first {
+            return .gymBusyness(["quiet", "dead", "empty"].contains(word) ? .quiet : .busy)
+        }
+        if contains(text, ["hungover", "hung over", "feeling rough", "feel rough", "rough today", "worse for wear"])
+            || matches(text, ["i'm hanging", "im hanging", "hanging"]) {
+            return .feelingRough
+        }
+        if contains(text, ["back to normal", "feeling normal", "feel normal again", "feeling myself again", "i'm recovered",
+                           "im recovered", "feeling human"]) {
+            return .backToNormal
+        }
+        if contains(text, ["going out tonight", "drinks tonight", "night out tonight", "going to the pub", "pub tonight",
+                           "going for drinks", "out for drinks"]) {
+            return .goingOut
+        }
+        if matches(text, ["alcohol-free", "alcohol free", "no drinking", "not drinking", "staying dry"]) { return .drinkingPlan(.alcoholFree) }
+        if matches(text, ["lighter", "a lighter one", "just a few"]) { return .drinkingPlan(.lighter) }
+        if matches(text, ["moderate"]) { return .drinkingPlan(.moderate) }
+        if matches(text, ["not decided", "undecided", "haven't decided", "havent decided"]) { return .drinkingPlan(.undecided) }
 
         // Commands that carry content come first, so "add done laundry" isn't read as "done".
         if let item = capture(text, prefixes: ["put ", "add ", "can you add "],

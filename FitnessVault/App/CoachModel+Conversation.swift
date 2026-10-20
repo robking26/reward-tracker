@@ -74,6 +74,12 @@ extension CoachModel {
         case .whatsForDinner: return whatsForDinner()
         case .forgotDefrost: return dinnerRescue(defrostForgotten: true)
         case .defrosted: return markDefrosted()
+        case .workMode(let mode): return setWorkMode(mode)
+        case .gymBusyness(let level): return reportGym(level)
+        case .feelingRough: return feelingRough()
+        case .backToNormal: return backToNormal()
+        case .goingOut: return goingOut()
+        case .drinkingPlan(let plan): return chooseDrinkingPlan(plan)
         case .dinnerNotReady: return dinnerRescue(defrostForgotten: false)
         case .unknown:
             let why = aiStatus.isAvailable ? "" : " (\(aiStatus.title), so I'm on simple commands only)"

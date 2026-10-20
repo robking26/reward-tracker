@@ -2,6 +2,27 @@
 
 Newest first. Each entry records what was decided, why, and who made the call ("User" means answered by the user; "Team" means a default chosen because the question wasn't blocking).
 
+## D-033 · Social plans and recovery (Team, from SO1–SO3 and RE1)
+- **Which events:** golf, football, meals, nights out and weekends away are recognised by whole words in your own calendars. Becky's shared events are asked about ("Going too?"), never assumed.
+- **Drinking plans:** alcohol-free, lighter, moderate or not decided. Advice is short. It never says heavy drinking is safe, and there's never a gambling suggestion.
+- **Driving:** if you're driving, the advice is always "no alcohol before you drive".
+- **Recovery length:** after the event, 0 days (alcohol-free), 1 (lighter), 2 (moderate) or 3 (not decided). An extra event day adds a day, up to 3.
+- **During recovery:** no gym. A gentle walk is offered only once you say you're "getting there".
+- **Restart:** "Back to normal" makes that day the restart day: one easy thing, and a 40-minute "easy" gym session if the week's target isn't met.
+- **No fines:** saying you feel rough excuses that day's agreed gym session or swim.
+- **History:** without your consent, recovery periods are deleted a week after they end.
+- **Outings:** an idea when you're both free from 6pm, at most every 3 days, not repeating the last three, and nothing outdoors in the rain. A free weekend 2–8 weeks ahead is offered at most monthly. The budget is asked at the moment of the suggestion.
+
+## D-032 · Weather and travel (Team, from L1 and K2)
+- **Weather:** Open-Meteo, free with no key. The location is rounded to 2 decimal places (about 1 km), or Bolton when location is off. Forecasts are cached for an hour.
+- **Rain:** an hour counts as wet at 50% or more chance of rain, or 0.3 mm. A wet lunch moves the walk to the first dry slot before 6pm, or drops it.
+- **No forecast:** without a forecast nothing changes, and no weather is guessed.
+- **Travel:** an Apple Maps driving estimate is fresh for 2 hours. It's padded by 10% plus 3 minutes and rounded up to 5. Otherwise your own travel setting is used.
+
+## D-031 · Home or office (Team, from S2)
+- **Order:** your own choice for today wins ("I'm working from home today", or the chip on Today), then calendar hints, then the phone being within 300 m of a saved home or office.
+- **Location:** only when you allow it, while the app is open, and never stored as a history.
+
 ## D-030 · No automatic payments for fines (Team, from brief §22 and §32)
 - **Trial:** a closed month produces a statement and a *simulated* transfer description. No code path sends a fine-related payment to Starling.
 - **Going live:** after the trial review, which needs at least 14 scored days and your confirmation, fines become real. The app shows the amount and a reference, and you move "£500 − fines" from Starling to Monzo yourself, then confirm it here. That confirmation is recorded once in the audit trail.

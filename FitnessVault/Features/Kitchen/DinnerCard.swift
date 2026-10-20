@@ -5,6 +5,7 @@ struct DinnerCard: View {
     @Environment(KitchenModel.self) private var kitchen
     @State private var rescuing = false
     @State private var forgotDefrost = false
+    @State private var choosingFromMenu = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.s) {
@@ -27,8 +28,13 @@ struct DinnerCard: View {
             }
             .buttonStyle(.plain)
 
-            if let dinner = kitchen.tonight {
-                Text(dinner.portions == 0 ? "Eating out" : dinner.title)
+            if let dinner = kitchen.tonight, dinner.portions == 0 {
+                Text("Eating out")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(Palette.textPrimary)
+                SmallActionButton(title: "Help me pick from the menu", symbol: "menucard") { choosingFromMenu = true }
+            } else if let dinner = kitchen.tonight {
+                Text(dinner.title)
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(dinner.cooked ? Palette.textTertiary : Palette.textPrimary)
                     .strikethrough(dinner.cooked)
@@ -78,6 +84,9 @@ struct DinnerCard: View {
             }
         }
         .surface()
+        .sheet(isPresented: $choosingFromMenu) {
+            MenuHelperView().presentationBackground(Palette.background)
+        }
         .sheet(isPresented: $rescuing) {
             DinnerRescueView(defrostForgotten: forgotDefrost)
                 .presentationDetents([.medium, .large])
