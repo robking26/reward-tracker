@@ -13,38 +13,38 @@ final class ClockChangeTests: XCTestCase {
     private let autumn = DayKey(year: 2026, month: 10, day: 25)
     private let spring = DayKey(year: 2026, month: 3, day: 29)
 
-    private func wallClock(_ date: Date) -> (Int, Int) {
+    private func wallClock(_ date: Date) -> String {
         let parts = london.dateComponents([.hour, .minute], from: date)
-        return (parts.hour ?? -1, parts.minute ?? -1)
+        return String(format: "%02ld:%02ld", parts.hour ?? -1, parts.minute ?? -1)
     }
 
     func testTimesOfDayStayOnTheWallClock() {
-        XCTAssertTrue(wallClock(autumn.date(atMinute: 355, calendar: london)) == (5, 55))
-        XCTAssertTrue(wallClock(autumn.date(atMinute: 21 * 60 + 30, calendar: london)) == (21, 30))
-        XCTAssertTrue(wallClock(spring.date(atMinute: 8 * 60, calendar: london)) == (8, 0))
+        XCTAssertEqual(wallClock(autumn.date(atMinute: 355, calendar: london)), "05:55")
+        XCTAssertEqual(wallClock(autumn.date(atMinute: 21 * 60 + 30, calendar: london)), "21:30")
+        XCTAssertEqual(wallClock(spring.date(atMinute: 8 * 60, calendar: london)), "08:00")
         let ordinary = DayKey(year: 2026, month: 10, day: 19)
         XCTAssertEqual(ordinary.date(atMinute: 90, calendar: london), ordinary.startDate(calendar: london).addingTimeInterval(90 * 60))
         // The old "midnight plus seconds" would have said 04:55 on the autumn change.
-        XCTAssertTrue(wallClock(autumn.startDate(calendar: london).addingTimeInterval(355 * 60)) == (4, 55))
+        XCTAssertEqual(wallClock(autumn.startDate(calendar: london).addingTimeInterval(355 * 60)), "04:55")
     }
 
     func testSelfCareAndWindowsOnTheChangeDay() {
         let settings = CoachSettings()
         let now = autumn.date(atMinute: 6 * 60, calendar: london)
         let windows = Availability.windows(on: autumn, shape: settings.shape(isWorkday: false), blocks: [], notBefore: now, calendar: london)
-        XCTAssertTrue(wallClock(windows.first!.interval.start) == (6, 0))
+        XCTAssertEqual(wallClock(windows.first!.interval.start), "06:00")
         let input = RecommendationInput(day: autumn, now: now, calendar: london, settings: settings, isWorkday: false,
                                         windows: windows, events: [], existingKinds: [], workoutsThisWeek: 0,
                                         consecutiveWorkoutDays: 0, lastWorkoutWasUpper: nil, houseTask: nil)
         let selfCare = RecommendationEngine.morning(input).first { $0.kind == .selfCare }
-        XCTAssertTrue(wallClock(selfCare!.start!) == (21, 30), "Not 20:30 or 22:30 on the clock-change day")
+        XCTAssertEqual(wallClock(selfCare!.start!), "21:30", "Not 20:30 or 22:30 on the clock-change day")
     }
 
     @MainActor
     func testSettlementStaysAtEight() {
         let store = SettingsStore(defaults: UserDefaults(suiteName: "dst.\(UUID().uuidString)")!)
         let next = store.nextSettlement(after: autumn.date(atMinute: 60, calendar: london), calendar: london)
-        XCTAssertTrue(wallClock(next) == (8, 0))
+        XCTAssertEqual(wallClock(next), "08:00")
         XCTAssertEqual(DayKey(next, calendar: london), autumn)
     }
 }
@@ -118,18 +118,36 @@ final class PlanAuditorTests: XCTestCase {
 
 final class ValidationSummaryTests: XCTestCase {
     func testSummaryAndReport() {
-        let input = ValidationInput(
-            from: DayKey(year: 2026, month: 10, day: 19), to: DayKey(year: 2026, month: 10, day: 25),
-            suggestions: [.init(kind: .walk, agreed: true, declined: false), .init(kind: .workout, agreed: false, declined: true),
-                          .init(kind: .walk, agreed: false, declined: true), .init(kind: .rehab, agreed: true, declined: false),
-                          .init(kind: .walk, agreed: false, declined: true)],
-            outcomes: [.init(state: .completed, assumedMissed: false), .init(state: .missed, assumedMissed: true),
-                       .init(state: .excused, assumedMissed: false)],
-            checkIns: [.init(usefulness: .very, effort: .light, note: nil), .init(usefulness: .notReally, effort: .tooMuch, note: "Too many pings"),
-                       .init(usefulness: .somewhat, effort: .tooMuch, note: nil)],
-            feedback: [.init(title: "Walk", reason: .wrongTime, note: nil), .init(title: "Walk", reason: .wrongTime, note: "Lunch is 1pm"),
-                       .init(title: "Gym", reason: .tooMuch, note: nil)],
-            issues: ["2026-10-20: Walk: Rain is forecast then"], messagesSent: 8, unknownMessages: 3)
+        typealias Suggestion = ValidationInput.Suggestion
+        typealias Outcome = ValidationInput.Outcome
+        typealias CheckIn = ValidationInput.CheckIn
+        typealias Feedback = ValidationInput.Feedback
+        let suggestions: [Suggestion] = [
+            Suggestion(kind: .walk, agreed: true, declined: false),
+            Suggestion(kind: .workout, agreed: false, declined: true),
+            Suggestion(kind: .walk, agreed: false, declined: true),
+            Suggestion(kind: .rehab, agreed: true, declined: false),
+            Suggestion(kind: .walk, agreed: false, declined: true),
+        ]
+        let outcomes: [Outcome] = [
+            Outcome(state: .completed, assumedMissed: false),
+            Outcome(state: .missed, assumedMissed: true),
+            Outcome(state: .excused, assumedMissed: false),
+        ]
+        let checkIns: [CheckIn] = [
+            CheckIn(usefulness: .very, effort: .light, note: nil),
+            CheckIn(usefulness: .notReally, effort: .tooMuch, note: "Too many pings"),
+            CheckIn(usefulness: .somewhat, effort: .tooMuch, note: nil),
+        ]
+        let feedback: [Feedback] = [
+            Feedback(title: "Walk", reason: .wrongTime, note: nil),
+            Feedback(title: "Walk", reason: .wrongTime, note: "Lunch is 1pm"),
+            Feedback(title: "Gym", reason: .tooMuch, note: nil),
+        ]
+        let issues: [String] = ["2026-10-20: Walk: Rain is forecast then"]
+        let input = ValidationInput(from: DayKey(year: 2026, month: 10, day: 19), to: DayKey(year: 2026, month: 10, day: 25),
+                                    suggestions: suggestions, outcomes: outcomes, checkIns: checkIns, feedback: feedback,
+                                    issues: issues, messagesSent: 8, unknownMessages: 3)
         let summary = ValidationSummary(input, calendar: london)
         XCTAssertEqual(summary.days, 7)
         XCTAssertEqual(summary.agreed, 2)
