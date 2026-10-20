@@ -23,8 +23,8 @@ final class Commitment {
     var excuseRaw: String? = nil
     var note: String? = nil
     var assumedMissed: Bool = false
-    var createdAt: Date = .distantPast
-    var updatedAt: Date = .distantPast
+    var createdAt: Date = Date.distantPast
+    var updatedAt: Date = Date.distantPast
     var approvedAt: Date? = nil
 
     init() {}
@@ -38,7 +38,7 @@ final class CommitmentEvent {
     var toRaw: String = ""
     var reason: String? = nil
     var actorRaw: String = ""
-    var at: Date = .distantPast
+    var at: Date = Date.distantPast
 
     init() {}
 }
@@ -55,7 +55,7 @@ final class Routine {
     var isEnabled: Bool = false
     var enabledAt: Date? = nil
     var reason: String? = nil
-    var createdAt: Date = .distantPast
+    var createdAt: Date = Date.distantPast
 
     init() {}
 }
@@ -80,7 +80,7 @@ final class CoachMessage {
     var id: UUID = UUID()
     var roleRaw: String = ""
     var text: String = ""
-    var createdAt: Date = .distantPast
+    var createdAt: Date = Date.distantPast
     var quickReplies: [String] = []
     var relatedCommitmentID: UUID? = nil
     var toolSummary: String? = nil
@@ -98,8 +98,8 @@ final class MemoryRecord {
     var statusRaw: String = ""
     var confidence: Double? = nil
     var sensitivityRaw: String = ""
-    var createdAt: Date = .distantPast
-    var updatedAt: Date = .distantPast
+    var createdAt: Date = Date.distantPast
+    var updatedAt: Date = Date.distantPast
     var reviewAt: Date? = nil
 
     init() {}
@@ -117,8 +117,8 @@ final class TaskItem {
     var stateRaw: String = ""
     var resumeNote: String? = nil
     var sortIndex: Int = 0
-    var createdAt: Date = .distantPast
-    var updatedAt: Date = .distantPast
+    var createdAt: Date = Date.distantPast
+    var updatedAt: Date = Date.distantPast
     var completedAt: Date? = nil
 
     init() {}
@@ -134,7 +134,7 @@ final class FineLedgerEntry {
     var scorePercent: Int? = nil
     var reason: String = ""
     var isSimulation: Bool = false
-    var at: Date = .distantPast
+    var at: Date = Date.distantPast
 
     init() {}
 }
@@ -151,7 +151,7 @@ final class MonthStatement {
     var capSavedPence: Int = 0
     var statusRaw: String = ""
     var idempotencyKey: String = ""
-    var closedAt: Date = .distantPast
+    var closedAt: Date = Date.distantPast
     var confirmedAt: Date? = nil
 
     init() {}
@@ -161,15 +161,15 @@ final class MonthStatement {
 final class SocialPlan {
     @Attribute(.unique) var eventID: String = ""
     var title: String = ""
-    var start: Date = .distantPast
-    var end: Date = .distantPast
+    var start: Date = Date.distantPast
+    var end: Date = Date.distantPast
     var kindRaw: String = ""
     var drinkingRaw: String = ""
     var driving: Bool = false
     var days: Int = 0
     var going: Bool = false
     var preparedSteps: [String] = []
-    var createdAt: Date = .distantPast
+    var createdAt: Date = Date.distantPast
 
     init() {}
 }
@@ -182,14 +182,14 @@ final class RecoveryPeriod {
     var feelingRaw: String? = nil
     var endedDay: String? = nil
     var reason: String = ""
-    var createdAt: Date = .distantPast
+    var createdAt: Date = Date.distantPast
 
     init() {}
 }
 
 @Model
 final class GymBusynessRecord {
-    var date: Date = .distantPast
+    var date: Date = Date.distantPast
     var levelRaw: String = ""
 
     init() {}
@@ -201,7 +201,7 @@ final class OutingSuggestion {
     var day: String = ""
     var accepted: Bool? = nil
     var budget: String? = nil
-    var createdAt: Date = .distantPast
+    var createdAt: Date = Date.distantPast
 
     init() {}
 }
@@ -215,7 +215,7 @@ final class PlanFeedback {
     var proposedStart: Date? = nil
     var reasonRaw: String = ""
     var note: String? = nil
-    var at: Date = .distantPast
+    var at: Date = Date.distantPast
 
     init() {}
 }
@@ -226,7 +226,7 @@ final class DayCheckIn {
     var usefulness: Int = 0
     var effort: Int = 0
     var note: String? = nil
-    var at: Date = .distantPast
+    var at: Date = Date.distantPast
 
     init() {}
 }
@@ -237,7 +237,7 @@ final class PlanAuditRecord {
     var title: String = ""
     var problem: String = ""
     var severityRaw: String = ""
-    var at: Date = .distantPast
+    var at: Date = Date.distantPast
 
     init() {}
 }
