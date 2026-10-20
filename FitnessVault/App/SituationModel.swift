@@ -294,12 +294,15 @@ final class SituationModel {
                 .intersection(with: evening).map { $0.duration > 0 } ?? false
         }
         let events = coach.events
-        let userFree = !events.contains { [.work, .personal].contains($0.role) && overlapsEvening($0) }
-            && !coach.commitments.contains { item in
-                guard item.state.isOpen, item.kind != .selfCare, let start = item.scheduledStart else { return false }
-                return evening.contains(start)
-            }
-            && socialEveningStart(on: day) == nil
+        let ownEvening: Bool = events.contains { item in
+            (item.role == .work || item.role == .personal) && overlapsEvening(item)
+        }
+        let commitmentEvening: Bool = coach.commitments.contains { item in
+            guard item.state.isOpen, item.kind != .selfCare, let start = item.scheduledStart else { return false }
+            return evening.contains(start)
+        }
+        let goingOut: Bool = socialEveningStart(on: day) != nil
+        let userFree = !ownEvening && !commitmentEvening && !goingOut
         let beckyFree = !events.contains { $0.role == .shared && overlapsEvening($0) }
         let suggestions = (try? context.fetch(FetchDescriptor<OutingSuggestion>())) ?? []
         if let todays = suggestions.first(where: { $0.day == day.description && $0.ideaID != OutingPlanner.weekendAway.id }) {

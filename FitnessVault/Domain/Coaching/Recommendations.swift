@@ -163,7 +163,9 @@ enum RecommendationEngine {
         if !input.existingKinds.contains(.workout),
            input.workoutsThisWeek < weeklyWorkoutTarget(on: input.day, calendar: input.calendar),
            var gym = gymRecommendation(input, windows: windows, activeMinutes: 40) {
-            gym.title = "Easy " + gym.title.prefix(1).lowercased() + gym.title.dropFirst()
+            let first: String = gym.title.prefix(1).lowercased()
+            let rest = String(gym.title.dropFirst())
+            gym.title = "Easy \(first)\(rest)"
             gym.weight = 3
             gym.reason = "First day back. Lighter weights, 40 minutes, then home. Just turning up is the win."
             result.append(gym)

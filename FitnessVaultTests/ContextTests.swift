@@ -163,10 +163,17 @@ final class ContextDomainTests: XCTestCase {
         XCTAssertTrue(driving.first?.contains("no alcohol before you drive") ?? false)
         let weekend = SocialPlanner.advice(kind: .weekendAway, plan: .undecided, driving: false, eventDays: 3).joined(separator: " ")
         XCTAssertTrue(weekend.contains("adds up"))
-        let all = (SocialKind.allCases.flatMap { kind in DrinkingPlan.allCases.flatMap { SocialPlanner.advice(kind: kind, plan: $0, driving: false, eventDays: 2) } })
-            .joined(separator: " ").lowercased()
+        var lines: [String] = []
+        for kind in SocialKind.allCases {
+            for plan in DrinkingPlan.allCases {
+                lines += SocialPlanner.advice(kind: kind, plan: plan, driving: false, eventDays: 2)
+            }
+        }
+        let all: String = lines.joined(separator: " ").lowercased()
         XCTAssertFalse(all.contains("safe"), "Never implies heavy drinking is risk-free")
-        XCTAssertFalse(all.contains("betting") || all.contains("casino") || all.contains("gambl") || all.contains("bookie"), "No gambling suggestions")
+        for word in ["betting", "casino", "gambl", "bookie"] {
+            XCTAssertFalse(all.contains(word), "No gambling suggestions")
+        }
 
         XCTAssertEqual(SocialPlanner.preparation(plan: .alcoholFree, eventDays: 1, nextDayHasWorkout: true).filter { $0.action != .reminder }.count, 0)
         let undecided = SocialPlanner.preparation(plan: .undecided, eventDays: 1, nextDayHasWorkout: false)
