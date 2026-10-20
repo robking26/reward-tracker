@@ -7,6 +7,8 @@ import SwiftData
 @MainActor
 @Observable
 final class KitchenModel {
+    /// Held so the context's container (and its objects) outlive the caller's reference.
+    @ObservationIgnored private let container: ModelContainer
     let context: ModelContext
     let calendar: Calendar
     let now: () -> Date
@@ -35,6 +37,7 @@ final class KitchenModel {
     init(container: ModelContainer, settingsStore: SettingsStore? = nil, reminders: ReminderScheduling? = nil,
          countdowns: CountdownControlling? = nil, defaults: UserDefaults = .standard,
          calendar: Calendar = .current, now: @escaping () -> Date = { .now }) {
+        self.container = container
         context = container.mainContext
         self.settingsStore = settingsStore
         self.defaults = defaults

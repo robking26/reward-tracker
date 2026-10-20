@@ -8,6 +8,8 @@ import SwiftUI
 @MainActor
 @Observable
 final class TrainingModel {
+    /// Held so the context's container (and its objects) outlive the caller's reference.
+    @ObservationIgnored private let container: ModelContainer
     let context: ModelContext
     let calendar: Calendar
     let now: () -> Date
@@ -23,6 +25,7 @@ final class TrainingModel {
 
     init(container: ModelContainer, restAlerts: RestAlerting? = nil, defaults: UserDefaults = .standard,
          calendar: Calendar = .current, now: @escaping () -> Date = { .now }) {
+        self.container = container
         context = container.mainContext
         self.restAlerts = restAlerts ?? LocalRestAlerts()
         self.defaults = defaults
