@@ -35,6 +35,14 @@ struct DayKey: Hashable, Comparable, Codable, Sendable, CustomStringConvertible 
         calendar.date(byAdding: .day, value: 1, to: startDate(calendar: calendar)) ?? .distantFuture
     }
 
+    /// Wall-clock time on this day, e.g. minute 355 is 05:55. Unlike midnight plus seconds, this stays right on
+    /// the days the clocks change (the last Sundays of March and October in the UK).
+    func date(atMinute minute: Int, calendar: Calendar = .current) -> Date {
+        let minute = max(0, minute)
+        let components = DateComponents(year: year, month: month, day: day, hour: minute / 60, minute: minute % 60)
+        return calendar.date(from: components) ?? startDate(calendar: calendar).addingTimeInterval(TimeInterval(minute * 60))
+    }
+
     func adding(days: Int, calendar: Calendar = .current) -> DayKey {
         DayKey(calendar.date(byAdding: .day, value: days, to: startDate(calendar: calendar)) ?? .distantPast, calendar: calendar)
     }

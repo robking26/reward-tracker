@@ -23,7 +23,15 @@ extension CoachModel {
     /// Builds today's suggestions as proposals and asks about the first one only.
     func startBriefing() -> CoachReply {
         defaults.set(today.description, forKey: Self.briefingDayKey)
-        for recommendation in RecommendationEngine.morning(recommendationInput()) {
+        let input = recommendationInput()
+        let recovering: Bool
+        if case .recovering = input.recovery { recovering = true } else { recovering = false }
+        let plan = RecommendationEngine.morning(input)
+        // The plan checker (Phase 8): anything that could never be right is removed and recorded for fixing.
+        let issues = PlanAuditor.audit(plan, events: events, settings: coach, day: today, calendar: calendar,
+                                       forecast: input.forecast, recovering: recovering)
+        for issue in issues { context.insert(PlanAuditRecord(day: today, issue: issue, at: now())) }
+        for recommendation in PlanAuditor.filtered(plan, issues: issues) {
             let item = propose(recommendation.title, kind: recommendation.kind, start: recommendation.start,
                                durationMinutes: recommendation.durationMinutes, weight: recommendation.weight,
                                objective: recommendation.objective, reason: recommendation.reason)
@@ -162,10 +170,9 @@ extension CoachModel {
             guard let start = item.scheduledStart else { return nil }
             return NotifiableCommitment(id: item.id, title: item.title, kind: item.kind, start: start, state: item.state)
         }
-        let midnight = today.startDate(calendar: calendar)
         return NotificationPlanner.plan(items, blocks: CalendarClassifier.blocks(from: events), now: now(),
-                                        quietFrom: midnight.addingTimeInterval(TimeInterval(coach.bedtimeMinute * 60)),
-                                        quietUntil: midnight.addingTimeInterval(TimeInterval(coach.wakeMinute * 60)),
+                                        quietFrom: today.date(atMinute: coach.bedtimeMinute, calendar: calendar),
+                                        quietUntil: today.date(atMinute: coach.wakeMinute, calendar: calendar),
                                         office: workLocation == .office)
     }
 

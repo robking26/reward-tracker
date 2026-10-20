@@ -101,6 +101,10 @@ struct TodayView: View {
                         EssentialsCard(items: coach.essentialsDue)
                     }
 
+                    if coach.shouldAskForCheckIn {
+                        CheckInCard()
+                    }
+
                     NavigationLink {
                         AccountabilityView()
                     } label: {
@@ -321,16 +325,16 @@ struct CurrentActionCard: View {
         let now = coach.now()
         var options = [LaterOption(title: "In 30 minutes", date: now.addingTimeInterval(30 * 60)),
                        LaterOption(title: "In an hour", date: now.addingTimeInterval(60 * 60))]
-        let evening = coach.today.startDate(calendar: coach.calendar)
-            .addingTimeInterval(TimeInterval(max(coach.coach.workEndMinute + 60, 18 * 60) * 60))
+        let evening = coach.today.date(atMinute: max(coach.coach.workEndMinute + 60, 18 * 60), calendar: coach.calendar)
         if evening > now.addingTimeInterval(60 * 60) { options.append(LaterOption(title: "This evening", date: evening)) }
         return options
     }
 
     private var tomorrowSameTime: Date {
-        let tomorrow = coach.today.adding(days: 1, calendar: coach.calendar).startDate(calendar: coach.calendar)
-        guard let start = item.scheduledStart else { return tomorrow.addingTimeInterval(12 * 3_600) }
-        return tomorrow.addingTimeInterval(start.timeIntervalSince(coach.today.startDate(calendar: coach.calendar)))
+        let tomorrow = coach.today.adding(days: 1, calendar: coach.calendar)
+        guard let start = item.scheduledStart else { return tomorrow.date(atMinute: 12 * 60, calendar: coach.calendar) }
+        let parts = coach.calendar.dateComponents([.hour, .minute], from: start)
+        return tomorrow.date(atMinute: (parts.hour ?? 12) * 60 + (parts.minute ?? 0), calendar: coach.calendar)
     }
 }
 
@@ -456,6 +460,53 @@ struct ProposalCard: View {
             HStack(spacing: Spacing.xs) {
                 SmallActionButton(title: "Agree", symbol: "checkmark") { coach.transition(item, .approve) }
                 SmallActionButton(title: "Not today", symbol: "xmark") { coach.transition(item, .cancel, reason: "Declined") }
+                // Test week (Phase 8): saying why a suggestion was wrong is how the rules get fixed.
+                Menu {
+                    ForEach(FeedbackReason.allCases) { reason in
+                        Button(reason.title) { coach.flagWrong(item, reason: reason) }
+                    }
+                } label: {
+                    SmallActionLabel(title: "Wrong", symbol: "exclamationmark.bubble")
+                }
+                .accessibilityLabel("This suggestion is wrong. Say why")
+            }
+        }
+        .surface()
+    }
+}
+
+/// The end-of-day check-in (Phase 8): two taps, optional, never scored.
+struct CheckInCard: View {
+    @Environment(CoachModel.self) private var coach
+    @State private var usefulness: Usefulness?
+    @State private var effort: Effort?
+    @State private var note = ""
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.s) {
+            Text("Test week: how was today?")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Palette.textSecondary)
+            Text("Was the plan useful?").font(.footnote).foregroundStyle(Palette.textTertiary)
+            Picker("Useful", selection: $usefulness) {
+                ForEach(Usefulness.allCases) { Text($0.title).tag(Optional($0)) }
+            }
+            .pickerStyle(.segmented)
+            Text("How much effort did the app take?").font(.footnote).foregroundStyle(Palette.textTertiary)
+            Picker("Effort", selection: $effort) {
+                ForEach(Effort.allCases) { Text($0.title).tag(Optional($0)) }
+            }
+            .pickerStyle(.segmented)
+            TextField("Anything it got wrong? (optional)", text: $note, axis: .vertical)
+                .font(.subheadline)
+                .lineLimit(1...3)
+            HStack(spacing: Spacing.xs) {
+                SmallActionButton(title: "Save", symbol: "checkmark") {
+                    guard let usefulness, let effort else { return }
+                    coach.saveCheckIn(usefulness: usefulness, effort: effort, note: note.isEmpty ? nil : note)
+                }
+                .disabled(usefulness == nil || effort == nil)
+                SmallActionButton(title: "Skip", symbol: "xmark") { coach.skipCheckIn() }
             }
         }
         .surface()

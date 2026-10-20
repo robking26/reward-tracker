@@ -116,7 +116,7 @@ final class DemoCalendarService: CalendarProviding {
     private func sample(on day: DayKey) -> [CalendarEventInfo] {
         let weekday = calendar.component(.weekday, from: day.startDate(calendar: calendar))
         func at(_ hour: Int, _ minute: Int = 0) -> Date {
-            day.startDate(calendar: calendar).addingTimeInterval(TimeInterval((hour * 60 + minute) * 60))
+            day.date(atMinute: hour * 60 + minute, calendar: calendar)
         }
         func event(_ title: String, _ calendarID: String, _ start: Date, _ end: Date) -> CalendarEventInfo {
             CalendarEventInfo(id: "\(calendarID)-\(title)-\(day)", calendarID: calendarID, title: title,

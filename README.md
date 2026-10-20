@@ -137,6 +137,14 @@ Each allocation moves through separate, explicit steps:
 
 Trading 212 market orders take a share quantity, not a £ amount. Vaultality keeps back 2% for price movement and fees, rounds down to 0.01 of a share, and never spends more than the allocation or the free cash. If you don't already hold the ETC, enter the current price shown in Trading 212 when buying, because the API has no price quote. The Trading 212 API is in beta, so check the whole flow in demo before going live.
 
+## Test week
+
+For the first week of real use:
+- **Each suggestion:** tap **Wrong** on any suggestion that doesn't fit and say why.
+- **Each evening:** answer the two-tap check-in on Today, from 7pm.
+- **At the end:** open **Settings → Test week** for a summary and what to fix first. **Share the report** sends plain text with no calendar names, health figures or money.
+- **Plan checker:** it reviews every morning plan before you see it, and removes anything that clashes with your calendar or falls outside your day.
+
 ## Widgets, Siri and Live Activities
 
 The widgets never show money, fines or body measurements.

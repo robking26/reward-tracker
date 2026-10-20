@@ -245,12 +245,14 @@ final class SettingsStore {
 
     /// The next settlement time after `date`.
     func nextSettlement(after date: Date, calendar: Calendar = .current) -> Date {
-        let start = calendar.startOfDay(for: date)
-        let today = calendar.date(byAdding: .minute, value: settings.settlementMinuteOfDay, to: start) ?? date
-        return today > date ? today : calendar.date(byAdding: .day, value: 1, to: today) ?? today
+        let today = settlementTime(on: date, calendar: calendar)
+        guard today <= date else { return today }
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: date)) ?? date
+        return settlementTime(on: tomorrow, calendar: calendar)
     }
 
     func settlementTime(on day: Date, calendar: Calendar = .current) -> Date {
-        calendar.date(byAdding: .minute, value: settings.settlementMinuteOfDay, to: calendar.startOfDay(for: day)) ?? day
+        // Wall-clock time, so 08:00 stays 08:00 on the days the clocks change.
+        DayKey(day, calendar: calendar).date(atMinute: settings.settlementMinuteOfDay, calendar: calendar)
     }
 }

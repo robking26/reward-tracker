@@ -40,6 +40,7 @@ Automated tests run on every push (GitHub Actions, iOS simulator). Deterministic
 | `AccountabilityDomainTests`, `AccountabilityModelTests` | Month close timing, ledger entries, statement maths (cap, no debt), simulated and manual transfer plans, frozen closed months, one statement per month, trial review |
 | `ContextDomainTests`, `ContextRecommendationTests`, `SituationModelTests` | Weather parsing and dry slots, rounded location, home/office priority, travel padding, busyness estimates, social detection and plans, recovery windows, outings, menu picks; rain, recovery, restart, social evening, travel and busyness in the morning plan; mode, busyness and recovery through the coach |
 | `PlatformTests` | Widget Done (directly and through the intent router), week scores, departure, task and cooking countdowns, `vaultality://` links, no money in widget data |
+| `ClockChangeTests`, `PlanAuditorTests`, `ValidationSummaryTests`, `ValidationModelTests` | Wall-clock times on 25 Oct and 29 Mar, settlement at 08:00; plan checker blocks clashes, night times and recovery workouts and flags rain and overload; the engine never trips the checker across workday, day-off, recovery and restart plans; report contents; "Wrong" feedback and the evening check-in |
 | `KitchenModelTests` | Seeding and weekly plan, conversational corrections, list ticking, freezer portions, defrost, receipts and the ceiling, task chains |
 
 ## Manual device checklist (Phase 1)
@@ -85,3 +86,10 @@ Automated tests run on every push (GitHub Actions, iOS simulator). Deterministic
 - [ ] Start a household task: a countdown appears and ends when you mark it done
 - [ ] "Hey Siri, what's next in Vaultality" and "Hey Siri, Vaultality done"
 - [ ] Turn on Reduce Motion and large text: cards don't scale, the rest timer stays readable
+
+## Real-world validation (Phase 8)
+For a week:
+- [ ] Each morning, tap "I'm ready". Agree, decline, or tap **Wrong** with a reason.
+- [ ] Each evening, answer the two-tap check-in (Today, from 7pm).
+- [ ] Sunday 25 October (the clocks go back): reminders and suggestions are at the right times.
+- [ ] At the end, share the report from **Settings → Test week**. Fix what it lists under "Fix first" before adding anything.

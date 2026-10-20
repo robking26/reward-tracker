@@ -80,7 +80,7 @@ enum Availability {
     static func windows(on day: DayKey, shape: DayShape, blocks: [BusyBlock], notBefore now: Date? = nil,
                         calendar: Calendar = .current) -> [OpportunityWindow] {
         func at(_ minute: Int) -> Date {
-            day.startDate(calendar: calendar).addingTimeInterval(TimeInterval(minute * 60))
+            day.date(atMinute: minute, calendar: calendar)
         }
 
         var segments: [(DateInterval, WindowKind)] = []

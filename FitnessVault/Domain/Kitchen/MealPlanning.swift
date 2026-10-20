@@ -246,8 +246,7 @@ enum DefrostPlanner {
     static func reminders(for meals: [PlannedMeal], now: Date, calendar: Calendar,
                           minute: Int = reminderMinute) -> [PlannedNotification] {
         meals.filter(\.fromFreezer).compactMap { meal in
-            let evening = meal.day.adding(days: -1, calendar: calendar).startDate(calendar: calendar)
-                .addingTimeInterval(TimeInterval(minute * 60))
+            let evening = meal.day.adding(days: -1, calendar: calendar).date(atMinute: minute, calendar: calendar)
             guard evening > now else { return nil }
             let whose = meal.slot == .dinner ? "dinner" : "lunch"
             return PlannedNotification(id: prefix + meal.day.description + "." + meal.slot.rawValue, date: evening,

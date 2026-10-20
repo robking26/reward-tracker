@@ -119,4 +119,12 @@ Widgets, Siri and Live Activities still need checking on the iPhone.
 - [ ] Swift 6 language mode: deferred until after Phase 8 (D-036)
 
 ## Phase 8 — Real-world validation
-- [ ] A week of real use; fix wrong recommendations before adding features
+The tools are built; the validation itself needs a week of real use.
+
+- [x] Clock changes: every time of day is now a wall-clock time, so 25 October (clocks back) and 29 March (clocks forward) keep reminders, suggestions and settlement at the right time (D-037)
+- [x] Plan checker: each morning's plan is checked independently before it's shown; clashes and night-time suggestions are removed and recorded (D-038)
+- [x] "Wrong" on every suggestion, with a one-tap reason
+- [x] Evening check-in: was the plan useful, and how much effort did the app take
+- [x] Settings → Test week: a summary, what to fix first, and a plain-text report to share
+- [ ] A week of real use against the real calendar
+- [ ] Fix the wrong recommendations the report shows, before adding features

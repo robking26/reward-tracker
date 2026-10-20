@@ -205,7 +205,7 @@ final class SituationModel {
 
     /// Social plans the user is going to, starting today in the evening: the day's physical suggestions finish before them.
     func socialEveningStart(on day: DayKey) -> Date? {
-        let evening = day.startDate(calendar: calendar).addingTimeInterval(17 * 3600)
+        let evening = day.date(atMinute: 17 * 60, calendar: calendar)
         let end = day.endDate(calendar: calendar)
         let confirmed = upcomingSocial.filter { social in
             social.start >= evening && social.start < end
@@ -218,9 +218,9 @@ final class SituationModel {
     @discardableResult
     func addTonight(kind: SocialKind = .nightOut, title: String = "Night out") -> SocialPlan {
         let day = today
-        let start = max(now(), day.startDate(calendar: calendar).addingTimeInterval(19 * 3600))
+        let start = max(now(), day.date(atMinute: 19 * 60, calendar: calendar))
         let detected = DetectedSocial(eventID: "coach-\(day.description)", title: title, start: start,
-                                      end: day.startDate(calendar: calendar).addingTimeInterval(23.5 * 3600),
+                                      end: day.date(atMinute: 23 * 60 + 30, calendar: calendar),
                                       kind: kind, needsConfirmation: false, days: 1)
         if !upcomingSocial.contains(where: { $0.eventID == detected.eventID }) { upcomingSocial.append(detected) }
         return plan(for: detected)
@@ -290,7 +290,7 @@ final class SituationModel {
     func computeOutings() {
         guard let coach else { return }
         let day = today
-        let evening = DateInterval(start: day.startDate(calendar: calendar).addingTimeInterval(18 * 3600), duration: 4 * 3600)
+        let evening = DateInterval(start: day.date(atMinute: 18 * 60, calendar: calendar), end: day.date(atMinute: 22 * 60, calendar: calendar))
         func overlapsEvening(_ event: ClassifiedEvent) -> Bool {
             !event.event.isAllDay && DateInterval(start: event.event.start, end: max(event.event.start, event.event.end))
                 .intersection(with: evening).map { $0.duration > 0 } ?? false

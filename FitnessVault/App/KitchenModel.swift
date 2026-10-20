@@ -70,7 +70,7 @@ final class KitchenModel {
             let weekday = isoWeekday(day)
             let isWorkday = (coach?.coach.isWorkday(day, calendar: calendar) ?? (weekday <= 5)) && !CalendarClassifier.isOnLeave(events)
             let location = CalendarClassifier.workLocation(from: events)
-            let evening = day.startDate(calendar: calendar).addingTimeInterval(17 * 3600)
+            let evening = day.date(atMinute: 17 * 60, calendar: calendar)
             let lateEvent = events.contains { item in
                 !item.event.isAllDay && item.role != .shared && item.role != .ignored && item.event.start >= evening
                     && item.event.start < evening.addingTimeInterval(3 * 3600)
@@ -564,7 +564,7 @@ final class KitchenModel {
         let slowCooker = soon.compactMap { entry -> PlannedNotification? in
             guard entry.slot == .dinner, let recipe = self.recipe(entry.recipeID), recipe.usesSlowCooker, let day = entry.dayKey else { return nil }
             let wake = coach?.coach.wakeMinute ?? 355
-            let date = day.startDate(calendar: calendar).addingTimeInterval(TimeInterval((wake + 75) * 60))
+            let date = day.date(atMinute: wake + 75, calendar: calendar)
             guard date > now() else { return nil }
             return PlannedNotification(id: Self.reminderPrefix + "slow." + day.description, date: date,
                                        body: "Ten minutes of slow-cooker prep now and \(recipe.title) is sorted for tonight.", isDiscreet: false)

@@ -280,7 +280,7 @@ final class CoachModel {
             lastError = "Moving this to another day needs a reason."
             return nil
         }
-        guard start < newDay.startDate(calendar: calendar).addingTimeInterval(TimeInterval(coach.bedtimeMinute * 60)) else {
+        guard start < newDay.date(atMinute: coach.bedtimeMinute, calendar: calendar) else {
             lastError = "That's after your bedtime."
             return nil
         }
@@ -326,7 +326,7 @@ final class CoachModel {
         let existing = Set(commitments(on: day).compactMap(\.routineID))
         for routine in routines() where routine.isEnabled && routine.runs(onISOWeekday: weekday) && !existing.contains(routine.id) {
             if let enabledAt = routine.enabledAt, DayKey(enabledAt, calendar: calendar) > day { continue }
-            let start = routine.minuteOfDay.map { day.startDate(calendar: calendar).addingTimeInterval(TimeInterval($0 * 60)) }
+            let start = routine.minuteOfDay.map { day.date(atMinute: $0, calendar: calendar) }
             if onlyUpcoming, let start, start < now() { continue }
             let item = Commitment(day: day, title: routine.title, kind: routine.kind, state: .approved, weight: routine.weight,
                                   scheduledStart: start, durationMinutes: routine.durationMinutes, source: .routine,

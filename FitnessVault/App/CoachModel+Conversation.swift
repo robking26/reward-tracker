@@ -150,7 +150,7 @@ extension CoachModel {
     }
 
     func moveCurrentToEvening() -> CoachReply {
-        let evening = today.startDate(calendar: calendar).addingTimeInterval(TimeInterval(max(coach.workEndMinute + 60, 18 * 60) * 60))
+        let evening = today.date(atMinute: max(coach.workEndMinute + 60, 18 * 60), calendar: calendar)
         guard evening > now() else {
             return CoachReply(text: "It's already evening. Do it now, or tell me what's blocking you.", quickReplies: ["Start", "Something's blocking me"])
         }

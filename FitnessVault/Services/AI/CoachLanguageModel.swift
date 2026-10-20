@@ -88,7 +88,7 @@ final class CoachToolbox {
                 return "Not done: startTime must be HH:mm, e.g. 17:30."
             }
             guard parsed > coach.now() else { return "Not done: that time has already passed." }
-            let bedtime = coach.today.startDate(calendar: coach.calendar).addingTimeInterval(TimeInterval(coach.coach.bedtimeMinute * 60))
+            let bedtime = coach.today.date(atMinute: coach.coach.bedtimeMinute, calendar: coach.calendar)
             guard parsed.addingTimeInterval(TimeInterval(minutes * 60)) <= bedtime else { return "Not done: that runs past bedtime." }
             let interval = DateInterval(start: parsed, duration: TimeInterval(minutes * 60))
             if let clash = coach.events.first(where: { Self.overlaps($0, interval) }) {
@@ -180,7 +180,7 @@ enum ToolParsing {
         if isPM && hour < 12 { hour += 12 }
         if isAM && hour == 12 { hour = 0 }
         guard (0...23).contains(hour), (0...59).contains(minute), parts.count <= 2 else { return nil }
-        return day.startDate(calendar: calendar).addingTimeInterval(TimeInterval((hour * 60 + minute) * 60))
+        return day.date(atMinute: hour * 60 + minute, calendar: calendar)
     }
 
     static func excuse(_ text: String) -> ExcuseReason? {

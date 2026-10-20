@@ -2,6 +2,18 @@
 
 Newest first. Each entry records what was decided, why, and who made the call ("User" means answered by the user; "Team" means a default chosen because the question wasn't blocking).
 
+## D-038 · How the test week is measured (Team, from Phase 8)
+- **Usefulness:** suggestions agreed versus declined, suggestions marked "Wrong" with a reason, and the evening "Was the plan useful?" check-in (not really, somewhat or very).
+- **Reliability:** the plan checker's findings, misses that were really unanswered prompts, and messages the coach didn't understand.
+- **Effort:** the evening "How much effort did the app take?" check-in (light, OK or too much).
+- **The plan checker:** it runs separately from the recommendation engine. It removes anything that clashes with a meeting, focus time or a personal event, falls outside waking hours, or asks for a workout on a recovery day. It flags a walk in forecast rain, too many suggestions, or repeats. Each finding is a rule to fix, not a feature.
+- **The report:** plain text with counts, your reasons and notes, and the checker's findings. It never includes calendar event names, health figures or money. It's kept on the iPhone and shared only when you choose.
+
+## D-037 · Times of day are wall-clock times (Team, found in Phase 8 review)
+- **The bug:** "Midnight plus N minutes" is an hour out on the days the clocks change. On 25 October 2026, wake-up at 05:55 would have been treated as 04:55.
+- **The fix:** every time of day now comes from `DayKey.date(atMinute:)`, which builds the date from the hour and minute. That covers wake, bedtime, work, lunch, dinner, wind-down, routines, quiet hours, defrost and slow-cooker reminders, recovery and social evenings, and the 08:00 settlement.
+- **Tests:** times on the autumn and spring change days are covered.
+
 ## D-036 · Swift 6 language mode deferred (Team, revisits D-003)
 - **Why not now:** the app builds cleanly in Swift 5 mode with main-actor models. Switching modes means a project-wide strict-concurrency migration (delegates, callbacks, shared singletons and SwiftData models crossing actors). It can only be checked through CI, and the behaviours most at risk (HealthKit callbacks, Live Activities, WatchConnectivity, location) can only be checked on the device.
 - **When:** after Phase 8, when real use has settled what the app needs to do.

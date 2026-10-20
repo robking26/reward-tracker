@@ -311,9 +311,8 @@ enum RecommendationEngine {
     /// Physical suggestions stop at wind-down and keep clear of dinner (S3: protect dinner, self-care and sleep).
     static func protectEvenings(_ windows: [OpportunityWindow], day: DayKey, settings: CoachSettings,
                                 calendar: Calendar) -> [OpportunityWindow] {
-        let midnight = day.startDate(calendar: calendar)
-        let dinner = DateInterval(start: midnight.addingTimeInterval(TimeInterval(settings.dinnerMinute * 60)), duration: 60 * 60)
-        let windDown = midnight.addingTimeInterval(TimeInterval(settings.windDownMinute * 60))
+        let dinner = DateInterval(start: day.date(atMinute: settings.dinnerMinute, calendar: calendar), duration: 60 * 60)
+        let windDown = day.date(atMinute: settings.windDownMinute, calendar: calendar)
         return windows.flatMap { window -> [OpportunityWindow] in
             guard window.interval.start < windDown else { return [] }
             let clipped = DateInterval(start: window.interval.start, end: min(window.interval.end, windDown))
@@ -325,7 +324,7 @@ enum RecommendationEngine {
     }
 
     private static func at(_ minute: Int, _ input: RecommendationInput) -> Date {
-        input.day.startDate(calendar: input.calendar).addingTimeInterval(TimeInterval(minute * 60))
+        input.day.date(atMinute: minute, calendar: input.calendar)
     }
 
     private static func hour(of date: Date, _ input: RecommendationInput) -> Int {

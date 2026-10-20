@@ -88,8 +88,8 @@ enum WeatherAdvisor {
 
     /// "Dry, 9–14°", "Rain likely from 3 pm, 11°", "Wet this morning, drier from 1 pm". Daytime only (7am–9pm).
     static func summary(for day: DayKey, forecast: [HourlyWeather], calendar: Calendar) -> String? {
-        let start = day.startDate(calendar: calendar).addingTimeInterval(7 * 3600)
-        let daytime = hours(during: DateInterval(start: start, duration: 14 * 3600), in: forecast).sorted { $0.date < $1.date }
+        let daytimeInterval = DateInterval(start: day.date(atMinute: 7 * 60, calendar: calendar), end: day.date(atMinute: 21 * 60, calendar: calendar))
+        let daytime = hours(during: daytimeInterval, in: forecast).sorted { $0.date < $1.date }
         guard !daytime.isEmpty else { return nil }
         let low = Int(daytime.map(\.temperature).min()?.rounded() ?? 0)
         let high = Int(daytime.map(\.temperature).max()?.rounded() ?? 0)
