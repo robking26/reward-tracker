@@ -1,26 +1,19 @@
 import SwiftUI
 
-/// Setup, then the live set logger. Presented full screen from Today.
+/// Setup, then the live set logger. Presented full screen from the Gym tab.
 struct WorkoutFlowView: View {
     @Environment(TrainingModel.self) private var training
-    @Environment(CoachModel.self) private var coach
     @Environment(\.dismiss) private var dismiss
-    let commitment: Commitment?
+    /// Opens on the rehab-only session.
+    var rehabOnly = false
 
     var body: some View {
         NavigationStack {
             Group {
                 if training.isActive {
-                    ActiveWorkoutView { summary in
-                        if let summary {
-                            let done = summary.countedAsDone ? " Marked as done." : ""
-                            coach.say(CoachReply(text: "Workout saved: \(summary.workingSets) sets across \(summary.exercises) exercises in \(summary.minutes) minutes.\(done)",
-                                                 toolSummary: summary.countedAsDone ? "Marked done: workout" : nil))
-                        }
-                        dismiss()
-                    }
+                    ActiveWorkoutView { _ in dismiss() }
                 } else {
-                    WorkoutSetupView(commitment: commitment) { dismiss() }
+                    WorkoutSetupView(startWithRehab: rehabOnly) { dismiss() }
                 }
             }
             .pageBackground()
@@ -31,31 +24,55 @@ struct WorkoutFlowView: View {
 
 // MARK: - Setup
 
+/// Upper body, lower body, or knee rehab on its own.
+enum SessionChoice: String, CaseIterable, Identifiable {
+    case upper, lower, rehab
+
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .upper: "Upper"
+        case .lower: "Lower"
+        case .rehab: "Rehab only"
+        }
+    }
+}
+
 struct WorkoutSetupView: View {
     @Environment(TrainingModel.self) private var training
-    let commitment: Commitment?
+    var startWithRehab = false
     var onCancel: () -> Void
-    @State private var focus: TrainingFocus = .upper
+    @State private var choice: SessionChoice = .upper
     @State private var variant = 0
     @State private var minutes = 60
     @State private var rehabFirst = true
     @State private var loaded = false
 
+    private var plan: WorkoutPlan {
+        switch choice {
+        case .rehab: training.makeRehabPlan()
+        case .upper: training.makePlan(focus: .upper, variant: variant, availableMinutes: minutes, rehabFirst: rehabFirst)
+        case .lower: training.makePlan(focus: .lower, variant: variant, availableMinutes: minutes, rehabFirst: rehabFirst)
+        }
+    }
+
     var body: some View {
-        let plan = training.makePlan(focus: focus, variant: variant, availableMinutes: minutes, rehabFirst: rehabFirst)
+        let plan = self.plan
         List {
             Section {
-                Picker("Session", selection: $focus) {
-                    ForEach(TrainingFocus.allCases, id: \.self) { Text($0.title).tag($0) }
+                Picker("Session", selection: $choice) {
+                    ForEach(SessionChoice.allCases) { Text($0.title).tag($0) }
                 }
                 .pickerStyle(.segmented)
-                Stepper("\(minutes) minutes in the gym", value: $minutes, in: 30...90, step: 5)
-                Toggle(isOn: $rehabFirst) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Knee rehab first")
-                        Text("Recommended: straight after your warm-up, so it doesn't get skipped at the end.")
-                            .font(.caption)
-                            .foregroundStyle(Palette.textTertiary)
+                if choice != .rehab {
+                    Stepper("\(minutes) minutes in the gym", value: $minutes, in: 30...90, step: 5)
+                    Toggle(isOn: $rehabFirst) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Knee rehab first")
+                            Text("Recommended: straight after your warm-up, so it doesn't get skipped at the end.")
+                                .font(.caption)
+                                .foregroundStyle(Palette.textTertiary)
+                        }
                     }
                 }
             }
@@ -89,16 +106,23 @@ struct WorkoutSetupView: View {
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button("Cancel", action: onCancel) }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Start") { training.start(plan, commitment: commitment) }.fontWeight(.semibold)
+                Button("Start") { training.start(plan) }.fontWeight(.semibold)
             }
+        }
+        .onChange(of: choice) { _, new in
+            guard new != .rehab else { return }
+            variant = training.suggestedFocus(for: new == .lower ? "lower" : "upper").1
         }
         .onAppear {
             guard !loaded else { return }
             loaded = true
-            let suggested = training.suggestedFocus(for: commitment?.title)
-            focus = suggested.0
-            variant = suggested.1
-            minutes = training.availableMinutes(for: commitment)
+            if startWithRehab {
+                choice = .rehab
+            } else {
+                let suggested = training.suggestedFocus(for: nil)
+                choice = suggested.0 == .lower ? .lower : .upper
+                variant = suggested.1
+            }
         }
     }
 }
@@ -443,7 +467,7 @@ struct AddExerciseSheet: View {
         let options = training.extensionOptions()
         List {
             if options.isEmpty {
-                Text("Not today: there isn't time before your next commitment, or there's nothing suitable left.")
+                Text("Nothing suitable left to add today.")
                     .foregroundStyle(Palette.textSecondary)
             }
             ForEach(options) { exercise in

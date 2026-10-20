@@ -34,11 +34,10 @@ extension AppModel {
 
     // MARK: Month-end
 
-    /// Closes every finished month that hasn't been closed: locks its days, records final earnings and
-    /// sets aside `max(0, allowance − earned)` for gold. Safe to call repeatedly; each month closes once.
+    /// Closes every finished month that hasn't been closed: locks its days and records final earnings.
+    /// With gold investing on, `max(0, allowance − earned)` is set aside for gold; otherwise it simply stays in
+    /// Starling. Safe to call repeatedly; each month closes once.
     func closeFinishedMonths() {
-        // Dormant since Vaultality 2.0: fines stay in Starling instead (D-005).
-        guard settings.goldInvestingEnabled else { return }
         let state = syncState()
         for record in vaults() where record.closedAt == nil {
             guard let month = record.monthKey, month < currentMonth,
@@ -55,9 +54,10 @@ extension AppModel {
             record.closedAt = now()
             record.finalEarnedPence = earned.value
             record.forfeitedPence = forfeited.value
-            audit("month-end", "\(month) closed: earned \(earned.formatted()) of \(record.allocation.formatted()); \(forfeited.formatted()) forfeited from spending.")
+            let unearned = settings.goldInvestingEnabled ? "forfeited from spending" : "not earned, left in Starling"
+            audit("month-end", "\(month) closed: earned \(earned.formatted()) of \(record.allocation.formatted()); \(forfeited.formatted()) \(unearned).")
 
-            if forfeited.isPositive, goldAllocation(for: month) == nil {
+            if settings.goldInvestingEnabled, forfeited.isPositive, goldAllocation(for: month) == nil {
                 let allocation = GoldAllocation(month: month, allocated: forfeited)
                 context.insert(allocation)
                 audit("gold", "Gold allocation of \(forfeited.formatted()) created for \(month).", allocation.id.uuidString)

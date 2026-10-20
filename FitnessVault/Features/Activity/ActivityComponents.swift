@@ -47,8 +47,7 @@ struct ActivityMetricLink: View {
                 timeframe: showsRate ? model.settings.rates.rateDescription(for: category) : period.timeframe,
                 measurement: measure.value,
                 unit: measure.unit,
-                // Activity earned money only before the Vaultality 2.0 cutover; show it only where there is some.
-                earned: model.earned(category, in: days).isPositive ? model.earned(category, in: days) : nil)
+                earned: model.earned(category, in: days))
         }
         .buttonStyle(CardButtonStyle())
     }
@@ -94,7 +93,7 @@ struct StatusNotices: View {
                              tint: Palette.error)
             case .notDetermined where !model.settings.demoMode:
                 NoticeBanner(symbol: "heart.text.square", title: "Connect Apple Health",
-                             message: "Vaultality reads your steps, workouts and swims to plan around your recovery and show your progress.",
+                             message: "Vaultality needs to read your activity to calculate what you've earned.",
                              tint: Palette.accent, actionTitle: "Allow Access") {
                     Task { await model.requestHealthAccess() }
                 }

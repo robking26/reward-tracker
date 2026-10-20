@@ -4,28 +4,28 @@ import SwiftData
 import SwiftUI
 
 /// Starts, runs and finishes gym sessions. Progression, knee rules and the programme are pure domain code;
-/// this model persists what happened and tells the coach when an agreed workout is done.
+/// this model persists what happened.
 @MainActor
 @Observable
 final class TrainingModel {
     let context: ModelContext
     let calendar: Calendar
     let now: () -> Date
-    @ObservationIgnored private weak var coach: CoachModel?
     @ObservationIgnored private let restAlerts: RestAlerting
+    @ObservationIgnored private let defaults: UserDefaults
 
     private(set) var session: WorkoutSession? = nil
     private(set) var plan: WorkoutPlan? = nil
     private(set) var restEndsAt: Date? = nil
     private(set) var lastAdvice: String? = nil
-    /// The commitment a workout is being set up for, before it starts.
-    var pendingCommitmentID: UUID? = nil
+    /// The last finished session, for the Gym tab's "saved" note.
+    private(set) var lastSummary: Summary? = nil
 
-    init(container: ModelContainer, coach: CoachModel?, restAlerts: RestAlerting? = nil,
+    init(container: ModelContainer, restAlerts: RestAlerting? = nil, defaults: UserDefaults = .standard,
          calendar: Calendar = .current, now: @escaping () -> Date = { .now }) {
         context = container.mainContext
-        self.coach = coach
         self.restAlerts = restAlerts ?? LocalRestAlerts()
+        self.defaults = defaults
         self.calendar = calendar
         self.now = now
         restoreActiveSession()
@@ -89,24 +89,26 @@ final class TrainingModel {
                                                   rehabFirst: rehabFirst, knee: knee, weights: decisions))
     }
 
-    /// Gym time left once travel and changing are taken off the agreed slot.
-    func availableMinutes(for commitment: Commitment?) -> Int {
-        guard let commitment, let coach else { return 60 }
-        return max(30, min(75, commitment.durationMinutes - coach.coach.gymTravelMinutes * 2 - 10))
+    /// The knee rehab block on its own, for days without the gym (R1–R2).
+    func makeRehabPlan() -> WorkoutPlan {
+        let history = records()
+        let knee = kneeStatus
+        var decisions: [String: ProgressionDecision] = [:]
+        for exercise in ExerciseLibrary.all where exercise.role == .rehab {
+            decisions[exercise.id] = Progression.decide(exercise, history: history, knee: knee)
+        }
+        return ProgramGenerator.rehabOnly(knee: knee, weights: decisions)
     }
 
     // MARK: Running a session
 
-    func start(_ plan: WorkoutPlan, commitment: Commitment?) {
+    func start(_ plan: WorkoutPlan) {
         guard session == nil else { return }
-        let created = WorkoutSession(day: DayKey(now(), calendar: calendar), plan: plan, commitmentID: commitment?.id,
-                                     startedAt: now())
+        let created = WorkoutSession(day: DayKey(now(), calendar: calendar), plan: plan, commitmentID: nil, startedAt: now())
         context.insert(created)
         session = created
         self.plan = plan
-        if let commitment, commitment.state == .approved { coach?.transition(commitment, .start, reason: "Workout started") }
         restAlerts.workoutStarted(title: plan.title)
-        pendingCommitmentID = nil
         save()
     }
 
@@ -213,10 +215,6 @@ final class TrainingModel {
     /// Extra work only when the calendar allows (W4): optional exercises from today's template not in the plan.
     func extensionOptions() -> [Exercise] {
         guard let plan else { return [] }
-        if let coach, let next = coach.events.first(where: { $0.kind.blocksUser && $0.event.start > now() }),
-           next.event.start.timeIntervalSince(now()) < 45 * 60 {
-            return []
-        }
         let inPlan = Set(plan.exercises.map(\.exerciseID))
         let candidates = ProgramGenerator.templates(plan.focus, variant: plan.variant) + ProgramGenerator.templates(plan.focus, variant: plan.variant + 1)
         var seen = Set<String>()
@@ -241,11 +239,10 @@ final class TrainingModel {
         var workingSets: Int
         var exercises: Int
         var minutes: Int
-        var countedAsDone: Bool
     }
 
-    /// Ends and saves the session. Whatever was done counts; nothing is carried over as catch-up (scenario I).
-    /// An agreed workout with at least one working set is marked done (D-020).
+    /// Ends and saves the session. Whatever was done counts; nothing is carried over as catch-up.
+    /// Apple Health records the workout's minutes, which is what earns money.
     @discardableResult
     func end() -> Summary? {
         guard let session else { return nil }
@@ -253,13 +250,9 @@ final class TrainingModel {
         session.endedAt = now()
         session.awaitingReady = false
         skipRest()
-        var counted = false
-        if !working.isEmpty, let id = session.commitmentID, let coach,
-           let commitment = coach.allCommitments().first(where: { $0.id == id }), commitment.state.isOpen {
-            counted = coach.transition(commitment, .complete, reason: "Workout logged: \(working.count) sets")
-        }
         let summary = Summary(workingSets: working.count, exercises: Set(working.map(\.exerciseID)).count,
-                              minutes: Int(now().timeIntervalSince(session.startedAt) / 60), countedAsDone: counted)
+                              minutes: Int(now().timeIntervalSince(session.startedAt) / 60))
+        lastSummary = summary
         self.session = nil
         plan = nil
         save()
@@ -269,21 +262,24 @@ final class TrainingModel {
 
     // MARK: Walking (K1)
 
+    private static let stepTargetKey = "training.stepTarget"
+    private static let stepTargetReviewedKey = "training.stepTargetReviewed"
+
     /// Today's step target: from the real baseline, reviewed at most once a week, and only raised when the knee
     /// is settled. `recentSteps` is oldest first and includes today, which is left out as it isn't finished.
     func stepTarget(recentSteps: [Int]) -> Int {
-        guard let store = coach?.settingsStore else { return WalkingTargets.startingAim }
         let today = DayKey(now(), calendar: calendar)
         let history = Array(recentSteps.dropLast())
-        let current = store.settings.coach.stepTarget
-        if let current, let reviewed = store.settings.coach.stepTargetReviewed,
+        let saved = defaults.integer(forKey: Self.stepTargetKey)
+        let current: Int? = saved > 0 ? saved : nil
+        if let current, let reviewed = defaults.string(forKey: Self.stepTargetReviewedKey).flatMap(DayKey.init(string:)),
            reviewed.adding(days: 7, calendar: calendar) > today {
             return current
         }
         guard let baseline = WalkingTargets.baseline(history) else { return current ?? WalkingTargets.startingAim }
         let next = WalkingTargets.target(baseline: baseline, previous: current, lastWeek: Array(history.suffix(7)), knee: kneeStatus)
-        store.settings.coach.stepTarget = next
-        store.settings.coach.stepTargetReviewed = today
+        defaults.set(next, forKey: Self.stepTargetKey)
+        defaults.set(today.description, forKey: Self.stepTargetReviewedKey)
         return next
     }
 
@@ -293,8 +289,8 @@ final class TrainingModel {
     var needsNextDayKneeCheck: Bool {
         let today = DayKey(now(), calendar: calendar)
         let yesterday = today.adding(days: -1, calendar: calendar).description
+        // Lower-body sessions and rehab sessions both load the knee.
         let trainedLegs = sessions().contains { $0.day == yesterday && $0.endedAt != nil && $0.focus == .lower }
-            || (coach?.allCommitments().contains { $0.day == yesterday && $0.kind == .rehab && $0.state == .completed } ?? false)
         guard trainedLegs else { return false }
         return !symptomLogs().contains { $0.timing == .nextDay && DayKey($0.date, calendar: calendar) == today }
     }

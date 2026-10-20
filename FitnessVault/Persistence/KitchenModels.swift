@@ -108,7 +108,7 @@ enum RecipeSource: String, Codable, Sendable {
         case .pdf: "PDF"
         case .file: "File"
         case .manual: "Typed in"
-        case .conversation: "From the coach"
+        case .conversation: "Added by hand"
         }
     }
 }

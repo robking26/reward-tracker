@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Tonight's dinner on Today, with the defrost prompt (I5) and a way out when it isn't happening (scenario G).
+/// Tonight's dinner at the top of the Kitchen, with the defrost prompt and a way out when it isn't happening.
 struct DinnerCard: View {
     @Environment(KitchenModel.self) private var kitchen
     @State private var rescuing = false
@@ -9,24 +9,9 @@ struct DinnerCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.s) {
-            NavigationLink {
-                KitchenView()
-            } label: {
-                HStack {
-                    Text("Dinner")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Palette.textSecondary)
-                    Spacer()
-                    Text("Kitchen")
-                        .font(.footnote.weight(.medium))
-                        .foregroundStyle(Palette.textSecondary)
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(Palette.textTertiary)
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
+            Text("Tonight")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Palette.textSecondary)
 
             if let dinner = kitchen.tonight, dinner.portions == 0 {
                 Text("Eating out")

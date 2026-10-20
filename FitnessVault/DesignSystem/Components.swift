@@ -322,3 +322,43 @@ struct ValueRow: View {
         .accessibilityElement(children: .combine)
     }
 }
+
+// MARK: - Small actions
+
+/// A compact secondary action, at least 44 points tall.
+struct SmallActionLabel: View {
+    let title: String
+    let symbol: String
+
+    var body: some View {
+        Label(title, systemImage: symbol)
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(Palette.textPrimary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .padding(.horizontal, Spacing.s)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .background(Palette.elevated, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+    }
+}
+
+struct SmallActionButton: View {
+    let title: String
+    let symbol: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            SmallActionLabel(title: title, symbol: symbol)
+        }
+        .buttonStyle(CardButtonStyle())
+    }
+}
+
+enum DurationFormat {
+    static func text(minutes: Int) -> String {
+        let hours = minutes / 60, rest = minutes % 60
+        if hours == 0 { return "\(rest) min" }
+        return rest == 0 ? "\(hours) h" : "\(hours) h \(rest) min"
+    }
+}

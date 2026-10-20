@@ -43,7 +43,9 @@ struct MoneyVaultView: View {
                     .font(.subheadline)
                     .foregroundStyle(Palette.textPrimary)
                     .surface()
-                    Text("Earnings stop once the month's allowance is unlocked. Whatever isn't earned by month-end is set aside for a gold investment and never added to a future allowance.")
+                    Text(model.settings.goldInvestingEnabled
+                         ? "Earnings stop once the month's allowance is unlocked. Whatever isn't earned by month-end is set aside for a gold investment and never added to a future allowance."
+                         : "Earnings stop once the month's allowance is unlocked. Whatever isn't earned by month-end stays in Starling.")
                         .font(.caption)
                         .foregroundStyle(Palette.textTertiary)
                 }
@@ -63,9 +65,11 @@ struct MoneyVaultView: View {
                     PaymentHistory(payments: model.payments)
                 }
 
-                VStack(alignment: .leading, spacing: Spacing.s) {
-                    SectionHeader("Gold investment")
-                    GoldSection()
+                if model.settings.goldInvestingEnabled {
+                    VStack(alignment: .leading, spacing: Spacing.s) {
+                        SectionHeader("Gold investment")
+                        GoldSection()
+                    }
                 }
 
                 if !model.monthHistory.isEmpty {
@@ -351,6 +355,7 @@ struct PaymentHistory: View {
 }
 
 struct MonthHistoryRow: View {
+    @Environment(AppModel.self) private var model
     let summary: VaultSummary
 
     var body: some View {
@@ -366,7 +371,7 @@ struct MonthHistoryRow: View {
                     .foregroundStyle(Palette.textSecondary)
             }
             ThinProgressBar(progress: summary.progress, height: 4)
-            Text(summary.month < MonthKey(.now) ? "\(summary.remainingToUnlock.formatted()) forfeited from spending, set aside for gold" : "\(summary.remainingToUnlock.formatted()) still to unlock")
+            Text(summary.month < MonthKey(.now) ? "\(summary.remainingToUnlock.formatted()) \(model.settings.goldInvestingEnabled ? "set aside for gold" : "not earned, left in Starling")" : "\(summary.remainingToUnlock.formatted()) still to unlock")
                 .font(.caption)
                 .foregroundStyle(Palette.textTertiary)
         }
@@ -376,6 +381,8 @@ struct MonthHistoryRow: View {
 }
 
 struct HowMoneyMoves: View {
+    @Environment(AppModel.self) private var model
+
     var body: some View {
         DisclosureGroup {
             VStack(alignment: .leading, spacing: Spacing.s) {
@@ -383,11 +390,15 @@ struct HowMoneyMoves: View {
                 step("2", "Released", "Earned money moves from your Savings Space to your Starling balance.")
                 step("3", "Awaiting approval", "Each morning one payment to Monzo is created. Starling asks you to approve it in their app. Nothing is sent until you do.")
                 step("4", "Paid", "Shown only after Starling confirms the payment completed.")
-                step("5", "Gold", "At month-end, whatever wasn't earned is forfeited from spending and set aside for a gold ETC in Trading 212. It's still your money, invested rather than spent, and it never rolls into next month's allowance.")
-                Text("Funding Trading 212 needs your approval in the Starling app, and nothing is shown as invested until Trading 212 confirms the purchase.")
-                    .font(.footnote)
-                    .foregroundStyle(Palette.textSecondary)
-                    .padding(.top, Spacing.xs)
+                if model.settings.goldInvestingEnabled {
+                    step("5", "Gold", "At month-end, whatever wasn't earned is forfeited from spending and set aside for a gold ETC in Trading 212. It's still your money, invested rather than spent, and it never rolls into next month's allowance.")
+                    Text("Funding Trading 212 needs your approval in the Starling app, and nothing is shown as invested until Trading 212 confirms the purchase.")
+                        .font(.footnote)
+                        .foregroundStyle(Palette.textSecondary)
+                        .padding(.top, Spacing.xs)
+                } else {
+                    step("5", "Month-end", "Whatever wasn't earned stays in your Starling Savings Space.")
+                }
             }
             .padding(.top, Spacing.s)
         } label: {

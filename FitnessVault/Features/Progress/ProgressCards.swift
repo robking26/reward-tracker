@@ -140,7 +140,7 @@ struct StrengthCard: View {
 
 struct WorkoutsPerWeekCard: View {
     @Environment(TrainingModel.self) private var training
-    @Environment(CoachModel.self) private var coach
+    @Environment(AppModel.self) private var model
 
     var body: some View {
         let weeks = lastWeeks(8)
@@ -155,17 +155,9 @@ struct WorkoutsPerWeekCard: View {
                 ForEach(weeks, id: \.start) { week in
                     BarMark(x: .value("Week", week.start, unit: .weekOfYear), y: .value("Sessions", week.count))
                         .foregroundStyle(Palette.accent)
-                    RuleMark(xStart: .value("Week", week.start, unit: .weekOfYear),
-                             xEnd: .value("Week", week.start.addingTimeInterval(6 * 86_400), unit: .weekOfYear),
-                             y: .value("Target", week.target))
-                        .foregroundStyle(Palette.textTertiary)
-                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
                 }
             }
             .frame(height: 120)
-            Text("Dashed line: that week's target as the routine builds up.")
-                .font(.caption)
-                .foregroundStyle(Palette.textTertiary)
         }
         .surface()
     }
@@ -173,13 +165,13 @@ struct WorkoutsPerWeekCard: View {
     private struct Week {
         var start: Date
         var count: Int
-        var target: Int
     }
 
     private func lastWeeks(_ count: Int) -> [Week] {
-        let calendar = coach.calendar
-        let today = coach.today
-        let monday = today.adding(days: -(coach.isoWeekday(today) - 1), calendar: calendar)
+        let calendar = model.calendar
+        let today = model.today
+        let weekday = calendar.component(.weekday, from: today.startDate(calendar: calendar)) // 1 = Sunday
+        let monday = today.adding(days: -((weekday + 5) % 7), calendar: calendar)
         let finished = training.sessions().filter { $0.endedAt != nil }
         return (0..<count).reversed().map { offset in
             let start = monday.adding(days: -7 * offset, calendar: calendar)
@@ -188,8 +180,7 @@ struct WorkoutsPerWeekCard: View {
                 guard let day = DayKey(string: session.day) else { return false }
                 return day >= start && day < end
             }.count
-            return Week(start: start.startDate(calendar: calendar), count: sessions,
-                        target: RecommendationEngine.weeklyWorkoutTarget(on: start, calendar: calendar))
+            return Week(start: start.startDate(calendar: calendar), count: sessions)
         }
     }
 }

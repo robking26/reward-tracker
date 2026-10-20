@@ -1,19 +1,28 @@
 import Foundation
 import UserNotifications
 
-/// Schedules the coach's commitment reminders. Local notifications only (no push on a free developer team).
+/// A local notification the app intends to schedule. Pure data, so plans can be unit tested.
+struct PlannedNotification: Hashable, Sendable {
+    var id: String
+    var date: Date
+    var body: String
+    /// No sound, delivered quietly.
+    var isDiscreet: Bool
+}
+
+/// Schedules the kitchen's defrost and slow-cooker reminders. Local notifications only (no push on a free team).
 @MainActor
 protocol ReminderScheduling: AnyObject {
-    /// Replaces every pending commitment reminder with `plan`.
+    /// Replaces every pending reminder with this scheduler's prefix with `plan`.
     func replace(with plan: [PlannedNotification])
 }
 
 @MainActor
 final class LocalReminderScheduler: ReminderScheduling {
-    /// Only pending reminders with this prefix are replaced, so the coach and the kitchen don't clear each other's.
+    /// Only pending reminders with this prefix are replaced, so other notifications are never cleared.
     private let prefix: String
 
-    init(prefix: String = NotificationPlanner.prefix) {
+    init(prefix: String) {
         self.prefix = prefix
     }
 
@@ -21,7 +30,7 @@ final class LocalReminderScheduler: ReminderScheduling {
         let prefix = self.prefix
         Task {
             let center = UNUserNotificationCenter.current()
-            // Ask at the first moment it matters: when there's an agreed commitment to remind about.
+            // Ask at the first moment it matters: when there's something to remind about.
             if !plan.isEmpty, await center.notificationSettings().authorizationStatus == .notDetermined {
                 _ = try? await center.requestAuthorization(options: [.alert, .sound, .badge])
             }

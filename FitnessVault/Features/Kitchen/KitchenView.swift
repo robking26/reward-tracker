@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// The kitchen (Phase 4): this week's meals, the Aldi list, what's probably in, recipes and the £400 ceiling.
-/// Opened from Today; never part of the daily score.
+/// The Kitchen tab: tonight's dinner, this week's meals, the Aldi list, what's probably in, recipes and the
+/// £400 household ceiling. Nothing here affects earnings.
 enum KitchenSection: String, CaseIterable, Identifiable {
     case plan = "Meals"
     case list = "List"
@@ -14,11 +14,13 @@ enum KitchenSection: String, CaseIterable, Identifiable {
 
 struct KitchenView: View {
     @Environment(KitchenModel.self) private var kitchen
+    @Binding var showingSettings: Bool
     @State var section: KitchenSection = .plan
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.l) {
+                DinnerCard()
                 Picker("Section", selection: $section) {
                     ForEach(KitchenSection.allCases) { Text($0.rawValue).tag($0) }
                 }
@@ -36,7 +38,50 @@ struct KitchenView: View {
         }
         .pageBackground()
         .navigationTitle("Kitchen")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                SettingsToolbarButton(isPresented: $showingSettings)
+            }
+        }
+        .refreshable { kitchen.refresh() }
         .onAppear { kitchen.refresh() }
+    }
+}
+
+/// Which weekdays you work from home: slow-cooker meals are only planned for those (no morning prep on office days).
+struct HomeDaysCard: View {
+    @Environment(KitchenModel.self) private var kitchen
+    private let weekdays = [1, 2, 3, 4, 5]
+    private let letters = ["M", "T", "W", "T", "F"]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.s) {
+            Text("Working from home on")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Palette.textSecondary)
+            HStack(spacing: Spacing.xs) {
+                ForEach(weekdays, id: \.self) { weekday in
+                    let atHome = kitchen.homeWorkdays.contains(weekday)
+                    Button {
+                        kitchen.setHomeWorkday(weekday, !atHome)
+                    } label: {
+                        Text(letters[weekday - 1])
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .foregroundStyle(atHome ? Palette.onAccent : Palette.textPrimary)
+                            .background(atHome ? Palette.accent : Palette.elevated,
+                                        in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Calendar.current.weekdaySymbols[weekday % 7])
+                    .accessibilityValue(atHome ? "Working from home" : "In the office")
+                }
+            }
+            Text("Slow-cooker meals are only planned on these days, with a 07:10 reminder.")
+                .font(.caption)
+                .foregroundStyle(Palette.textTertiary)
+        }
+        .surface()
     }
 }
 
@@ -49,6 +94,7 @@ struct MealPlanSection: View {
         let days = upcomingDays
         VStack(alignment: .leading, spacing: Spacing.m) {
             BatchCookCard()
+            HomeDaysCard()
             ForEach(days, id: \.self) { day in
                 DayMealsCard(day: day, entries: kitchen.entries(on: day))
             }
@@ -58,7 +104,7 @@ struct MealPlanSection: View {
                 SmallActionLabel(title: "Replan the rest of the week", symbol: "arrow.triangle.2.circlepath")
             }
             .buttonStyle(CardButtonStyle())
-            Text("Dinners are two identical portions. Lunches come from one batch cook, on a four-week rotation. Nothing here affects your score.")
+            Text("Dinners are two identical portions. Lunches come from one batch cook, on a four-week rotation. Nothing here affects your earnings.")
                 .font(.caption)
                 .foregroundStyle(Palette.textTertiary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -396,7 +442,7 @@ struct InventorySection: View {
                 }
                 .surface()
             }
-            Text("These are estimates from receipts, your list and what you tell me. A receipt only says something was bought, not that it's still there. Say \"we've run out of milk\" to the coach any time.")
+            Text("These are estimates from receipts, your list and what you tell me. A receipt only says something was bought, not that it's still there. Mark things as run out with the menu on each item.")
                 .font(.caption)
                 .foregroundStyle(Palette.textTertiary)
                 .fixedSize(horizontal: false, vertical: true)

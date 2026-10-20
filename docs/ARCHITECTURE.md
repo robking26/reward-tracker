@@ -38,32 +38,17 @@
 - **Strength:** only `traditionalStrengthTraining` and `functionalStrengthTraining` workouts, de-duplicated by workout UUID and assigned to the day the workout started.
 - **Starling payments:** with a personal access token, payments to a payee must be approved in the Starling app. The app never tries to approve them.
 
-## Vaultality 2.0 target architecture
+## Roadmap
 
-```
-                ┌──────────── SwiftUI (Today · Coach · Calendar · Progress · Settings) ────────────┐
-                │                         reads derived state only                                  │
-                └──────────────┬──────────────────────────────┬────────────────────────────────────┘
-                        CoachModel (@MainActor)          AppModel (@MainActor)
-           commitments · routines · reconciliation   Health sync · Starling · (dormant) gold
-           conversation · memory · calendar context
-                │            │             │                         │
-   Domain (pure, tested)     │      Services (protocols + mocks)     │
-   CommitmentRules           │      CalendarService (EventKit, read-only)
-   DayScoring / FineSchedule │      SpeechService (on-device dictation)
-   Availability              │      CoachLanguageModel (Foundation Models, iOS 26+) ◀── tools call CoachModel
-   CalendarClassifier        │      HealthDataProviding, BankingService
-   CoachIntentParser         │
-                └────────────┴──── SwiftData store (on device) ───────────────────┘
-```
-
-- **Deterministic first.** Scheduling, scoring, fines, state changes and progression are pure Swift in `Domain/`. The language model only interprets language and words the coach's replies. It acts through tools that call `CoachModel`, which validates every argument and records what really happened (E4, AI2–AI3).
-- **One source of truth.** The conversation and the Today screen change the same SwiftData records through `CoachModel`.
-- **Two models, one store.** `AppModel` keeps Health and banking. `CoachModel` owns everything coaching. Both share the `ModelContainer`.
-- **Read-only external calendars.** `CalendarService` maps EventKit events into plain `CalendarEventInfo` values. Classification and availability never see EventKit types, so they can be tested.
-
-See `IMPLEMENTATION_PLAN.md` for phases and `DECISIONS.md` for the reasoning.
+| Phase | Status |
+|---|---|
+| 1. App foundation: navigation, design system, four tabs, reusable components | Done |
+| 2. Reward engine: rates, daily calculation, monthly cap, persistent ledger, unit tests | Done |
+| 3. Apple Health: permissions, reading, workout classification, sync, reconciliation | Implemented; needs on-device testing |
+| 4. AI meal logging | Removed at the user's request. The app has no nutrition features. |
+| 5. Starling sandbox: connection, balances, releases, payment initiation, status | Client written against the documented v2 API. **Next: check the request and response shapes against the sandbox, especially local payments and payment-order status.** |
+| 6. Production: live config, real-device testing, accessibility audit, performance | Not started |
 
 ## Continuous integration
 
-- `.github/workflows/ios.yml` builds the app and runs the unit tests on a macOS runner with Xcode 26.3 and an iOS 26 simulator, using an unsigned Simulator build, on every push that touches the app.
+- `.github/workflows/ios.yml` builds the app and runs the unit tests on a macOS runner, using an unsigned Simulator build, on every push that touches the app.

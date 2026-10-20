@@ -79,13 +79,12 @@ final class InvestingTests: XCTestCase {
 
 @MainActor
 final class MonthEndSettlementTests: XCTestCase {
-    private func makeModel(now: Date) -> AppModel {
+    private func makeModel(now: Date, gold: Bool = true) -> AppModel {
         let defaults = UserDefaults(suiteName: "test.\(UUID().uuidString)")!
         let settings = SettingsStore(defaults: defaults)
         settings.settings.demoMode = true
-        // These tests exercise the dormant v1 month-end gold flow.
-        settings.settings.goldInvestingEnabled = true
-        settings.settings.activityEarningsEnd = nil
+        // Most of these tests exercise the month-end gold flow, which is off by default.
+        settings.settings.goldInvestingEnabled = gold
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "Europe/London")!
         return AppModel(container: Persistence.makeContainer(inMemory: true), settingsStore: settings,
@@ -117,6 +116,25 @@ final class MonthEndSettlementTests: XCTestCase {
         XCTAssertNotNil(vault?.closedAt)
         XCTAssertEqual(model.syncState().finalisedThroughDay, DayKey(year: 2026, month: 10, day: 31),
                        "A closed month is locked so it can't change afterwards")
+    }
+
+    func testWithGoldOffTheMonthClosesButNothingIsInvested() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Europe/London")!
+        let now = DayKey(year: 2026, month: 11, day: 3).startDate(calendar: calendar).addingTimeInterval(9 * 3_600)
+        let model = makeModel(now: now, gold: false)
+        let october = MonthKey(year: 2026, month: 10)
+        model.context.insert(MonthlyVault(month: october, allocation: .pounds(500), openingSpaceBalance: nil, plan: nil))
+        model.context.insert(RewardLedgerEntry(line: LedgerLine(
+            id: "part", day: DayKey(year: 2026, month: 10, day: 12), category: .steps, amount: .pounds(365), kind: .accrual)))
+        model.syncState().lastSuccessfulSync = now
+
+        model.closeFinishedMonths()
+        XCTAssertTrue(model.goldAllocationRecords().isEmpty, "Unearned money stays in Starling")
+        let vault = model.vaults().first { $0.month == october.description }
+        XCTAssertNotNil(vault?.closedAt)
+        XCTAssertEqual(vault?.finalEarnedPence, 36_500)
+        XCTAssertEqual(model.syncState().finalisedThroughDay, DayKey(year: 2026, month: 10, day: 31))
     }
 
     func testFullyEarnedMonthCreatesNoAllocation() {

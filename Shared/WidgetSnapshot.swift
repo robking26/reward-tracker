@@ -77,7 +77,6 @@ struct WidgetSnapshot: Codable, Hashable, Sendable {
 enum WidgetSnapshotStore {
     static let appGroup = "group.com.robking.FitnessVault"
     static let widgetKind = "FitnessVaultToday"
-    static let weekWidgetKind = "FitnessVaultWeek"
     private static let key = "widget.snapshot.v1"
 
     private static var defaults: UserDefaults? { UserDefaults(suiteName: appGroup) }
@@ -101,58 +100,5 @@ enum WidgetMoney {
         return wholePounds
             ? amount.formatted(style.precision(.fractionLength(0)))
             : amount.formatted(style)
-    }
-}
-
-/// What the coach shares with the widget: the next action and today's commitment count.
-/// Sensitive commitments (e.g. knee rehab) are flagged so the Lock Screen can stay discreet (WG1).
-struct CoachWidgetSnapshot: Codable, Hashable, Sendable {
-    var day: String
-    var nextTitle: String?
-    var nextSymbol: String?
-    var nextStart: Date?
-    var nextIsSensitive: Bool
-    var nextInProgress: Bool
-    /// Up to three other things still due today, non-sensitive titles only.
-    var stillDue: [String]
-    var done: Int
-    var total: Int
-    var updatedAt: Date
-    // Phase 7. Optional so snapshots saved by earlier versions still load.
-    /// The current commitment, for the widget's Done button. Nil when there's nothing to mark.
-    var nextID: String? = nil
-    /// "workout" or "swim" adds a Start workout link.
-    var nextKind: String? = nil
-    /// The morning "I'm ready" hasn't happened yet.
-    var briefingPending: Bool? = nil
-    /// The last seven finished days, oldest first: a score, or nil for no score. Never money (WG1).
-    var week: [Int?]? = nil
-    var workoutsThisWeek: Int? = nil
-    var workoutTarget: Int? = nil
-
-    func isForToday(_ now: Date = .now, calendar: Calendar = .current) -> Bool {
-        day == WidgetSnapshot.dayString(for: now, calendar: calendar)
-    }
-
-    func hasSameContent(as other: CoachWidgetSnapshot) -> Bool {
-        var a = self, b = other
-        a.updatedAt = .distantPast
-        b.updatedAt = .distantPast
-        return a == b
-    }
-}
-
-enum CoachWidgetStore {
-    private static let key = "widget.coach.v1"
-    private static var defaults: UserDefaults? { UserDefaults(suiteName: WidgetSnapshotStore.appGroup) }
-
-    static func load() -> CoachWidgetSnapshot? {
-        guard let data = defaults?.data(forKey: key) else { return nil }
-        return try? JSONDecoder().decode(CoachWidgetSnapshot.self, from: data)
-    }
-
-    static func save(_ snapshot: CoachWidgetSnapshot) {
-        guard let data = try? JSONEncoder().encode(snapshot) else { return }
-        defaults?.set(data, forKey: key)
     }
 }

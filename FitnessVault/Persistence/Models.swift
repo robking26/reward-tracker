@@ -267,18 +267,14 @@ enum Persistence {
     static let schema = Schema([
         MonthlyVault.self, DailyActivity.self, RewardLedgerEntry.self, Meal.self,
         HealthSyncState.self, BankTransfer.self, PaymentOrder.self, AuditEvent.self, GoldAllocation.self,
-        // Vaultality 2.0 coaching
-        Commitment.self, CommitmentEvent.self, Routine.self, DayRecord.self, CoachMessage.self,
-        MemoryRecord.self, TaskItem.self,
-        // Phase 3 training
+        // Gym and rehab
         WorkoutSession.self, SetLog.self, SymptomLog.self,
-        // Phase 4 kitchen
+        // Kitchen
         Recipe.self, MealPlanEntry.self, InventoryItem.self, ReceiptRecord.self, ShoppingItem.self,
-        // Phase 5 accountability
-        FineLedgerEntry.self, MonthStatement.self,
-        // Phase 6 context
+        // Retired 2.0 coaching data, kept so existing stores open (RetiredModels.swift)
+        Commitment.self, CommitmentEvent.self, Routine.self, DayRecord.self, CoachMessage.self,
+        MemoryRecord.self, TaskItem.self, FineLedgerEntry.self, MonthStatement.self,
         SocialPlan.self, RecoveryPeriod.self, GymBusynessRecord.self, OutingSuggestion.self,
-        // Phase 8 validation
         PlanFeedback.self, DayCheckIn.self, PlanAuditRecord.self,
     ])
 

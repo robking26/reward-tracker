@@ -2,6 +2,12 @@ import XCTest
 import SwiftData
 @testable import FitnessVault
 
+/// A clock the tests can move forward.
+final class TestClock {
+    var date: Date
+    init(_ date: Date) { self.date = date }
+}
+
 @MainActor
 final class TrainingModelTests: XCTestCase {
     private var london: Calendar = {
@@ -16,36 +22,26 @@ final class TrainingModelTests: XCTestCase {
     }
 
     private struct Harness {
-        var coach: CoachModel
         var training: TrainingModel
         var alerts: RecordingRestAlerts
         var clock: TestClock
         var container: ModelContainer
     }
 
-    private func make(at date: Date) async -> Harness {
+    private func make(at date: Date) -> Harness {
         let clock = TestClock(date)
         let container = Persistence.makeContainer(inMemory: true)
         let defaults = UserDefaults(suiteName: "training.test.\(UUID().uuidString)")!
-        let settings = SettingsStore(defaults: defaults)
-        settings.settings.demoMode = true
-        let demo = DemoCalendarService(calendar: london)
-        let coach = CoachModel(container: container, settingsStore: settings, liveCalendar: demo, demoCalendar: demo,
-                               defaults: defaults, reminders: RecordingReminderScheduler(), languageModel: nil,
-                               calendar: london, now: { clock.date })
-        await coach.start()
         let alerts = RecordingRestAlerts()
-        let training = TrainingModel(container: container, coach: coach, restAlerts: alerts, calendar: london,
+        let training = TrainingModel(container: container, restAlerts: alerts, defaults: defaults, calendar: london,
                                      now: { clock.date })
-        return Harness(coach: coach, training: training, alerts: alerts, clock: clock, container: container)
+        return Harness(training: training, alerts: alerts, clock: clock, container: container)
     }
 
-    func testLogRestReadyAndFinishCompletesTheCommitment() async {
-        let h = await make(at: at(17, 30))
-        let gym = h.coach.addCommitment("Upper body at Nuffield", kind: .workout, start: at(17, 20), durationMinutes: 100)
+    func testLogRestReadyAndFinish() {
+        let h = make(at: at(17, 30))
         let plan = h.training.makePlan(focus: .upper, variant: 0, availableMinutes: 60, rehabFirst: true)
-        h.training.start(plan, commitment: gym)
-        XCTAssertEqual(gym.state, .inProgress)
+        h.training.start(plan)
         XCTAssertTrue(h.training.current?.isRehab ?? false, "Rehab first by default")
 
         h.training.logSet(weight: nil, reps: 12)
@@ -63,17 +59,16 @@ final class TrainingModelTests: XCTestCase {
 
         let summary = h.training.end()
         XCTAssertEqual(summary?.workingSets, 3)
-        XCTAssertEqual(summary?.countedAsDone, true)
-        XCTAssertEqual(gym.state, .completed)
+        XCTAssertEqual(h.training.lastSummary, summary)
         XCTAssertFalse(h.training.isActive)
     }
 
-    func testAPartialWorkoutCountsWhatWasDoneWithoutCatchUp() async {
+    func testAPartialWorkoutCountsWhatWasDoneWithoutCatchUp() {
         // Scenario I.
-        let h = await make(at: at(17, 30))
+        let h = make(at: at(17, 30))
         let plan = h.training.makePlan(focus: .upper, variant: 0, availableMinutes: 60, rehabFirst: false)
         XCTAssertEqual(plan.exercises.first?.exerciseID, "inclineDBBench")
-        h.training.start(plan, commitment: nil)
+        h.training.start(plan)
         h.training.logWarmUp(weight: 12, reps: 10)
         h.training.logSet(weight: 16, reps: 10)
         h.training.logSet(weight: 16, reps: 10)
@@ -89,12 +84,12 @@ final class TrainingModelTests: XCTestCase {
         XCTAssertFalse(bench?.isValidation ?? true)
     }
 
-    func testKneePainMidSessionAdaptsAndIsRemembered() async {
+    func testKneePainMidSessionAdaptsAndIsRemembered() {
         // Scenario D.
-        let h = await make(at: at(17, 30))
+        let h = make(at: at(17, 30))
         let plan = h.training.makePlan(focus: .lower, variant: 0, availableMinutes: 60, rehabFirst: false)
         XCTAssertEqual(plan.exercises.first?.exerciseID, "barbellSquat")
-        h.training.start(plan, commitment: nil)
+        h.training.start(plan)
         h.training.logSet(weight: 60, reps: 10)
         let advice = h.training.reportKneePain(pain: 4, swelling: false, sharp: false)
         XCTAssertFalse(advice.isEmpty)
@@ -112,10 +107,10 @@ final class TrainingModelTests: XCTestCase {
         XCTAssertFalse(next.exercises.contains { $0.exerciseID == "barbellSquat" }, "Swapped while the knee is irritable")
     }
 
-    func testBusyEquipmentSwapsTheCurrentExercise() async {
+    func testBusyEquipmentSwapsTheCurrentExercise() {
         // Scenario H.
-        let h = await make(at: at(17, 30))
-        h.training.start(h.training.makePlan(focus: .upper, variant: 0, availableMinutes: 60, rehabFirst: false), commitment: nil)
+        let h = make(at: at(17, 30))
+        h.training.start(h.training.makePlan(focus: .upper, variant: 0, availableMinutes: 60, rehabFirst: false))
         XCTAssertEqual(h.training.current?.exerciseID, "inclineDBBench")
         let options = h.training.alternativesForCurrent()
         XCTAssertEqual(options.first?.id, "flatDBBench")
@@ -125,9 +120,9 @@ final class TrainingModelTests: XCTestCase {
         XCTAssertEqual(h.training.current?.exerciseID, "barbellRow", "Do it later moves it back one")
     }
 
-    func testNextMorningKneeCheckAfterLegs() async {
-        let h = await make(at: at(17, 30))
-        h.training.start(h.training.makePlan(focus: .lower, variant: 0, availableMinutes: 60, rehabFirst: true), commitment: nil)
+    func testNextMorningKneeCheckAfterLegs() {
+        let h = make(at: at(17, 30))
+        h.training.start(h.training.makePlan(focus: .lower, variant: 0, availableMinutes: 60, rehabFirst: true))
         h.training.logSet(weight: nil, reps: 12)
         h.training.end()
         XCTAssertFalse(h.training.needsNextDayKneeCheck)
@@ -138,14 +133,28 @@ final class TrainingModelTests: XCTestCase {
         XCTAssertFalse(h.training.needsNextDayKneeCheck)
     }
 
-    func testAnActiveSessionSurvivesARelaunch() async {
-        let h = await make(at: at(17, 30))
-        h.training.start(h.training.makePlan(focus: .upper, variant: 1, availableMinutes: 60, rehabFirst: true), commitment: nil)
+    func testAnActiveSessionSurvivesARelaunch() {
+        let h = make(at: at(17, 30))
+        h.training.start(h.training.makePlan(focus: .upper, variant: 1, availableMinutes: 60, rehabFirst: true))
         h.training.logSet(weight: nil, reps: 12)
-        let relaunched = TrainingModel(container: h.container, coach: h.coach, restAlerts: RecordingRestAlerts(),
+        let relaunched = TrainingModel(container: h.container, restAlerts: RecordingRestAlerts(),
                                        calendar: london, now: { h.clock.date })
         XCTAssertTrue(relaunched.isActive)
         XCTAssertEqual(relaunched.plan?.title, "Upper body B")
         XCTAssertEqual(relaunched.setsDone, 1)
+    }
+
+    func testKneeRehabOnlySession() {
+        let h = make(at: at(17, 30))
+        let plan = h.training.makeRehabPlan()
+        XCTAssertEqual(plan.title, "Knee rehab")
+        XCTAssertFalse(plan.exercises.isEmpty)
+        XCTAssertTrue(plan.exercises.allSatisfy(\.isRehab))
+        h.training.start(plan)
+        h.training.logSet(weight: nil, reps: 12)
+        h.training.end()
+
+        h.clock.date = at(7, day: monday.adding(days: 1, calendar: london))
+        XCTAssertTrue(h.training.needsNextDayKneeCheck, "Rehab loads the knee too")
     }
 }

@@ -231,12 +231,7 @@ final class AppModel {
             let days = month.days(calendar: calendar).filter { $0 <= end }
             var calculated: [DayKey: [RewardCategory: Pence]] = [:]
             for day in days {
-                // From the Vaultality 2.0 cutover activity no longer earns money (D-005); earlier days keep their earnings.
-                if let end = settings.activityEarningsEnd, day > end {
-                    calculated[day] = [:]
-                } else {
-                    calculated[day] = RewardEngine.rewards(for: metrics(for: day), rates: settings.rates)
-                }
+                calculated[day] = RewardEngine.rewards(for: metrics(for: day), rates: settings.rates)
             }
             let locked = Set(days.filter { day in finalisedThrough.map { day <= $0 } ?? false })
             let existing = ledgerEntries(month: month).compactMap(\.line)

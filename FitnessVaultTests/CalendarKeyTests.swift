@@ -21,4 +21,26 @@ final class CalendarKeyTests: XCTestCase {
         XCTAssertEqual(MonthKey(year: 2026, month: 1).previous, MonthKey(year: 2025, month: 12))
         XCTAssertEqual(MonthKey(year: 2028, month: 2).days().count, 29)
     }
+
+    func testWallClockTimesSurviveTheClockChange() {
+        var london = Calendar(identifier: .gregorian)
+        london.timeZone = TimeZone(identifier: "Europe/London")!
+        // The clocks go back at 02:00 on 25 October 2026, so that day is 25 hours long.
+        let changeDay = DayKey(year: 2026, month: 10, day: 25)
+        let eight = changeDay.date(atMinute: 8 * 60, calendar: london)
+        XCTAssertEqual(london.component(.hour, from: eight), 8)
+        XCTAssertEqual(london.component(.minute, from: eight), 0)
+        XCTAssertEqual(DayKey(eight, calendar: london), changeDay)
+    }
+
+    @MainActor
+    func testSettlementStaysAtEightOnTheClockChange() {
+        var london = Calendar(identifier: .gregorian)
+        london.timeZone = TimeZone(identifier: "Europe/London")!
+        let store = SettingsStore(defaults: UserDefaults(suiteName: "settle.\(UUID().uuidString)")!)
+        let saturdayEvening = DayKey(year: 2026, month: 10, day: 24).date(atMinute: 20 * 60, calendar: london)
+        let next = store.nextSettlement(after: saturdayEvening, calendar: london)
+        XCTAssertEqual(DayKey(next, calendar: london), DayKey(year: 2026, month: 10, day: 25))
+        XCTAssertEqual(london.component(.hour, from: next), 8)
+    }
 }

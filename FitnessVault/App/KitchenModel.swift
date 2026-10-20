@@ -2,20 +2,23 @@ import Foundation
 import Observation
 import SwiftData
 
-/// Meals, recipes, the freezer, the shopping list and receipts (Phase 4). The planning, estimating and parsing are
-/// pure domain code; this model persists them and reads the calendar through the coach. Food never affects fines.
+/// Meals, recipes, the freezer, the shopping list and receipts. The planning, estimating and parsing are pure
+/// domain code; this model persists them. Food never affects earnings.
 @MainActor
 @Observable
 final class KitchenModel {
     let context: ModelContext
     let calendar: Calendar
     let now: () -> Date
-    @ObservationIgnored private weak var coach: CoachModel?
+    @ObservationIgnored private let settingsStore: SettingsStore?
+    @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let reminders: ReminderScheduling
     @ObservationIgnored private var lastReminderSignature: String? = nil
     @ObservationIgnored private let countdowns: CountdownControlling
-    /// The dinner being cooked right now, for the cooking timer (Phase 7).
+    /// The dinner being cooked right now, for the cooking timer.
     private(set) var cooking: UUID? = nil
+    /// ISO weekdays (Monday = 1) worked from home: the only days slow-cooker meals are planned (F4).
+    private(set) var homeWorkdays: Set<Int> = []
 
     private(set) var recipes: [Recipe] = []
     private(set) var plan: [MealPlanEntry] = []
@@ -25,16 +28,21 @@ final class KitchenModel {
 
     static let reminderPrefix = "kitchen."
 
-    init(container: ModelContainer, coach: CoachModel?, reminders: ReminderScheduling? = nil,
-         countdowns: CountdownControlling? = nil,
+    static let homeWorkdaysKey = "kitchen.homeWorkdays"
+    /// 07:10: ten minutes of slow-cooker prep before work.
+    static let slowCookerReminderMinute = 7 * 60 + 10
+
+    init(container: ModelContainer, settingsStore: SettingsStore? = nil, reminders: ReminderScheduling? = nil,
+         countdowns: CountdownControlling? = nil, defaults: UserDefaults = .standard,
          calendar: Calendar = .current, now: @escaping () -> Date = { .now }) {
         context = container.mainContext
-        self.coach = coach
+        self.settingsStore = settingsStore
+        self.defaults = defaults
+        homeWorkdays = Set((defaults.array(forKey: Self.homeWorkdaysKey) as? [Int]) ?? [])
         self.reminders = reminders ?? LocalReminderScheduler(prefix: KitchenModel.reminderPrefix)
         self.countdowns = countdowns ?? LocalCountdowns.shared
         self.calendar = calendar
         self.now = now
-        coach?.kitchen = self
         reload()
     }
 
@@ -62,31 +70,23 @@ final class KitchenModel {
         day.adding(days: -(isoWeekday(day) - 1), calendar: calendar)
     }
 
-    /// Work location, evening plans and eating out for each day, from the calendar and agreed commitments.
+    /// Monday to Friday are workdays; the days you mark as home-working allow slow-cooker prep in the morning.
     func dayContexts(from start: DayKey, days: Int = 7) -> [MealDayContext] {
         (0..<days).map { offset in
             let day = start.adding(days: offset, calendar: calendar)
-            let events = coach?.classifiedEvents(on: day) ?? []
             let weekday = isoWeekday(day)
-            let isWorkday = (coach?.coach.isWorkday(day, calendar: calendar) ?? (weekday <= 5)) && !CalendarClassifier.isOnLeave(events)
-            let location = CalendarClassifier.workLocation(from: events)
-            let evening = day.date(atMinute: 17 * 60, calendar: calendar)
-            let lateEvent = events.contains { item in
-                !item.event.isAllDay && item.role != .shared && item.role != .ignored && item.event.start >= evening
-                    && item.event.start < evening.addingTimeInterval(3 * 3600)
-            }
-            let lateCommitment = (coach?.commitments(on: day) ?? []).contains { item in
-                guard item.state.isOpen, let start = item.scheduledStart else { return false }
-                return start >= evening && [.workout, .swim, .social].contains(item.kind)
-            }
-            let eatingOut = events.contains { item in
-                !item.event.isAllDay && item.role != .ignored && item.event.start >= evening
-                    && CalendarClassifier.matches(item.event.title, ["dinner out", "restaurant", "meal out", "takeaway", "curry night", "pub tea", "eating out"])
-            }
-            return MealDayContext(day: day, weekday: weekday, workFromHome: isWorkday && location == .home,
-                                  office: isWorkday && location != .home, eatingOut: eatingOut,
-                                  lateFinish: lateEvent || lateCommitment)
+            let isWorkday = weekday <= 5
+            let atHome = homeWorkdays.contains(weekday)
+            return MealDayContext(day: day, weekday: weekday, workFromHome: isWorkday && atHome,
+                                  office: isWorkday && !atHome, eatingOut: false, lateFinish: false)
         }
+    }
+
+    /// Which weekdays are worked from home. Replans the rest of the week.
+    func setHomeWorkday(_ weekday: Int, _ atHome: Bool) {
+        if atHome { homeWorkdays.insert(weekday) } else { homeWorkdays.remove(weekday) }
+        defaults.set(Array(homeWorkdays).sorted(), forKey: Self.homeWorkdaysKey)
+        replan()
     }
 
     // MARK: Recipes
@@ -563,8 +563,7 @@ final class KitchenModel {
         let defrost = DefrostPlanner.reminders(for: soon.filter { !$0.defrosted }.compactMap(\.planned), now: now(), calendar: calendar)
         let slowCooker = soon.compactMap { entry -> PlannedNotification? in
             guard entry.slot == .dinner, let recipe = self.recipe(entry.recipeID), recipe.usesSlowCooker, let day = entry.dayKey else { return nil }
-            let wake = coach?.coach.wakeMinute ?? 355
-            let date = day.date(atMinute: wake + 75, calendar: calendar)
+            let date = day.date(atMinute: Self.slowCookerReminderMinute, calendar: calendar)
             guard date > now() else { return nil }
             return PlannedNotification(id: Self.reminderPrefix + "slow." + day.description, date: date,
                                        body: "Ten minutes of slow-cooker prep now and \(recipe.title) is sorted for tonight.", isDiscreet: false)
@@ -573,7 +572,7 @@ final class KitchenModel {
     }
 
     func scheduleReminders() {
-        let enabled = coach?.settings.notificationsEnabled ?? true
+        let enabled = settingsStore?.settings.notificationsEnabled ?? true
         let plan = enabled ? reminderPlan() : []
         let signature = plan.map { "\($0.id)@\(Int($0.date.timeIntervalSince1970))" }.joined(separator: "|")
         guard signature != lastReminderSignature else { return }

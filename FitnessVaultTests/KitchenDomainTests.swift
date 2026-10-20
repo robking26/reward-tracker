@@ -358,21 +358,6 @@ final class KitchenDomainTests: XCTestCase {
 
     // MARK: Conversation
 
-    func testKitchenIntents() {
-        XCTAssertEqual(CoachIntentParser.parse("We've got three portions of curry left"), .haveLeft(portions: 3, item: "curry"))
-        XCTAssertEqual(CoachIntentParser.parse("we have 2 portions of chilli in the freezer"), .haveLeft(portions: 2, item: "chilli"))
-        XCTAssertEqual(CoachIntentParser.parse("We've got eggs"), .haveLeft(portions: nil, item: "eggs"))
-        XCTAssertEqual(CoachIntentParser.parse("I used the last chicken"), .ranOut("chicken"))
-        XCTAssertEqual(CoachIntentParser.parse("Add milk to the shopping list"), .addToShopping("milk"))
-        XCTAssertEqual(CoachIntentParser.parse("We need bin bags"), .addToShopping("bin bags"))
-        XCTAssertEqual(CoachIntentParser.parse("We need to sort the attic"), .unknown("We need to sort the attic"))
-        XCTAssertEqual(CoachIntentParser.parse("What's for dinner?"), .whatsForDinner)
-        XCTAssertEqual(CoachIntentParser.parse("I forgot to defrost the curry"), .forgotDefrost)
-        XCTAssertEqual(CoachIntentParser.parse("It's defrosted"), .defrosted)
-        XCTAssertEqual(CoachIntentParser.parse("There's nothing in for dinner"), .dinnerNotReady)
-        XCTAssertEqual(CoachIntentParser.parse("Put cleaning the attic on my list"), .addTask("cleaning the attic"), "Tasks still work")
-    }
-
     func testStarterRecipesAvoidExclusionsAndParseCleanly() {
         for recipe in StarterRecipes.all {
             let text = ([recipe.title] + recipe.ingredients).joined(separator: " ")

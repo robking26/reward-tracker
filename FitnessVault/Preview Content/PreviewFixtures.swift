@@ -6,6 +6,17 @@ import SwiftUI
 /// Production views never contain sample balances or activity values.
 @MainActor
 enum PreviewFixtures {
+    static func training() -> TrainingModel {
+        TrainingModel(container: Persistence.makeContainer(inMemory: true), restAlerts: RecordingRestAlerts())
+    }
+
+    static func kitchen() -> KitchenModel {
+        let kitchen = KitchenModel(container: Persistence.makeContainer(inMemory: true), reminders: RecordingReminderScheduler(),
+                                   countdowns: RecordingCountdowns())
+        kitchen.start()
+        return kitchen
+    }
+
     static func model() -> AppModel {
         let defaults = UserDefaults(suiteName: "preview.\(UUID().uuidString)") ?? .standard
         let settings = SettingsStore(defaults: defaults)
@@ -13,32 +24,6 @@ enum PreviewFixtures {
         let model = AppModel(container: Persistence.makeContainer(inMemory: true), settingsStore: settings)
         Task { await model.start() }
         return model
-    }
-
-    static func training() -> TrainingModel {
-        TrainingModel(container: Persistence.makeContainer(inMemory: true), coach: nil, restAlerts: RecordingRestAlerts())
-    }
-
-    static func kitchen() -> KitchenModel {
-        let kitchen = KitchenModel(container: Persistence.makeContainer(inMemory: true), coach: nil,
-                                   reminders: RecordingReminderScheduler())
-        kitchen.start()
-        return kitchen
-    }
-
-    static func situation() -> SituationModel {
-        SituationModel(container: Persistence.makeContainer(inMemory: true), coach: nil, weather: FixedWeatherService(hours: []),
-                       location: FixedLocationService(nil), travel: FixedTravelService(minutes: 15, place: nil))
-    }
-
-    static func coach() -> CoachModel {
-        let defaults = UserDefaults(suiteName: "preview.coach.\(UUID().uuidString)") ?? .standard
-        let settings = SettingsStore(defaults: defaults)
-        settings.settings.demoMode = true
-        let coach = CoachModel(container: Persistence.makeContainer(inMemory: true), settingsStore: settings,
-                               defaults: defaults, reminders: RecordingReminderScheduler())
-        Task { await coach.start() }
-        return coach
     }
 }
 

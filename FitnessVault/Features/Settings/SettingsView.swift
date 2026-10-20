@@ -2,7 +2,6 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(AppModel.self) private var model
-    @Environment(CoachModel.self) private var coach
     @Environment(\.dismiss) private var dismiss
     @State private var exportURL: URL?
     @State private var exportError: String?
@@ -11,40 +10,6 @@ struct SettingsView: View {
         @Bindable var store = model.settingsStore
         NavigationStack {
             Form {
-                Section {
-                    NavigationLink { RoutinesView() } label: {
-                        Label("Routines", systemImage: "repeat").foregroundStyle(Palette.textPrimary)
-                    }
-                    NavigationLink { CalendarsSettingsView() } label: {
-                        StatusRow(title: "Calendars", symbol: "calendar", status: coach.calendarAccess.title,
-                                  isGood: coach.calendarAccess == .granted && !coach.hasNoWorkCalendar)
-                    }
-                    NavigationLink { MemoryView() } label: {
-                        Label("Coach memory", systemImage: "brain").foregroundStyle(Palette.textPrimary)
-                    }
-                    NavigationLink { AccountabilitySettingsView() } label: {
-                        Label("Accountability and your day", systemImage: "scalemass").foregroundStyle(Palette.textPrimary)
-                    }
-                    NavigationLink { ValidationView() } label: {
-                        Label("Test week", systemImage: "checklist").foregroundStyle(Palette.textPrimary)
-                    }
-                    NavigationLink { PlacesSettingsView() } label: {
-                        Label("Places, weather and travel", systemImage: "location").foregroundStyle(Palette.textPrimary)
-                    }
-                    NavigationLink { PrivacyView() } label: {
-                        Label("Privacy & data", systemImage: "hand.raised").foregroundStyle(Palette.textPrimary)
-                    }
-                    Toggle("Speak replies to voice messages", isOn: $store.settings.coach.speakReplies)
-                    StatusRow(title: "Coach AI", symbol: "sparkles", status: coach.aiStatus.isAvailable ? "On this iPhone" : "Simple commands only",
-                              isGood: coach.aiStatus.isAvailable)
-                } header: {
-                    Text("Coach")
-                } footer: {
-                    Text(coach.aiStatus.isAvailable
-                         ? "The coach uses Apple's on-device model. Nothing you say is sent to an AI service. Replies are only spoken at home."
-                         : "\(coach.aiStatus.title). The coach still handles everyday commands, plans and reminders without it.")
-                }
-
                 Section {
                     NavigationLink {
                         MoneyVaultView()
@@ -67,7 +32,7 @@ struct SettingsView: View {
                     StatusRow(title: "Monzo payee", symbol: "arrow.right.circle",
                               status: model.settings.starling.payeeName ?? "Not chosen",
                               isGood: model.settings.starling.payeeAccountUID != nil)
-                    // Gold investing is dormant since Vaultality 2.0 (D-005).
+                    // Gold investing is off unless switched on; unearned money stays in Starling.
                     if model.settings.goldInvestingEnabled {
                         NavigationLink {
                             Trading212ConnectionView()
@@ -80,7 +45,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Money")
                 } footer: {
-                    Text("Allowance, payouts, payment history and previous months. Activity earned money until 18 October 2026; from 19 October your £500 is kept minus fines for missed commitments (in trial).")
+                    Text("Allowance, payouts, payment history, previous months and reward rates.")
                 }
 
                 Section("Apple Health") {
@@ -136,7 +101,7 @@ struct SettingsView: View {
 
                 Section("About") {
                     LabeledContent("Version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0")
-                    Text("Vaultality: your coach for the next action. It plans around your calendar, health and goals, and helps you keep the commitments you agree to. Your coaching data and Health data stay on this iPhone. Banking tokens are kept in the Keychain on this device only. Payments always need your approval in the Starling app.")
+                    Text("Vaultality: healthy habits unlock wealth. Activity recorded in Apple Health unlocks your own monthly allowance from a Starling Savings Space to Monzo; whatever isn't earned stays in Starling. It only reads from Apple Health, and your Health data stays on this iPhone. Banking tokens are kept in the Keychain on this device only. Payments always need your approval in the Starling app.")
                         .font(.footnote)
                         .foregroundStyle(Palette.textSecondary)
                 }

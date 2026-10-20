@@ -16,31 +16,24 @@ final class KitchenModelTests: XCTestCase {
     }
 
     private struct Harness {
-        var coach: CoachModel
         var kitchen: KitchenModel
         var reminders: RecordingReminderScheduler
         var clock: TestClock
     }
 
-    private func make(at date: Date) async -> Harness {
+    private func make(at date: Date, defaults: UserDefaults? = nil) -> Harness {
         let clock = TestClock(date)
         let container = Persistence.makeContainer(inMemory: true)
-        let defaults = UserDefaults(suiteName: "kitchen.test.\(UUID().uuidString)")!
-        let settings = SettingsStore(defaults: defaults)
-        settings.settings.demoMode = true
-        let demo = DemoCalendarService(calendar: london)
-        let coach = CoachModel(container: container, settingsStore: settings, liveCalendar: demo, demoCalendar: demo,
-                               defaults: defaults, reminders: RecordingReminderScheduler(), languageModel: nil,
-                               calendar: london, now: { clock.date })
-        await coach.start()
+        let store = defaults ?? UserDefaults(suiteName: "kitchen.test.\(UUID().uuidString)")!
         let reminders = RecordingReminderScheduler()
-        let kitchen = KitchenModel(container: container, coach: coach, reminders: reminders, calendar: london, now: { clock.date })
+        let kitchen = KitchenModel(container: container, reminders: reminders, countdowns: RecordingCountdowns(),
+                                   defaults: store, calendar: london, now: { clock.date })
         kitchen.start()
-        return Harness(coach: coach, kitchen: kitchen, reminders: reminders, clock: clock)
+        return Harness(kitchen: kitchen, reminders: reminders, clock: clock)
     }
 
-    func testStartSeedsRecipesAndPlansTheWeek() async {
-        let h = await make(at: at(9))
+    func testStartSeedsRecipesAndPlansTheWeek() {
+        let h = make(at: at(9))
         XCTAssertEqual(h.kitchen.recipes.count, StarterRecipes.all.count)
         let days = (0..<7).map { monday.adding(days: $0, calendar: london) }
         for day in days {
@@ -58,27 +51,23 @@ final class KitchenModelTests: XCTestCase {
         XCTAssertEqual(h.kitchen.plan.filter { $0.slot == .lunch }.count, 5)
     }
 
-    func testConversationalInventoryCorrections() async {
-        let h = await make(at: at(18))
-        let reply = h.coach.respond(to: "We've run out of milk")
-        XCTAssertTrue(reply.text.contains("shopping list"))
+    func testInventoryCorrections() {
+        let h = make(at: at(18))
+        _ = h.kitchen.markOut("milk")
         let milk = FoodCatalogue.byID["milk"]!
         XCTAssertEqual(h.kitchen.presence(of: milk), .out)
+        _ = h.kitchen.addToShopping("milk")
         XCTAssertTrue(h.kitchen.shopping.contains { $0.key == "milk" })
 
-        _ = h.coach.respond(to: "We've got three portions of chilli left")
+        _ = h.kitchen.confirm("chilli", portions: 3)
         XCTAssertEqual(h.kitchen.freezerMeals().first { $0.title == "Slow cooker turkey chilli" }?.portions, 3)
 
-        _ = h.coach.respond(to: "We've got eggs")
+        _ = h.kitchen.confirm("eggs", portions: nil)
         XCTAssertEqual(h.kitchen.presence(of: FoodCatalogue.byID["eggs"]!), .have)
-
-        let shopping = h.coach.respond(to: "Add bin bags to the shopping list")
-        XCTAssertEqual(shopping.toolSummary, "Shopping list: Bin bags")
-        XCTAssertTrue(h.coach.commitments.allSatisfy { $0.kind != .meal }, "Food never becomes a commitment or a fine")
     }
 
-    func testTickingAListItemUpdatesTheInventory() async {
-        let h = await make(at: at(10))
+    func testTickingAListItemUpdatesTheInventory() {
+        let h = make(at: at(10))
         h.kitchen.generateShoppingList()
         XCTAssertFalse(h.kitchen.shopping.isEmpty)
         h.kitchen.addToShopping("milk")
@@ -92,8 +81,8 @@ final class KitchenModelTests: XCTestCase {
         XCTAssertFalse(h.kitchen.shopping.contains { $0.key == "milk" })
     }
 
-    func testEatingAFreezableDinnerFreezesTheSpares() async {
-        let h = await make(at: at(19))
+    func testEatingAFreezableDinnerFreezesTheSpares() {
+        let h = make(at: at(19))
         let tonight = h.kitchen.tonight!
         let ragu = h.kitchen.recipes.first { $0.title == "Beef ragu pasta" }!
         h.kitchen.swap(tonight, to: ragu)
@@ -104,8 +93,8 @@ final class KitchenModelTests: XCTestCase {
         XCTAssertNotNil(ragu.lastCookedAt)
     }
 
-    func testDefrostReminderAndForgottenDefrost() async {
-        let h = await make(at: at(9))
+    func testDefrostReminderAndForgottenDefrost() {
+        let h = make(at: at(9))
         h.kitchen.adjustFreezer(title: "Chicken curry (freezer favourite)", by: 4)
         let tuesday = monday.adding(days: 1, calendar: london)
         let tomorrow = h.kitchen.dinner(on: tuesday)!
@@ -118,23 +107,14 @@ final class KitchenModelTests: XCTestCase {
         h.clock.date = at(17, day: tuesday)
         h.kitchen.refresh()
         XCTAssertTrue(h.kitchen.tonightNeedsDefrosting)
-        let reply = h.coach.respond(to: "I forgot to defrost it")
-        XCTAssertTrue(reply.text.contains("piping hot"))
-        XCTAssertTrue(reply.text.contains("Easy options"))
+        XCTAssertFalse(h.kitchen.rescueOptions(defrostForgotten: true).isEmpty)
 
-        _ = h.coach.respond(to: "It's defrosted")
+        h.kitchen.markDefrosted(h.kitchen.tonight!)
         XCTAssertFalse(h.kitchen.tonightNeedsDefrosting)
     }
 
-    func testWhatsForDinner() async {
-        let h = await make(at: at(17))
-        let reply = h.coach.respond(to: "What's for dinner?")
-        XCTAssertTrue(reply.text.contains(h.kitchen.tonight!.title))
-        XCTAssertTrue(reply.text.contains("two portions"))
-    }
-
-    func testReceiptsRefuseDuplicatesAndCountTowardsTheCeiling() async {
-        let h = await make(at: at(12))
+    func testReceiptsRefuseDuplicatesAndCountTowardsTheCeiling() {
+        let h = make(at: at(12))
         let lines = [ReceiptLine(name: "CHICKEN BREAST FILLETS", quantity: 1, pricePence: 449, foodID: "chicken-breast", uncertain: false)]
         XCTAssertEqual(h.kitchen.saveReceipt(merchant: .aldi, date: at(11), totalPence: 4_230, lines: lines, needsReview: false, manual: false), .saved)
         XCTAssertEqual(h.kitchen.saveReceipt(merchant: .aldi, date: at(15), totalPence: 4_230, lines: lines, needsReview: false, manual: false),
@@ -145,26 +125,33 @@ final class KitchenModelTests: XCTestCase {
         XCTAssertEqual(h.kitchen.presence(of: FoodCatalogue.byID["chicken-breast"]!), .probably, "A receipt is never 'definitely'")
     }
 
-    func testDinnerRescueWithNothingPlanned() async {
-        let h = await make(at: at(18))
+    func testDinnerRescueWithNothingPlanned() {
+        let h = make(at: at(18))
         let options = h.kitchen.rescueOptions(defrostForgotten: false)
         XCTAssertFalse(options.isEmpty)
         XCTAssertLessThanOrEqual(options.count, 3)
         XCTAssertTrue(options.contains { $0.kind == .takeaway }, "Full budget allows a takeaway option")
     }
 
-    func testHouseholdChainStagesDependOnEachOther() async {
-        let h = await make(at: at(10))
-        let parent = h.coach.addChain(HouseholdChains.template("laundry")!)
-        let steps = h.coach.allTasks().filter { $0.parentID == parent.id }.sorted { $0.sortIndex < $1.sortIndex }
-        XCTAssertEqual(steps.map(\.title), ["Put a wash on", "Hang it out or put it in the dryer", "Fold it and put it away"])
-        XCTAssertTrue(steps[0].dependsOn.isEmpty)
-        XCTAssertEqual(steps[1].dependsOn, [steps[0].id.uuidString])
-        XCTAssertEqual(steps[2].dependsOn, [steps[1].id.uuidString])
-        let offered = h.coach.opportunityTasks(minutes: 60).map(\.title)
-        XCTAssertFalse(offered.contains("Hang it out or put it in the dryer"), "Later stages wait for the earlier ones")
-        XCTAssertFalse(offered.contains("Fold it and put it away"))
-        h.coach.setState(.done, for: steps[0])
-        XCTAssertNotEqual(parent.state, .done, "The first stage doesn't finish the chain")
+    func testHomeWorkdaysPersistAndGateSlowCookerMeals() {
+        let defaults = UserDefaults(suiteName: "kitchen.test.\(UUID().uuidString)")!
+        let h = make(at: at(6), defaults: defaults)
+        let week = h.kitchen.dayContexts(from: monday)
+        XCTAssertTrue(week.prefix(5).allSatisfy { $0.office && !$0.workFromHome }, "Office by default")
+        XCTAssertTrue(week.suffix(2).allSatisfy { !$0.office && !$0.workFromHome }, "Weekends aren't workdays")
+
+        h.kitchen.setHomeWorkday(1, true)
+        h.kitchen.setHomeWorkday(3, true)
+        XCTAssertEqual(h.kitchen.dayContexts(from: monday).filter(\.workFromHome).map(\.weekday), [1, 3])
+
+        let reopened = KitchenModel(container: Persistence.makeContainer(inMemory: true), reminders: RecordingReminderScheduler(),
+                                    countdowns: RecordingCountdowns(), defaults: defaults, calendar: london, now: { h.clock.date })
+        XCTAssertEqual(reopened.homeWorkdays, [1, 3])
+
+        // Any slow-cooker reminder lands at 07:10 on the day.
+        for note in h.kitchen.reminderPlan() where note.id.hasPrefix(KitchenModel.reminderPrefix + "slow.") {
+            let day = DayKey(string: String(note.id.dropFirst((KitchenModel.reminderPrefix + "slow.").count)))!
+            XCTAssertEqual(note.date, day.date(atMinute: 7 * 60 + 10, calendar: london))
+        }
     }
 }

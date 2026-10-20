@@ -95,8 +95,10 @@ struct WorkoutPlan: Hashable, Sendable, Codable {
     var rehabFirst: Bool
     var estimatedMinutes: Int
     var notes: [String]
+    /// A knee rehab session on its own. Optional so plans saved before it existed still load.
+    var rehabOnly: Bool? = nil
 
-    var title: String { "\(focus.title) \(variant == 0 ? "A" : "B")" }
+    var title: String { rehabOnly == true ? "Knee rehab" : "\(focus.title) \(variant == 0 ? "A" : "B")" }
 }
 
 struct ProgramInput: Sendable {
@@ -173,6 +175,16 @@ enum ProgramGenerator {
         let ordered = input.rehabFirst ? rehab + chosen : chosen + rehab
         return WorkoutPlan(focus: input.focus, variant: input.variant % 2, exercises: ordered, rehabFirst: input.rehabFirst,
                            estimatedMinutes: total(chosen), notes: notes)
+    }
+
+    /// The full lower-body rehab block on its own, about 12 minutes (R1–R2).
+    static func rehabOnly(knee: KneeStatus, weights: [String: ProgressionDecision]) -> WorkoutPlan {
+        let input = ProgramInput(focus: .lower, variant: 0, availableMinutes: 20, rehabFirst: true, knee: knee, weights: weights)
+        let rehab = rehabBlock(.lower).compactMap(ExerciseLibrary.exercise).map { planned($0, input: input) }
+        var notes = ["Slow and controlled. Stop anything that's sharp or makes the knee worse."]
+        if knee == .flare { notes.append("Knee flared up: only what doesn't hurt. Book your physio if it's not settling.") }
+        return WorkoutPlan(focus: .lower, variant: 0, exercises: rehab, rehabFirst: true, estimatedMinutes: minutes(rehab),
+                           notes: notes, rehabOnly: true)
     }
 
     static func planned(_ exercise: Exercise, input: ProgramInput) -> PlannedExercise {

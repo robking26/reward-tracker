@@ -137,26 +137,6 @@ final class RewardEngineTests: XCTestCase {
         XCTAssertEqual(decoded.rates, .standard, "Rates always come from code, never from saved settings")
     }
 
-    func testVersion2SettingsAdoptTheEarningsCutoverAndKeepGoldOff() throws {
-        let saved = #"{"monthlyAllocation":{"value":50000},"settingsVersion":2,"starling":{"accountUID":"acc"}}"#
-        let decoded = try JSONDecoder().decode(AppSettings.self, from: Data(saved.utf8))
-        XCTAssertEqual(decoded.activityEarningsEnd, DayKey(year: 2026, month: 10, day: 18))
-        XCTAssertFalse(decoded.goldInvestingEnabled)
-        XCTAssertEqual(decoded.coach, CoachSettings(), "Coach settings start from defaults")
-        XCTAssertEqual(decoded.coach.fineSchedule.monthlyCap, .pounds(100))
-        XCTAssertTrue(decoded.coach.finesAreSimulated, "Fines are virtual until the trial is reviewed")
-    }
-
-    func testWorkdaysUseIsoWeekdays() {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "Europe/London")!
-        let coach = CoachSettings()
-        XCTAssertTrue(coach.isWorkday(DayKey(year: 2026, month: 10, day: 19), calendar: calendar))  // Monday
-        XCTAssertTrue(coach.isWorkday(DayKey(year: 2026, month: 10, day: 23), calendar: calendar))  // Friday
-        XCTAssertFalse(coach.isWorkday(DayKey(year: 2026, month: 10, day: 24), calendar: calendar)) // Saturday
-        XCTAssertFalse(coach.isWorkday(DayKey(year: 2026, month: 10, day: 25), calendar: calendar)) // Sunday
-    }
-
     func testCustomAllowanceIsKeptOnUpgrade() throws {
         let old = #"{"monthlyAllocation":{"value":30000},"starling":{}}"#
         let decoded = try JSONDecoder().decode(AppSettings.self, from: Data(old.utf8))
