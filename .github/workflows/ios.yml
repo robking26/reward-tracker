@@ -58,8 +58,9 @@ jobs:
             -default-test-execution-time-allowance 60 \
             -maximum-test-execution-time-allowance 120 \
             CODE_SIGNING_ALLOWED=NO \
+            OTHER_SWIFT_FLAGS='$(inherited) -Xfrontend -solver-expression-time-threshold=60' \
             2>&1 | tee xcodebuild.log \
-            | grep --line-buffered -E "Test Suite|Test Case .* (passed|failed|started)|Executed|\*\* (BUILD|TEST)|error:|SwiftCompile normal [a-z0-9_]+ .*Coach|Testing started"
+            | grep --line-buffered -E "Test Suite|Test Case .* (passed|failed|started)|Executed|\*\* (BUILD|TEST)|error:|SwiftCompile normal|Testing started"
           status=${PIPESTATUS[0]}
           exit $status
 

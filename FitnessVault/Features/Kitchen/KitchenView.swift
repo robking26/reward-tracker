@@ -61,16 +61,18 @@ struct HomeDaysCard: View {
                 .foregroundStyle(Palette.textSecondary)
             HStack(spacing: Spacing.xs) {
                 ForEach(weekdays, id: \.self) { weekday in
-                    let atHome = kitchen.homeWorkdays.contains(weekday)
+                    let atHome: Bool = kitchen.homeWorkdays.contains(weekday)
+                    let fill: Color = atHome ? Palette.accent : Palette.elevated
+                    let ink: Color = atHome ? Palette.onAccent : Palette.textPrimary
+                    let shape = RoundedRectangle(cornerRadius: Radius.control, style: .continuous)
                     Button {
                         kitchen.setHomeWorkday(weekday, !atHome)
                     } label: {
                         Text(letters[weekday - 1])
                             .font(.subheadline.weight(.semibold))
                             .frame(maxWidth: .infinity, minHeight: 44)
-                            .foregroundStyle(atHome ? Palette.onAccent : Palette.textPrimary)
-                            .background(atHome ? Palette.accent : Palette.elevated,
-                                        in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+                            .foregroundStyle(ink)
+                            .background(fill, in: shape)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(Calendar.current.weekdaySymbols[weekday % 7])
