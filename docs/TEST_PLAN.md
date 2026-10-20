@@ -39,6 +39,7 @@ Automated tests run on every push (GitHub Actions, iOS simulator). Deterministic
 | `KitchenDomainTests` | Ingredient and recipe parsing, nutrition confidence, exclusions, macro tweaks, meal planning, batch-cook fit, defrost reminders, dinner rescue, inventory presence, shopping list, budget, receipts, kitchen intents, starter recipes |
 | `AccountabilityDomainTests`, `AccountabilityModelTests` | Month close timing, ledger entries, statement maths (cap, no debt), simulated and manual transfer plans, frozen closed months, one statement per month, trial review |
 | `ContextDomainTests`, `ContextRecommendationTests`, `SituationModelTests` | Weather parsing and dry slots, rounded location, home/office priority, travel padding, busyness estimates, social detection and plans, recovery windows, outings, menu picks; rain, recovery, restart, social evening, travel and busyness in the morning plan; mode, busyness and recovery through the coach |
+| `PlatformTests` | Widget Done (directly and through the intent router), week scores, departure, task and cooking countdowns, `vaultality://` links, no money in widget data |
 | `KitchenModelTests` | Seeding and weekly plan, conversational corrections, list ticking, freezer portions, defrost, receipts and the ceiling, task chains |
 
 ## Manual device checklist (Phase 1)
@@ -75,3 +76,12 @@ Automated tests run on every push (GitHub Actions, iOS simulator). Deterministic
 - [ ] Add "Drinks with friends" to tonight; plan it from the card on Today; the next day is a recovery day
 - [ ] Say "I'm hungover": the agreed gym session is excused with no fine; "Back to normal" gives one easy thing
 - [ ] Say "The gym was rammed" after a few visits; later suggestions avoid that time
+
+## Manual device checklist (Phase 7)
+- [ ] Add the Today widget (medium): when something is due now, Done marks it without opening the app
+- [ ] With a gym session agreed, the widget shows Start workout and opens the logger
+- [ ] Add the This week widget; check it never shows money
+- [ ] 45 minutes before an agreed gym session, "Leave for the gym" appears on the Lock Screen and in the Dynamic Island
+- [ ] Start a household task: a countdown appears and ends when you mark it done
+- [ ] "Hey Siri, what's next in Vaultality" and "Hey Siri, Vaultality done"
+- [ ] Turn on Reduce Motion and large text: cards don't scale, the rest timer stays readable

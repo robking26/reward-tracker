@@ -360,6 +360,7 @@ struct DepartmentCard: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .sensoryFeedback(.impact(weight: .light), trigger: item.ticked)
                 .accessibilityLabel("\(item.name), \(item.ticked ? "in the trolley" : "to buy")")
             }
         }

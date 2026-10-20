@@ -306,7 +306,8 @@ struct ActiveWorkoutView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Rest").font(.subheadline.weight(.semibold)).foregroundStyle(Palette.textSecondary)
                     Text(timerInterval: Date.now...end, countsDown: true)
-                        .font(.system(size: 44, weight: .medium))
+                        .font(.system(.largeTitle, design: .rounded).weight(.medium))
+                        .dynamicTypeSize(...DynamicTypeSize.accessibility2)
                         .monospacedDigit()
                         .foregroundStyle(Palette.textPrimary)
                 }

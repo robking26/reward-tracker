@@ -105,7 +105,18 @@ Location, Maps and weather behaviour still need checking on the iPhone.
 - [x] Calendar-change replanning (from Phase 2)
 
 ## Phase 7 — Platform polish
-- [ ] Widgets (what's next, essentials), Lock Screen, Live Activities, App Intents, haptics, accessibility audit, Swift 6 mode
+Widgets, Siri and Live Activities still need checking on the iPhone.
+
+- [x] Home Screen widgets that act: Done (runs without opening the app), Start workout, I'm ready (D-034)
+- [x] Week widget: the last seven days and gym sessions against this week's target, with no money (WG1)
+- [x] Lock Screen widgets stay discreet: sensitive titles hidden, no money or fines
+- [x] Live Activities and Dynamic Island: rest timer, leaving for the gym, task timer, cooking timer (D-035)
+- [x] App Intents and Siri phrases: What's next, Mark it done, I'm ready, Start my workout, Shopping list, Feeling rough
+- [x] `vaultality://` links from widgets; one shared set of models for the app, Siri and widget buttons
+- [x] Purposeful haptics: done, a suggestion answered, ticking the shopping list, sets and rest (from Phase 3)
+- [x] Accessibility review: Reduce Motion, Dynamic Type, VoiceOver labels, 44-point targets (`ACCESSIBILITY.md`)
+- [x] Performance: faster launch (weather and travel no longer block Health), fewer repeated fetches
+- [ ] Swift 6 language mode: deferred until after Phase 8 (D-036)
 
 ## Phase 8 — Real-world validation
 - [ ] A week of real use; fix wrong recommendations before adding features

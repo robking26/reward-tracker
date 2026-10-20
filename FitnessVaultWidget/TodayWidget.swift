@@ -91,6 +91,48 @@ struct TodayWidgetView: View {
             }
         }
         .foregroundStyle(WidgetPalette.textPrimary)
+        .widgetURL(tapURL)
+    }
+
+    // MARK: Actions (Phase 7: widgets that do something, not just decorate)
+
+    /// Where a tap anywhere on the widget goes. Small widgets can't hold links, so this matches their action.
+    private var tapURL: URL {
+        guard let plan else { return AppLink.today }
+        if plan.nextKind == "workout" || plan.nextKind == "swim" { return AppLink.workout }
+        if plan.briefingPending == true { return AppLink.ready }
+        return AppLink.today
+    }
+
+    /// Done for the current commitment, right on the Home Screen. Runs in the app without opening it.
+    @ViewBuilder
+    private var actionButton: some View {
+        if let plan, let id = plan.nextID, nextLabel == "Now" {
+            Button(intent: CompleteCommitmentIntent(commitmentID: id)) {
+                Label("Done", systemImage: "checkmark")
+                    .font(.caption.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(WidgetPalette.accent)
+            .foregroundStyle(WidgetPalette.background)
+        } else if let plan, plan.nextKind == "workout" || plan.nextKind == "swim" {
+            Link(destination: AppLink.workout) {
+                Label("Start workout", systemImage: "dumbbell")
+                    .font(.caption.weight(.semibold))
+                    .padding(.vertical, 6)
+                    .frame(maxWidth: .infinity)
+                    .background(WidgetPalette.elevated, in: Capsule())
+            }
+        } else if plan?.briefingPending == true {
+            Link(destination: AppLink.ready) {
+                Label("I'm ready", systemImage: "sunrise")
+                    .font(.caption.weight(.semibold))
+                    .padding(.vertical, 6)
+                    .frame(maxWidth: .infinity)
+                    .background(WidgetPalette.elevated, in: Capsule())
+            }
+        }
     }
 
     // MARK: Shared pieces
@@ -172,15 +214,25 @@ struct TodayWidgetView: View {
 
     private var small: some View {
         VStack(alignment: .leading, spacing: 0) {
-            nextBlock(titleFont: .headline, lines: 3)
+            nextBlock(titleFont: .headline, lines: hasAction ? 2 : 3)
             Spacer(minLength: 6)
-            HStack(alignment: .bottom, spacing: 8) {
-                doneBlock
-                Spacer(minLength: 0)
-                ActivityRingsView(rings: health?.rings, lineWidth: 6, spacing: 1.5)
-                    .frame(width: 52, height: 52)
+            if hasAction {
+                actionButton
+            } else {
+                HStack(alignment: .bottom, spacing: 8) {
+                    doneBlock
+                    Spacer(minLength: 0)
+                    ActivityRingsView(rings: health?.rings, lineWidth: 6, spacing: 1.5)
+                        .frame(width: 52, height: 52)
+                }
             }
         }
+    }
+
+    private var hasAction: Bool {
+        guard let plan else { return false }
+        return (plan.nextID != nil && nextLabel == "Now") || plan.nextKind == "workout" || plan.nextKind == "swim"
+            || plan.briefingPending == true
     }
 
     // MARK: Medium (4×2)
@@ -200,7 +252,11 @@ struct TodayWidgetView: View {
                 }
             }
             Spacer(minLength: 6)
-            metricsStrip
+            if hasAction {
+                actionButton
+            } else {
+                metricsStrip
+            }
         }
     }
 
@@ -244,6 +300,10 @@ struct TodayWidgetView: View {
                         .padding(.vertical, 2)
                 }
                 Spacer(minLength: 12)
+            }
+            if hasAction {
+                actionButton
+                Spacer(minLength: 10)
             }
             metricsStrip
             Spacer(minLength: 8)

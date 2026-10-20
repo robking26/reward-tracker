@@ -10,28 +10,18 @@ struct FitnessVaultApp: App {
     @State private var training: TrainingModel
     @State private var kitchen: KitchenModel
     @State private var situation: SituationModel
+    @State private var router: AppRouter
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
-        let container = Persistence.makeContainer()
-        self.container = container
-        let model = AppModel(container: container)
-        model.observeHealthChanges()
-        _model = State(initialValue: model)
-        let coach = CoachModel(container: container, settingsStore: model.settingsStore)
-        _coach = State(initialValue: coach)
-        let training = TrainingModel(container: container, coach: coach)
-        _training = State(initialValue: training)
-        let kitchen = KitchenModel(container: container, coach: coach)
-        _kitchen = State(initialValue: kitchen)
-        _situation = State(initialValue: SituationModel(container: container, coach: coach, kitchen: kitchen))
-        // The watch can skip rest or end the workout; the iPhone stays the logger.
-        WatchBridge.shared.onCommand = { command in
-            switch command {
-            case .skipRest: training.skipRest()
-            case .end: training.end()
-            }
-        }
+        let runtime = AppRuntime.shared
+        container = runtime.container
+        _model = State(initialValue: runtime.model)
+        _coach = State(initialValue: runtime.coach)
+        _training = State(initialValue: runtime.training)
+        _kitchen = State(initialValue: runtime.kitchen)
+        _situation = State(initialValue: runtime.situation)
+        _router = State(initialValue: runtime.router)
     }
 
     var body: some Scene {
@@ -42,13 +32,16 @@ struct FitnessVaultApp: App {
                 .environment(training)
                 .environment(kitchen)
                 .environment(situation)
+                .environment(router)
                 .modelContainer(container)
+                .onOpenURL { router.handle($0) }
                 .preferredColorScheme(.dark)
                 .tint(Palette.accent)
                 .task {
                     await coach.start()
                     kitchen.start()
-                    await situation.refresh()
+                    // Network-bound context loads alongside Health rather than before it (fast launch).
+                    Task { await situation.refresh() }
                     await model.start()
                     BackgroundRefresh.schedule(at: model.nextSettlement)
                 }

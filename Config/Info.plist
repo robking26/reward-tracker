@@ -6,6 +6,17 @@
 	<array>
 		<string>com.robking.FitnessVault.settlement</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.robking.FitnessVault</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>vaultality</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>Vaultality reads your calendars to plan around meetings, focus time and shared plans. It never adds, changes or deletes events.</string>
 	<key>NSSupportsLiveActivities</key>

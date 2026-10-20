@@ -10,6 +10,7 @@ struct ProgressTabView: View {
     @State private var period: ActivityPeriod = .week
     @State private var bodySamples: [BodySample] = []
     @State private var swims: [SwimSample] = []
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let columns = [GridItem(.flexible(), spacing: Spacing.s), GridItem(.flexible(), spacing: Spacing.s)]
 
@@ -43,7 +44,7 @@ struct ProgressTabView: View {
                 }
                 .padding(.horizontal, Spacing.page)
                 .padding(.bottom, Spacing.xl)
-                .animation(.snappy, value: period)
+                .animation(reduceMotion ? nil : .snappy, value: period)
             }
             .pageBackground()
             .navigationTitle("Progress")

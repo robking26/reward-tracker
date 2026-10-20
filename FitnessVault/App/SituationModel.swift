@@ -26,6 +26,8 @@ final class SituationModel {
     private(set) var recoveries: [RecoveryPeriod] = []
     private(set) var outingIdea: OutingIdea? = nil
     private(set) var freeWeekend: DayKey? = nil
+    /// The eight-week calendar scan for a free weekend runs once a day, not on every refresh (performance).
+    @ObservationIgnored private var weekendCheckedOn: DayKey? = nil
 
     init(container: ModelContainer, coach: CoachModel?, kitchen: KitchenModel? = nil,
          weather: WeatherProviding = OpenMeteoWeatherService(), location: LocationProviding? = nil,
@@ -325,7 +327,8 @@ final class SituationModel {
         let lastWeekend = suggestions.filter { $0.ideaID == OutingPlanner.weekendAway.id }.compactMap { DayKey(string: $0.day) }.max()
         if let lastWeekend, MealPlanner.daysBetween(lastWeekend, day) < 30 {
             freeWeekend = nil
-        } else {
+        } else if weekendCheckedOn != day {
+            weekendCheckedOn = day
             let from = day.adding(days: 14, calendar: calendar).startDate(calendar: calendar)
             let to = day.adding(days: 58, calendar: calendar).startDate(calendar: calendar)
             let raw = coach.calendarProvider.events(from: from, to: to)

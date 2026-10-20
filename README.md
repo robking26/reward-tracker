@@ -137,19 +137,36 @@ Each allocation moves through separate, explicit steps:
 
 Trading 212 market orders take a share quantity, not a £ amount. Vaultality keeps back 2% for price movement and fees, rounds down to 0.01 of a share, and never spends more than the allocation or the free cash. If you don't already hold the ETC, enter the current price shown in Trading 212 when buying, because the API has no price quote. The Trading 212 API is in beta, so check the whole flow in demo before going live.
 
-## Widgets
+## Widgets, Siri and Live Activities
 
-The widgets show what's next, today's commitments and your activity. They never show money or fines.
+The widgets never show money, fines or body measurements.
 
-| Size | Shows |
+| Widget | Shows |
 |---|---|
-| Small (2×2) | Next action, commitments done, small rings |
-| Medium (4×2) | Next action, rings, then steps, exercise, energy and flights |
-| Large (4×4) | Next action, rings, what's still due, activity, and when it last updated |
-| Lock Screen | Commitments done (circle), next action and steps (rectangle), or one line |
+| Today, small (2×2) | The next action, plus **Done** when it's due now (no need to open the app), or **Start workout** / **I'm ready** |
+| Today, medium (4×2) | The next action, rings and the same button, or your activity |
+| Today, large (4×4) | The next action, rings, what's still due, the button and activity |
+| This week | The last seven days as simple marks, and gym sessions against this week's target |
+| Lock Screen | Commitments done (circle), next action (rectangle), one line, or the week |
 
 - On the Lock Screen, sensitive commitments such as knee rehab show as "Next commitment" rather than by name.
-- **How it updates:** the widget shows what the app last saved. It refreshes when the app syncs (every minute while the app is open, and when iOS wakes it for new Health data), and iOS asks it to check about every 15 minutes.
+- **How it updates:** the widgets show what the app last saved. They refresh whenever something changes in the app, and iOS checks the Today widget about every 15 minutes and the week hourly.
+
+**Siri and Shortcuts:**
+- "What's next in Vaultality"
+- "Vaultality done"
+- "I'm ready in Vaultality"
+- "Start my workout in Vaultality"
+- "Add to my Vaultality shopping list"
+- "I'm feeling rough in Vaultality"
+
+They also appear in the Shortcuts app and can go on the Action button.
+
+**Live Activities:**
+- The rest timer during a workout.
+- "Leave for the gym" for the 45 minutes before an agreed session.
+- A timer for a task you've started.
+- A cooking timer, from **Start cooking** on tonight's dinner.
 
 ## Automatic checks
 

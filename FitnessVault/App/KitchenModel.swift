@@ -13,6 +13,9 @@ final class KitchenModel {
     @ObservationIgnored private weak var coach: CoachModel?
     @ObservationIgnored private let reminders: ReminderScheduling
     @ObservationIgnored private var lastReminderSignature: String? = nil
+    @ObservationIgnored private let countdowns: CountdownControlling
+    /// The dinner being cooked right now, for the cooking timer (Phase 7).
+    private(set) var cooking: UUID? = nil
 
     private(set) var recipes: [Recipe] = []
     private(set) var plan: [MealPlanEntry] = []
@@ -23,10 +26,12 @@ final class KitchenModel {
     static let reminderPrefix = "kitchen."
 
     init(container: ModelContainer, coach: CoachModel?, reminders: ReminderScheduling? = nil,
+         countdowns: CountdownControlling? = nil,
          calendar: Calendar = .current, now: @escaping () -> Date = { .now }) {
         context = container.mainContext
         self.coach = coach
         self.reminders = reminders ?? LocalReminderScheduler(prefix: KitchenModel.reminderPrefix)
+        self.countdowns = countdowns ?? LocalCountdowns.shared
         self.calendar = calendar
         self.now = now
         coach?.kitchen = self
@@ -233,9 +238,21 @@ final class KitchenModel {
 
     /// Marks a meal as eaten: updates the recipe's history and the freezer, and freezes leftover portions.
     /// Returns a short note about the freezer, if anything changed there.
+    /// A cooking timer on the Lock Screen for the recipe's prep and cook time.
+    func startCooking(_ entry: MealPlanEntry) {
+        guard let recipe = recipe(entry.recipeID) else { return }
+        let minutes = max(5, recipe.prepMinutes + recipe.cookMinutes)
+        let ready = now().addingTimeInterval(TimeInterval(minutes * 60))
+        cooking = entry.id
+        countdowns.show(.cooking, id: entry.id.uuidString, title: recipe.title,
+                        subtitle: "Ready about \(ready.formatted(date: .omitted, time: .shortened))", symbol: "flame", endsAt: ready)
+    }
+
     @discardableResult
     func markCooked(_ entry: MealPlanEntry) -> String? {
         guard !entry.cooked else { return nil }
+        countdowns.end(.cooking, id: entry.id.uuidString)
+        if cooking == entry.id { cooking = nil }
         entry.cooked = true
         var note: String?
         if entry.fromFreezer {

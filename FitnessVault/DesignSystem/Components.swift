@@ -42,6 +42,7 @@ struct MoneyText: View {
     var font: Font = .title2
     var weight: Font.Weight = .medium
     var color: Color = Palette.textPrimary
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Text(amount.formatted())
@@ -49,7 +50,7 @@ struct MoneyText: View {
             .monospacedDigit()
             .foregroundStyle(color)
             .contentTransition(.numericText(value: Double(amount.value)))
-            .animation(.snappy, value: amount)
+            .animation(reduceMotion ? nil : .snappy, value: amount)
             .lineLimit(1)
             .minimumScaleFactor(0.6)
     }
@@ -236,10 +237,20 @@ struct MetricCard: View {
 /// Press feedback for cards: a gentle native spring.
 struct CardButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .opacity(configuration.isPressed ? 0.9 : 1)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
+        CardPress(configuration: configuration)
+    }
+
+    /// A gentle press. With Reduce Motion it dims instead of scaling.
+    private struct CardPress: View {
+        let configuration: ButtonStyleConfiguration
+        @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+        var body: some View {
+            configuration.label
+                .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1)
+                .opacity(configuration.isPressed ? 0.85 : 1)
+                .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
+        }
     }
 }
 

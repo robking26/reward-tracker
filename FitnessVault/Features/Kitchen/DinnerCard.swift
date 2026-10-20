@@ -54,6 +54,9 @@ struct DinnerCard: View {
                     }
                 } else if !dinner.cooked && dinner.portions > 0 {
                     HStack(spacing: Spacing.s) {
+                        if kitchen.cooking != dinner.id, !dinner.fromFreezer, kitchen.recipe(dinner.recipeID) != nil {
+                            SmallActionButton(title: "Start cooking", symbol: "flame") { kitchen.startCooking(dinner) }
+                        }
                         SmallActionButton(title: "Eaten", symbol: "checkmark") { kitchen.markCooked(dinner) }
                         SmallActionButton(title: "Not happening", symbol: "arrow.uturn.left") {
                             forgotDefrost = false

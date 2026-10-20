@@ -2,6 +2,25 @@
 
 Newest first. Each entry records what was decided, why, and who made the call ("User" means answered by the user; "Team" means a default chosen because the question wasn't blocking).
 
+## D-036 · Swift 6 language mode deferred (Team, revisits D-003)
+- **Why not now:** the app builds cleanly in Swift 5 mode with main-actor models. Switching modes means a project-wide strict-concurrency migration (delegates, callbacks, shared singletons and SwiftData models crossing actors). It can only be checked through CI, and the behaviours most at risk (HealthKit callbacks, Live Activities, WatchConnectivity, location) can only be checked on the device.
+- **When:** after Phase 8, when real use has settled what the app needs to do.
+- **Meanwhile:** new code follows the Swift 6 rules where it's cheap. Models are `@MainActor`, services are `Sendable` value types, and delegate callbacks hop to the main actor explicitly.
+
+## D-035 · Countdowns are short and end on their own (Team, from WG2)
+There are three, each with a fixed end and never an all-day activity:
+- **Leaving for the gym or a swim:** shown from 45 minutes before an agreed session's door-to-door start until that start.
+- **A task you've started:** runs for the task's length, and ends when you finish, park or move it. Workouts use the rest timer instead.
+- **Cooking:** tap "Start cooking" on tonight's dinner; it runs for the recipe's prep plus cook time and ends when you mark it eaten.
+
+There's one activity of each kind at a time. Each goes stale 10 minutes after its end, and none runs during unit tests.
+
+## D-034 · How widgets act (Team, from WG3)
+- **Done:** the button is an App Intent marked as a Live Activity intent, so iOS runs it in the app's process, where the data is, without opening the app. It only appears when the current commitment is due now.
+- **Start workout and I'm ready:** these open the app with `vaultality://` links. Small widgets can't hold links, so tapping anywhere on them follows the same link.
+- **Shared models:** the app, Siri and widget buttons all use one `AppRuntime`, so a spoken "done" is identical to a tapped one.
+- **Never shown:** money, fines and body measurements never appear in any widget.
+
 ## D-033 · Social plans and recovery (Team, from SO1–SO3 and RE1)
 - **Which events:** golf, football, meals, nights out and weekends away are recognised by whole words in your own calendars. Becky's shared events are asked about ("Going too?"), never assumed.
 - **Drinking plans:** alcohol-free, lighter, moderate or not decided. Advice is short. It never says heavy drinking is safe, and there's never a gambling suggestion.

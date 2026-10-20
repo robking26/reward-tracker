@@ -28,5 +28,6 @@ Status key:
 | Nutrition data | Built (Phase 4) | About 70 common foods with typical UK values per 100 g, bundled in the app | Always shown as estimates with a confidence level (D-025). Open Food Facts for packaged items is a possible later addition. |
 | Supermarket prices | Not available | Typical Aldi shelf prices bundled for estimates | Aldi and Co-op have no public price API. Prices are labelled as typical, not live. |
 | Notifications | Built: scheduled commitment reminders (Phase 2), unverified on device | `UNUserNotificationCenter` calendar triggers for agreed commitments only; normal alerts at home, silent (passive) in the office | Local only (no push on a free team). The iOS limit is 64 pending notifications. |
-| Live Activities | Built, unverified on device (Phase 3) | ActivityKit rest timer on the Lock Screen and in the Dynamic Island | Updated locally without a push server; ends with the workout. |
-| App Intents | Planned (Phase 7) | "I'm ready", "What's next", "Done" for Siri and Shortcuts | |
+| Live Activities | Built, unverified on device (Phases 3 and 7) | ActivityKit: the rest timer, plus countdowns for leaving for the gym, a task in progress and cooking | Updated locally without a push server. Each ends at its time (D-035). |
+| App Intents | Built, unverified on device (Phase 7) | Six App Shortcuts (What's next, Mark it done, I'm ready, Start my workout, Shopping list, Feeling rough) and the widget's Done button | Siri phrases include the app name, as iOS requires. Nothing leaves the phone. |
+| Widgets | Built, unverified on device (Phase 7) | WidgetKit: Today (small, medium, large and Lock Screen) and This week | Interactive Done button on iOS 17 and later. No money or fines (D-034). |

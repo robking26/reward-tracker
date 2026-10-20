@@ -77,6 +77,7 @@ struct WidgetSnapshot: Codable, Hashable, Sendable {
 enum WidgetSnapshotStore {
     static let appGroup = "group.com.robking.FitnessVault"
     static let widgetKind = "FitnessVaultToday"
+    static let weekWidgetKind = "FitnessVaultWeek"
     private static let key = "widget.snapshot.v1"
 
     private static var defaults: UserDefaults? { UserDefaults(suiteName: appGroup) }
@@ -117,6 +118,17 @@ struct CoachWidgetSnapshot: Codable, Hashable, Sendable {
     var done: Int
     var total: Int
     var updatedAt: Date
+    // Phase 7. Optional so snapshots saved by earlier versions still load.
+    /// The current commitment, for the widget's Done button. Nil when there's nothing to mark.
+    var nextID: String? = nil
+    /// "workout" or "swim" adds a Start workout link.
+    var nextKind: String? = nil
+    /// The morning "I'm ready" hasn't happened yet.
+    var briefingPending: Bool? = nil
+    /// The last seven finished days, oldest first: a score, or nil for no score. Never money (WG1).
+    var week: [Int?]? = nil
+    var workoutsThisWeek: Int? = nil
+    var workoutTarget: Int? = nil
 
     func isForToday(_ now: Date = .now, calendar: Calendar = .current) -> Bool {
         day == WidgetSnapshot.dayString(for: now, calendar: calendar)

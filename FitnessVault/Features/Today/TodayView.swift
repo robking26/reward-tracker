@@ -7,6 +7,8 @@ struct TodayView: View {
     @Environment(AppModel.self) private var model
     @Environment(TrainingModel.self) private var training
     @Environment(SituationModel.self) private var situation
+    @Environment(AppRouter.self) private var router
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Binding var showingSettings: Bool
     var openCoach: () -> Void
     @State private var showingAdd = false
@@ -78,7 +80,7 @@ struct TodayView: View {
                         NoticeBanner(symbol: "exclamationmark.circle", title: "Nothing changed", message: error)
                     }
 
-                    if coach.routines().allSatisfy({ !$0.isEnabled }) && !coach.routines().isEmpty {
+                    if routinesNeedAgreeing {
                         NavigationLink {
                             RoutinesView()
                         } label: {
@@ -108,7 +110,7 @@ struct TodayView: View {
                 }
                 .padding(.horizontal, Spacing.page)
                 .padding(.bottom, Spacing.xl)
-                .animation(.snappy, value: coach.commitments.map(\.stateRaw))
+                .animation(reduceMotion ? nil : .snappy, value: coach.commitments.map(\.stateRaw))
             }
             .pageBackground()
             .navigationTitle("Today")
@@ -136,6 +138,10 @@ struct TodayView: View {
             .fullScreenCover(isPresented: $showingWorkout) {
                 WorkoutFlowView(commitment: workoutCommitment)
             }
+            .onChange(of: router.pending) { _, _ in openWorkoutIfAsked() }
+            .onAppear { openWorkoutIfAsked() }
+            // Purposeful haptics only (design bar §31): a suggestion answered. "Done" has its own on the card.
+            .sensoryFeedback(.selection, trigger: coach.proposals.count) { old, new in new < old }
             .sheet(isPresented: $showingKneeCheck) {
                 NavigationStack {
                     KneeCheckView(timing: .nextDay) { pain, swelling, sharp in
@@ -146,6 +152,20 @@ struct TodayView: View {
                 .presentationBackground(Palette.background)
             }
         }
+    }
+
+    /// One fetch rather than two per render.
+    private var routinesNeedAgreeing: Bool {
+        let routines = coach.routines()
+        return !routines.isEmpty && routines.allSatisfy { !$0.isEnabled }
+    }
+
+    /// "Start workout" from a widget or Siri: the agreed gym session if there is one, otherwise a fresh workout.
+    private func openWorkoutIfAsked() {
+        guard router.pending == .workout else { return }
+        router.pending = nil
+        workoutCommitment = coach.commitments.first { $0.kind == .workout && $0.state.isOpen }
+        showingWorkout = true
     }
 
     private var header: some View {

@@ -19,6 +19,8 @@ final class CoachModel {
     private let demoCalendar: CalendarProviding
     let defaults: UserDefaults
     let reminders: ReminderScheduling
+    /// Departure and task countdowns on the Lock Screen (Phase 7).
+    let countdowns: CountdownControlling
     /// Apple's on-device model when available; nil means the rule-based coach only (scenario N).
     let languageModel: CoachLanguageModel?
     @ObservationIgnored private var calendarObserver: NSObjectProtocol? = nil
@@ -76,6 +78,7 @@ final class CoachModel {
          demoCalendar: CalendarProviding? = nil,
          defaults: UserDefaults = .standard,
          reminders: ReminderScheduling? = nil,
+         countdowns: CountdownControlling? = nil,
          languageModel: CoachLanguageModel? = CoachAI.makeDefault(),
          calendar: Calendar = .current,
          now: @escaping () -> Date = { .now }) {
@@ -86,6 +89,7 @@ final class CoachModel {
         self.demoCalendar = demoCalendar ?? DemoCalendarService(calendar: calendar)
         self.defaults = defaults
         self.reminders = reminders ?? LocalReminderScheduler()
+        self.countdowns = countdowns ?? LocalCountdowns.shared
         self.languageModel = languageModel
         self.calendar = calendar
         self.now = now
@@ -252,6 +256,7 @@ final class CoachModel {
             }
             context.insert(CommitmentEvent(commitmentID: item.id, from: from, to: to, reason: reason ?? describe(action), actor: actor))
             lastError = nil
+            updateTaskCountdown(item, action: action)
             if let day = item.dayKey, day < today { recomputeDayRecords(for: day.monthKey) }
             save()
             reload()
@@ -462,6 +467,7 @@ final class CoachModel {
         messages = (try? context.fetch(FetchDescriptor<CoachMessage>(sortBy: [SortDescriptor(\.createdAt)]))) ?? []
         publishWidgetSnapshot()
         scheduleReminders()
+        updateDepartureCountdown()
     }
 
     /// Commitment kinds that are kept off the Lock Screen by name (WG1).
@@ -469,9 +475,21 @@ final class CoachModel {
 
     /// Shares the next action and today's count with the widget, refreshing it only when something changed.
     private func publishWidgetSnapshot() {
+        let snapshot = widgetSnapshot()
+        if let lastWidgetSnapshot, lastWidgetSnapshot.hasSameContent(as: snapshot) { return }
+        CoachWidgetStore.save(snapshot)
+        lastWidgetSnapshot = snapshot
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetSnapshotStore.widgetKind)
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetSnapshotStore.weekWidgetKind)
+    }
+
+    /// What the widgets show: the next action, today's count and the week. No money or fines (WG1).
+    func widgetSnapshot() -> CoachWidgetSnapshot {
         let current = currentAction
         let applicable = commitments.filter { $0.state.isApplicable }
-        let snapshot = CoachWidgetSnapshot(
+        let markable: Bool = current.map { $0.state == .approved || $0.state == .inProgress } ?? false
+        let nextID: String? = markable ? current?.id.uuidString : nil
+        return CoachWidgetSnapshot(
             day: today.description,
             nextTitle: current?.title,
             nextSymbol: current?.kind.symbol,
@@ -481,11 +499,13 @@ final class CoachModel {
             stillDue: essentialsDue.filter { !Self.sensitiveKinds.contains($0.kind) }.map(\.title),
             done: applicable.filter { $0.state == .completed }.count,
             total: applicable.count,
-            updatedAt: now())
-        if let lastWidgetSnapshot, lastWidgetSnapshot.hasSameContent(as: snapshot) { return }
-        CoachWidgetStore.save(snapshot)
-        lastWidgetSnapshot = snapshot
-        WidgetCenter.shared.reloadTimelines(ofKind: WidgetSnapshotStore.widgetKind)
+            updatedAt: now(),
+            nextID: nextID,
+            nextKind: current?.kind.rawValue,
+            briefingPending: shouldOfferBriefing,
+            week: weekScores(),
+            workoutsThisWeek: workoutsThisWeek(),
+            workoutTarget: RecommendationEngine.weeklyWorkoutTarget(on: today, calendar: calendar))
     }
 
     func save() {

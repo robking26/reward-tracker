@@ -8,6 +8,7 @@ enum AppTab: Hashable {
 struct RootView: View {
     @Environment(AppModel.self) private var model
     @Environment(CoachModel.self) private var coach
+    @Environment(AppRouter.self) private var router
     @State private var tab: AppTab = .today
     @State private var showingSettings = false
 
@@ -28,6 +29,28 @@ struct RootView: View {
         }
         .sheet(isPresented: $showingSettings) {
             SettingsView()
+        }
+        .onChange(of: router.pending) { _, _ in follow() }
+        .onAppear { follow() }
+    }
+
+    /// Links from widgets and Siri. The workout route is opened by Today, which owns the workout screen.
+    private func follow() {
+        guard let route = router.pending else { return }
+        switch route {
+        case .today:
+            tab = .today
+            router.pending = nil
+        case .coach:
+            tab = .coach
+            router.pending = nil
+        case .ready:
+            tab = .coach
+            router.pending = nil
+            if !coach.hasBriefedToday { coach.send("I'm ready") }
+        case .workout:
+            showingSettings = false
+            tab = .today
         }
     }
 }
@@ -55,6 +78,7 @@ struct SettingsToolbarButton: View {
         .environment(PreviewFixtures.training())
         .environment(PreviewFixtures.kitchen())
         .environment(PreviewFixtures.situation())
+        .environment(AppRouter())
         .preferredColorScheme(.dark)
 }
 #endif
