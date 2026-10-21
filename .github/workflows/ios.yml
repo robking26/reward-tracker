@@ -61,7 +61,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             OTHER_SWIFT_FLAGS='$(inherited) -Xfrontend -solver-expression-time-threshold=60' \
             2>&1 | tee xcodebuild.log \
-            | grep --line-buffered -E "Test Suite|Test Case .* (passed|failed|started)|Executed|\*\* (BUILD|TEST)|error:|Testing started" \
+            | grep --line-buffered -E "Test Suite|Test Case .* (passed|failed|started)|Executed|\*\* (BUILD|TEST)|error:|Testing started|SwiftCompile normal" \
             | grep --line-buffered -v "CoreData: "
           status=${PIPESTATUS[0]}
           exit $status

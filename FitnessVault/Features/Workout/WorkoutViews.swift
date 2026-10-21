@@ -826,8 +826,8 @@ struct KneeCheckView: View {
     @State private var advice: String?
 
     var body: some View {
-        let level = Int(pain)
-        let tint = Self.tint(for: level)
+        let level: Int = Int(pain)
+        let tint: Color = Self.tint(for: level)
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.l) {
                 Text(timing == .nextDay ? "How's the knee this morning?" : "How's the knee?")
@@ -840,7 +840,7 @@ struct KneeCheckView: View {
                             .font(.display(72))
                             .monospacedDigit()
                             .foregroundStyle(tint)
-                            .contentTransition(.numericText(value: pain))
+                            .contentTransition(.numericText())
                         Text("/ 10")
                             .font(.title3.weight(.semibold))
                             .foregroundStyle(Palette.textTertiary)
@@ -907,13 +907,11 @@ struct KneeCheckView: View {
     }
 
     static func label(for level: Int) -> String {
-        switch level {
-        case 0: "No pain"
-        case 1...2: "Barely there"
-        case 3...5: "Noticeable"
-        case 6...7: "Painful"
-        default: "Very painful"
-        }
+        if level == 0 { return "No pain" }
+        if level <= 2 { return "Barely there" }
+        if level <= 5 { return "Noticeable" }
+        if level <= 7 { return "Painful" }
+        return "Very painful"
     }
 }
 
@@ -925,6 +923,8 @@ private struct SymptomToggle: View {
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+        let fill: Color = isOn ? Palette.warning.opacity(0.12) : Palette.surface
+        let edge: Color = isOn ? Palette.warning : Color.clear
         Button {
             withAnimation(.snappy) { isOn.toggle() }
         } label: {
@@ -938,11 +938,11 @@ private struct SymptomToggle: View {
                     .foregroundStyle(isOn ? Palette.warning : Palette.textTertiary)
             }
             .padding(14)
-            .background(isOn ? Palette.warning.opacity(0.12) : Palette.surface, in: shape)
-            .overlay { shape.strokeBorder(isOn ? Palette.warning : Color.clear, lineWidth: 1.5) }
+            .background(fill, in: shape)
+            .overlay { shape.strokeBorder(edge, lineWidth: 1.5) }
         }
         .buttonStyle(.plain)
         .accessibilityLabel(title)
-        .accessibilityAddTraits(isOn ? [.isSelected, .isButton] : .isButton)
+        .accessibilityValue(isOn ? "Yes" : "No")
     }
 }
