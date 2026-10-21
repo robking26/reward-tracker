@@ -30,6 +30,9 @@ final class ScreenshotTests: XCTestCase {
         try await capture("gym-setup", height: 1_400, WorkoutFlowView(), model, training, kitchen)
         try await capture("gym-rehab-setup", height: 1_000, WorkoutFlowView(rehabOnly: true), model, training, kitchen)
 
+        let knee = NavigationStack { KneeCheckView(timing: .nextDay) { _, _, _ in "" } }
+        try await capture("gym-knee-check", height: 852, knee, model, training, kitchen)
+
         let plan = training.makePlan(focus: .upper, variant: 0, availableMinutes: 60, rehabFirst: false)
         training.start(plan)
         try await capture("gym-active", height: 1_300, WorkoutFlowView(), model, training, kitchen)

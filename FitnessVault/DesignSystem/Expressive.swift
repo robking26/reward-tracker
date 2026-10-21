@@ -276,6 +276,7 @@ struct PillTabs<Item: Hashable & Identifiable>: View {
             VStack(spacing: 4) {
                 Image(systemName: symbol(item))
                     .font(.system(size: 16, weight: .semibold))
+                    .frame(height: 20)
                 Text(title(item))
                     .font(.caption.weight(.semibold))
                     .lineLimit(1)

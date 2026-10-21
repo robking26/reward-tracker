@@ -826,36 +826,123 @@ struct KneeCheckView: View {
     @State private var advice: String?
 
     var body: some View {
-        Form {
-            Section {
-                VStack(alignment: .leading) {
-                    Text("Pain: \(Int(pain)) out of 10").monospacedDigit()
-                    Slider(value: $pain, in: 0...10, step: 1)
-                        .accessibilityValue("\(Int(pain)) out of 10")
-                }
-                Toggle("Swelling", isOn: $swelling)
-                Toggle("Sharp pain", isOn: $sharp)
-            } header: {
+        let level = Int(pain)
+        let tint = Self.tint(for: level)
+        ScrollView {
+            VStack(alignment: .leading, spacing: Spacing.l) {
                 Text(timing == .nextDay ? "How's the knee this morning?" : "How's the knee?")
-            } footer: {
-                Text("Pain can show up the next day, so the morning check matters too.")
-            }
-            if let advice {
-                Section {
-                    Text(advice).foregroundStyle(Palette.textPrimary)
+                    .font(.display(26))
+                    .foregroundStyle(Palette.textPrimary)
+
+                VStack(spacing: Spacing.s) {
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        Text("\(level)")
+                            .font(.display(72))
+                            .monospacedDigit()
+                            .foregroundStyle(tint)
+                            .contentTransition(.numericText(value: pain))
+                        Text("/ 10")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(Palette.textTertiary)
+                    }
+                    Text(Self.label(for: level))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Palette.textSecondary)
+                    Slider(value: $pain, in: 0...10, step: 1)
+                        .tint(tint)
+                        .accessibilityLabel("Pain")
+                        .accessibilityValue("\(level) out of 10")
+                    HStack {
+                        Text("None")
+                        Spacer()
+                        Text("Worst")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(Palette.textTertiary)
+                }
+                .padding(Spacing.l)
+                .frame(maxWidth: .infinity)
+                .background(Palette.surface, in: RoundedRectangle(cornerRadius: Radius2.hero, style: .continuous))
+                .animation(.snappy, value: level)
+
+                HStack(spacing: Spacing.s) {
+                    SymptomToggle(title: "Swelling", symbol: "drop.fill", isOn: $swelling)
+                    SymptomToggle(title: "Sharp pain", symbol: "bolt.fill", isOn: $sharp)
+                }
+
+                if let advice {
+                    HStack(alignment: .top, spacing: Spacing.s) {
+                        IconTile(symbol: "cross.case.fill", tint: Palette.rehab, size: 36)
+                        Text(advice)
+                            .font(.subheadline)
+                            .foregroundStyle(Palette.textPrimary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .surface(fill: Palette.rehab.opacity(0.12))
+                } else {
+                    Footnote("Pain can show up the next day, so the morning check matters too.")
                 }
             }
+            .padding(.horizontal, Spacing.page)
+            .padding(.top, Spacing.s)
+            .padding(.bottom, Spacing.xl)
         }
-        .scrollContentBackground(.hidden)
+        .pageBackground()
         .navigationTitle("Knee check")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button(advice == nil ? "Cancel" : "Close") { dismiss() } }
             if advice == nil {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { advice = save(Int(pain), swelling, sharp) }.fontWeight(.semibold)
+                    Button("Save") { advice = save(level, swelling, sharp) }.fontWeight(.semibold)
                 }
             }
         }
+    }
+
+    static func tint(for level: Int) -> Color {
+        if level >= 6 { return Palette.error }
+        if level >= 3 { return Palette.warning }
+        return Palette.success
+    }
+
+    static func label(for level: Int) -> String {
+        switch level {
+        case 0: "No pain"
+        case 1...2: "Barely there"
+        case 3...5: "Noticeable"
+        case 6...7: "Painful"
+        default: "Very painful"
+        }
+    }
+}
+
+/// A tappable symptom tile that fills in when it applies.
+private struct SymptomToggle: View {
+    let title: String
+    let symbol: String
+    @Binding var isOn: Bool
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+        Button {
+            withAnimation(.snappy) { isOn.toggle() }
+        } label: {
+            HStack(spacing: Spacing.s) {
+                IconTile(symbol: symbol, tint: Palette.warning, size: 36, filled: isOn)
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Palette.textPrimary)
+                Spacer(minLength: 0)
+                Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(isOn ? Palette.warning : Palette.textTertiary)
+            }
+            .padding(14)
+            .background(isOn ? Palette.warning.opacity(0.12) : Palette.surface, in: shape)
+            .overlay { shape.strokeBorder(isOn ? Palette.warning : Color.clear, lineWidth: 1.5) }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityAddTraits(isOn ? [.isSelected, .isButton] : .isButton)
     }
 }
