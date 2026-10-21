@@ -1,254 +1,183 @@
 import Foundation
 import SwiftData
 
-// Phase 4 kitchen entities. All new, so existing stores open with lightweight migration.
+// Retired: the dinner planner, recipe library, stock tracking, receipts and the old shopping list. The Kitchen is now
+// the 8-week lunch and breakfast cycle plus a food log. These definitions keep exactly the stored properties of the
+// originals so existing stores keep opening; nothing reads or writes them.
 
-/// A recipe in the personal library (F7). Imported text is kept only as the structured recipe for personal use.
 @Model
 final class Recipe {
-    @Attribute(.unique) var id: UUID
-    var title: String
-    var roleRaw: String
-    var servings: Int
-    var ingredientsData: Data
-    var steps: [String]
-    var prepMinutes: Int
-    var cookMinutes: Int
-    var washUpMinutes: Int
-    var usesSlowCooker: Bool
-    var isFakeaway: Bool
-    var freezable: Bool
-    var favourite: Bool
-    var sourceRaw: String
-    /// Per portion. User-corrected figures replace the estimate.
-    var kcal: Double
-    var protein: Double
-    var carbs: Double
-    var fat: Double
-    var confidenceRaw: String
+    @Attribute(.unique) var id: UUID = UUID()
+    var title: String = ""
+    var roleRaw: String = ""
+    var servings: Int = 0
+    var ingredientsData: Data = Data()
+    var steps: [String] = []
+    var prepMinutes: Int = 0
+    var cookMinutes: Int = 0
+    var washUpMinutes: Int = 0
+    var usesSlowCooker: Bool = false
+    var isFakeaway: Bool = false
+    var freezable: Bool = false
+    var favourite: Bool = false
+    var sourceRaw: String = ""
+    var kcal: Double = 0
+    var protein: Double = 0
+    var carbs: Double = 0
+    var fat: Double = 0
+    var confidenceRaw: String = ""
     var notes: String?
-    var createdAt: Date
+    var createdAt: Date = Date.distantPast
     var lastCookedAt: Date?
-    var timesCooked: Int
-    var archived: Bool
+    var timesCooked: Int = 0
+    var archived: Bool = false
 
-    init(title: String, role: MealRole, servings: Int, ingredients: [RecipeIngredient], steps: [String], prepMinutes: Int,
-         cookMinutes: Int, washUpMinutes: Int, usesSlowCooker: Bool = false, isFakeaway: Bool = false, freezable: Bool = false,
-         source: RecipeSource) {
-        id = UUID()
-        self.title = title
-        roleRaw = role.rawValue
-        self.servings = max(1, servings)
-        ingredientsData = (try? JSONEncoder().encode(ingredients)) ?? Data()
-        self.steps = steps
-        self.prepMinutes = prepMinutes
-        self.cookMinutes = cookMinutes
-        self.washUpMinutes = washUpMinutes
-        self.usesSlowCooker = usesSlowCooker
-        self.isFakeaway = isFakeaway
-        self.freezable = freezable
-        favourite = false
-        sourceRaw = source.rawValue
-        let estimate = NutritionEstimator.estimate(ingredients, servings: max(1, servings))
-        kcal = estimate.perPortion.kcal
-        protein = estimate.perPortion.protein
-        carbs = estimate.perPortion.carbs
-        fat = estimate.perPortion.fat
-        confidenceRaw = estimate.confidence.rawValue
-        createdAt = .now
-        timesCooked = 0
-        archived = false
-    }
-
-    var role: MealRole {
-        get { MealRole(rawValue: roleRaw) ?? .dinner }
-        set { roleRaw = newValue.rawValue }
-    }
-    var source: RecipeSource { RecipeSource(rawValue: sourceRaw) ?? .manual }
-    var confidence: EstimateConfidence { EstimateConfidence(rawValue: confidenceRaw) ?? .rough }
-    var macros: Macros { Macros(kcal: kcal, protein: protein, carbs: carbs, fat: fat) }
-
-    var ingredients: [RecipeIngredient] {
-        get { (try? JSONDecoder().decode([RecipeIngredient].self, from: ingredientsData)) ?? [] }
-        set {
-            ingredientsData = (try? JSONEncoder().encode(newValue)) ?? ingredientsData
-            if confidence != .confirmed { recalculate() }
-        }
-    }
-
-    var excludedIngredient: String? {
-        FoodExclusions.excluded(([title] + ingredients.map(\.original)).joined(separator: " "))
-    }
-
-    func recalculate() {
-        let estimate = NutritionEstimator.estimate(ingredients, servings: servings)
-        kcal = estimate.perPortion.kcal
-        protein = estimate.perPortion.protein
-        carbs = estimate.perPortion.carbs
-        fat = estimate.perPortion.fat
-        confidenceRaw = estimate.confidence.rawValue
-    }
-
-    func candidate(calendar: Calendar) -> MealCandidate {
-        MealCandidate(id: id, title: title, role: role, servings: servings, prepMinutes: prepMinutes, cookMinutes: cookMinutes,
-                      washUpMinutes: washUpMinutes, usesSlowCooker: usesSlowCooker, isFakeaway: isFakeaway, freezable: freezable,
-                      favourite: favourite, excluded: excludedIngredient != nil || archived,
-                      lastCooked: lastCookedAt.map { DayKey($0, calendar: calendar) })
-    }
+    init() {}
 }
 
-enum RecipeSource: String, Codable, Sendable {
-    case starter, camera, screenshot, pdf, file, manual, conversation
-
-    var title: String {
-        switch self {
-        case .starter: "Starter recipe"
-        case .camera: "Photo"
-        case .screenshot: "Screenshot"
-        case .pdf: "PDF"
-        case .file: "File"
-        case .manual: "Typed in"
-        case .conversation: "Added by hand"
-        }
-    }
-}
-
-/// One meal in the week's plan.
 @Model
 final class MealPlanEntry {
-    var id: UUID
-    var day: String
-    var slotRaw: String
+    var id: UUID = UUID()
+    var day: String = ""
+    var slotRaw: String = ""
     var recipeID: UUID?
-    var title: String
-    var portions: Int
-    var fromFreezer: Bool
+    var title: String = ""
+    var portions: Int = 0
+    var fromFreezer: Bool = false
     var note: String?
-    /// For freezer meals: moved to the fridge.
-    var defrosted: Bool
-    var cooked: Bool
-    var createdAt: Date
+    var defrosted: Bool = false
+    var cooked: Bool = false
+    var createdAt: Date = Date.distantPast
 
-    init(_ meal: PlannedMeal) {
-        id = UUID()
-        day = meal.day.description
-        slotRaw = meal.slot.rawValue
-        recipeID = meal.recipeID
-        title = meal.title
-        portions = meal.portions
-        fromFreezer = meal.fromFreezer
-        note = meal.note
-        defrosted = false
-        cooked = false
-        createdAt = .now
-    }
-
-    var dayKey: DayKey? { DayKey(string: day) }
-    var slot: MealSlot { MealSlot(rawValue: slotRaw) ?? .dinner }
-    var planned: PlannedMeal? {
-        dayKey.map { PlannedMeal(day: $0, slot: slot, recipeID: recipeID, title: title, portions: portions, fromFreezer: fromFreezer, note: note) }
-    }
+    init() {}
 }
 
-/// Something probably in the house (I4). Keyed by catalogue ID, or by the lowercased name for anything else.
 @Model
 final class InventoryItem {
-    @Attribute(.unique) var key: String
-    var name: String
+    @Attribute(.unique) var key: String = ""
+    var name: String = ""
     var foodID: String?
-    var locationRaw: String
-    var sourceRaw: String
+    var locationRaw: String = ""
+    var sourceRaw: String = ""
     var addedAt: Date?
     var confirmedAt: Date?
     var outAt: Date?
-    /// Counted things, such as freezer portions.
     var portions: Int?
-    var usedSinceAdded: Bool
-    var updatedAt: Date
+    var usedSinceAdded: Bool = false
+    var updatedAt: Date = Date.distantPast
 
-    init(key: String, name: String, foodID: String?, location: StorageLocation, source: InventorySource) {
-        self.key = key
-        self.name = name
-        self.foodID = foodID
-        locationRaw = location.rawValue
-        sourceRaw = source.rawValue
-        usedSinceAdded = false
-        updatedAt = .now
-    }
-
-    var location: StorageLocation { StorageLocation(rawValue: locationRaw) ?? .cupboard }
-    var source: InventorySource { InventorySource(rawValue: sourceRaw) ?? .manual }
-    var food: FoodItem? { foodID.flatMap { FoodCatalogue.byID[$0] } }
-
-    func presence(now: Date) -> Presence {
-        InventoryEstimator.presence(InventorySnapshot(addedAt: addedAt, source: source, confirmedAt: confirmedAt, outAt: outAt,
-                                                      shelfLifeDays: food?.shelfLifeDays ?? (location == .freezer ? 90 : 7),
-                                                      usedSinceAdded: usedSinceAdded, portions: portions), now: now)
-    }
+    init() {}
 }
 
-/// A shop: from a scanned receipt or typed in (I3). The fingerprint refuses the same receipt twice.
 @Model
 final class ReceiptRecord {
-    @Attribute(.unique) var fingerprint: String
-    var id: UUID
-    var merchantRaw: String
-    var date: Date
-    var month: String
-    var totalPence: Int
-    var linesData: Data
-    var needsReview: Bool
-    var manual: Bool
-    var createdAt: Date
+    @Attribute(.unique) var fingerprint: String = ""
+    var id: UUID = UUID()
+    var merchantRaw: String = ""
+    var date: Date = Date.distantPast
+    var month: String = ""
+    var totalPence: Int = 0
+    var linesData: Data = Data()
+    var needsReview: Bool = false
+    var manual: Bool = false
+    var createdAt: Date = Date.distantPast
 
-    init(merchant: Merchant, date: Date, totalPence: Int, lines: [ReceiptLine], needsReview: Bool, manual: Bool, calendar: Calendar) {
-        let day = DayKey(date, calendar: calendar)
-        fingerprint = ReceiptParser.fingerprint(merchant: merchant, day: day, totalPence: totalPence)
-        id = UUID()
-        merchantRaw = merchant.rawValue
-        self.date = date
-        month = day.monthKey.description
-        self.totalPence = totalPence
-        linesData = (try? JSONEncoder().encode(lines)) ?? Data()
-        self.needsReview = needsReview
-        self.manual = manual
-        createdAt = .now
-    }
-
-    var merchant: Merchant { Merchant(rawValue: merchantRaw) ?? .other }
-    var total: Pence { Pence(totalPence) }
-    var lines: [ReceiptLine] {
-        get { (try? JSONDecoder().decode([ReceiptLine].self, from: linesData)) ?? [] }
-        set { linesData = (try? JSONEncoder().encode(newValue)) ?? linesData }
-    }
+    init() {}
 }
 
-/// A line on the current shopping list. Ticked lines stay until the list is cleared.
 @Model
 final class ShoppingItem {
-    @Attribute(.unique) var key: String
-    var name: String
-    var departmentRaw: String
-    var quantityText: String
+    @Attribute(.unique) var key: String = ""
+    var name: String = ""
+    var departmentRaw: String = ""
+    var quantityText: String = ""
     var estimatePence: Int?
-    var reasons: [String]
-    var checkFirst: Bool
-    var manual: Bool
-    var ticked: Bool
-    var createdAt: Date
+    var reasons: [String] = []
+    var checkFirst: Bool = false
+    var manual: Bool = false
+    var ticked: Bool = false
+    var createdAt: Date = Date.distantPast
 
-    init(_ line: ShoppingLine, manual: Bool) {
-        key = line.id
-        name = line.name
-        departmentRaw = line.department.rawValue
-        quantityText = line.quantityText
-        estimatePence = line.estimatePence
-        reasons = line.reasons
-        checkFirst = line.checkFirst
-        self.manual = manual
-        ticked = false
-        createdAt = .now
+    init() {}
+}
+
+// MARK: - Food log
+
+/// Something eaten, logged by barcode, by hand, or from the cycle. Per-entry totals, not per 100 g.
+@Model
+final class FoodLogEntry {
+    @Attribute(.unique) var id: UUID = UUID()
+    var date: Date = Date.distantPast
+    /// `yyyy-MM-dd`, for grouping by day.
+    var day: String = ""
+    /// "breakfast", "lunch", "evening" or "snack".
+    var mealRaw: String = ""
+    var name: String = ""
+    var brand: String?
+    var barcode: String?
+    /// "cycle", "barcode" or "manual".
+    var sourceRaw: String = ""
+    /// What was eaten, e.g. "150 g" or "1 serving".
+    var amountText: String = ""
+    var kcal: Double = 0
+    var protein: Double = 0
+    var carbs: Double = 0
+    var fat: Double = 0
+
+    init(date: Date, day: DayKey, meal: FoodMeal, name: String, brand: String? = nil, barcode: String? = nil,
+         source: FoodLogSource, amountText: String, macros: Macros) {
+        self.date = date
+        self.day = day.description
+        mealRaw = meal.rawValue
+        self.name = name
+        self.brand = brand
+        self.barcode = barcode
+        sourceRaw = source.rawValue
+        self.amountText = amountText
+        kcal = macros.kcal
+        protein = macros.protein
+        carbs = macros.carbs
+        fat = macros.fat
     }
 
-    var department: AisleDepartment { AisleDepartment(rawValue: departmentRaw) ?? .other }
+    var meal: FoodMeal { FoodMeal(rawValue: mealRaw) ?? .evening }
+    var source: FoodLogSource { FoodLogSource(rawValue: sourceRaw) ?? .manual }
+    var macros: Macros { Macros(kcal: kcal, protein: protein, carbs: carbs, fat: fat) }
+}
+
+/// A product found by barcode, kept so it can be logged again without a lookup.
+@Model
+final class SavedProduct {
+    @Attribute(.unique) var barcode: String = ""
+    var name: String = ""
+    var brand: String?
+    var kcalPer100: Double = 0
+    var proteinPer100: Double = 0
+    var carbsPer100: Double = 0
+    var fatPer100: Double = 0
+    var servingGrams: Double?
+    var servingText: String?
+    var lastUsed: Date = Date.distantPast
+
+    init(_ product: FoodProduct) {
+        barcode = product.barcode
+        update(from: product)
+    }
+
+    func update(from product: FoodProduct) {
+        name = product.name
+        brand = product.brand
+        kcalPer100 = product.per100.kcal
+        proteinPer100 = product.per100.protein
+        carbsPer100 = product.per100.carbs
+        fatPer100 = product.per100.fat
+        servingGrams = product.servingGrams
+        servingText = product.servingText
+    }
+
+    var product: FoodProduct {
+        FoodProduct(barcode: barcode, name: name, brand: brand,
+                    per100: Macros(kcal: kcalPer100, protein: proteinPer100, carbs: carbsPer100, fat: fatPer100),
+                    servingGrams: servingGrams, servingText: servingText)
+    }
 }

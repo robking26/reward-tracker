@@ -11,8 +11,9 @@ enum PreviewFixtures {
     }
 
     static func kitchen() -> KitchenModel {
-        let kitchen = KitchenModel(container: Persistence.makeContainer(inMemory: true), reminders: RecordingReminderScheduler(),
-                                   countdowns: RecordingCountdowns())
+        let kitchen = KitchenModel(container: Persistence.makeContainer(inMemory: true), products: FixedProductLookup(),
+                                   reminders: RecordingReminderScheduler(),
+                                   defaults: UserDefaults(suiteName: "preview.kitchen.\(UUID().uuidString)") ?? .standard)
         kitchen.start()
         return kitchen
     }

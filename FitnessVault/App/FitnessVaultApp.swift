@@ -18,7 +18,7 @@ struct FitnessVaultApp: App {
         _model = State(initialValue: model)
         let training = TrainingModel(container: container)
         _training = State(initialValue: training)
-        _kitchen = State(initialValue: KitchenModel(container: container, settingsStore: model.settingsStore))
+        _kitchen = State(initialValue: KitchenModel(container: container))
         // The watch can skip rest or end the workout; the iPhone stays the logger.
         WatchBridge.shared.onCommand = { command in
             switch command {

@@ -7,7 +7,7 @@
 		<string>com.robking.FitnessVault.settlement</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>Vaultality uses the camera only when you scan a recipe, a receipt or a menu. The text is read on this iPhone.</string>
+	<string>Vaultality uses the camera only to scan food barcodes, so you can log what you ate. Only the barcode number is looked up.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>UIBackgroundModes</key>

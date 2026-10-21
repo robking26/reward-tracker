@@ -2,373 +2,159 @@ import XCTest
 @testable import FitnessVault
 
 final class KitchenDomainTests: XCTestCase {
-    // MARK: Ingredients and recipes
+    private var london: Calendar = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Europe/London")!
+        return calendar
+    }()
 
-    func testIngredientParsingConvertsUnits() {
-        let chicken = IngredientParser.parse("400g chicken breast, diced")
-        XCTAssertEqual(chicken.foodID, "chicken-breast")
-        XCTAssertEqual(chicken.amount, 400)
-        XCTAssertEqual(chicken.unit, .grams)
+    // MARK: The cycle meets its targets
 
-        let oil = IngredientParser.parse("2 tbsp olive oil")
-        XCTAssertEqual(oil.foodID, "olive-oil")
-        XCTAssertEqual(oil.amount, 30)
-        XCTAssertEqual(oil.unit, .millilitres)
+    func testEightWeeksOfEach() {
+        XCTAssertEqual(MealCycle.lunches.count, 8)
+        XCTAssertEqual(MealCycle.breakfasts.count, 8)
+        XCTAssertEqual(MealCycle.lunches.map(\.week), Array(1...8))
+        XCTAssertEqual(MealCycle.breakfasts.map(\.week), Array(1...8))
+        XCTAssertEqual(Set((MealCycle.lunches + MealCycle.breakfasts).map(\.id)).count, 16, "Unique ids")
+    }
 
-        let tins = IngredientParser.parse("2 tins chopped tomatoes")
-        XCTAssertEqual(tins.foodID, "chopped-tomatoes")
-        XCTAssertEqual(tins.grams, 800)
+    func testLunchesAreAbout600KcalHighProteinLowFat() {
+        for meal in MealCycle.lunches {
+            let macros = meal.macros
+            XCTAssertEqual(macros.kcal, 600, accuracy: 40, meal.title)
+            XCTAssertGreaterThanOrEqual(macros.protein, 50, meal.title)
+            XCTAssertLessThanOrEqual(macros.fat, 15, "\(meal.title) is low fat")
+        }
+    }
 
-        let weighed = IngredientParser.parse("1 x 400g tin kidney beans")
-        XCTAssertEqual(weighed.foodID, "kidney-beans")
-        XCTAssertEqual(weighed.grams, 400)
+    func testBreakfastsAreAbout500KcalHighProteinLowFatAndQuick() {
+        for meal in MealCycle.breakfasts {
+            let macros = meal.macros
+            XCTAssertEqual(macros.kcal, 500, accuracy: 40, meal.title)
+            XCTAssertGreaterThanOrEqual(macros.protein, 50, meal.title)
+            XCTAssertLessThanOrEqual(macros.fat, 15, "\(meal.title) is low fat")
+            XCTAssertLessThanOrEqual(meal.prepMinutes + meal.cookMinutes, 5, "\(meal.title) takes five minutes")
+        }
+    }
 
-        let rice = IngredientParser.parse("1kg basmati rice")
-        XCTAssertEqual(rice.amount, 1000)
+    func testEveryIngredientIsInTheCatalogueWithoutExclusions() {
+        for meal in MealCycle.lunches + MealCycle.breakfasts {
+            for ingredient in meal.ingredients {
+                XCTAssertNotNil(ingredient.food, "\(meal.title): \(ingredient.foodID)")
+            }
+            XCTAssertNil(FoodExclusions.excluded(meal.title + " " + meal.ingredients.map(\.foodID).joined(separator: " ")), meal.title)
+        }
+    }
 
-        let half = IngredientParser.parse("½ lemon")
-        XCTAssertEqual(half.amount, 0.5)
-        XCTAssertEqual(half.foodID, "lemon")
+    // MARK: Weeks
+
+    func testWeeksRotateEveryMondayAndWrapAfterEight() {
+        let anchor = DayKey(year: 2026, month: 10, day: 19) // a Monday
+        XCTAssertEqual(MealCycle.week(of: anchor, anchor: anchor, calendar: london), 1)
+        XCTAssertEqual(MealCycle.week(of: DayKey(year: 2026, month: 10, day: 25), anchor: anchor, calendar: london), 1, "Sunday is still week 1")
+        XCTAssertEqual(MealCycle.week(of: DayKey(year: 2026, month: 10, day: 26), anchor: anchor, calendar: london), 2)
+        XCTAssertEqual(MealCycle.week(of: anchor.adding(days: 7 * 7, calendar: london), anchor: anchor, calendar: london), 8)
+        XCTAssertEqual(MealCycle.week(of: anchor.adding(days: 7 * 8, calendar: london), anchor: anchor, calendar: london), 1)
+        XCTAssertEqual(MealCycle.week(of: anchor.adding(days: -1, calendar: london), anchor: anchor, calendar: london), 8, "Before the anchor wraps backwards")
+    }
+
+    func testSettingTheWeekMovesTheAnchor() {
+        let wednesday = DayKey(year: 2026, month: 10, day: 21)
+        let anchor = MealCycle.anchor(today: wednesday, week: 3, calendar: london)
+        XCTAssertEqual(MealCycle.week(of: wednesday, anchor: anchor, calendar: london), 3)
+        XCTAssertEqual(MealCycle.mondayOf(wednesday, calendar: london), DayKey(year: 2026, month: 10, day: 19))
+    }
+
+    // MARK: Shopping
+
+    func testLunchListCoversFivePortionsInWholePacks() {
+        let burrito = MealCycle.meal(.lunch, week: 1)
+        let list = CycleShopping.list(for: burrito)
+        let chicken = list.first { $0.foodID == "chicken-breast" }
+        // 5 × 200 g = 1 kg, sold in 650 g packs: two packs.
+        XCTAssertEqual(chicken?.packs, "2 × 650 g")
+        XCTAssertEqual(chicken?.needed, "1 kg chicken breast")
+        XCTAssertEqual(chicken?.pricePence, 2 * 449)
+        XCTAssertEqual(list.first { $0.foodID == "spray-oil" }?.checkFirst, true, "Staples are checked, not bought")
+        XCTAssertEqual(list.first { $0.foodID == "rice" }?.checkFirst, true, "Long-life packs usually last more than a week")
+        let estimate = CycleShopping.estimate(list)
+        XCTAssertEqual(estimate.value, list.filter { !$0.checkFirst }.reduce(0) { $0 + $1.pricePence })
+    }
+
+    func testBreakfastListCoversSevenPortions() {
+        let shake = MealCycle.meal(.breakfast, week: 4)
+        let list = CycleShopping.list(for: shake)
+        // 7 × 120 g of banana is 7 bananas: two packs of five.
+        XCTAssertEqual(list.first { $0.foodID == "bananas" }?.needed, "7 bananas")
+        XCTAssertEqual(list.first { $0.foodID == "bananas" }?.packs, "2 × pack of 5")
+        // 7 × 300 ml of milk is 2.1 litres: one 2,272 ml bottle.
+        XCTAssertEqual(list.first { $0.foodID == "milk" }?.packs, "2.3 l")
+    }
+
+    func testListsFollowTheShop() {
+        let order = AisleDepartment.allCases
+        let list = CycleShopping.list(for: MealCycle.meal(.lunch, week: 2))
+        let positions = list.map { order.firstIndex(of: $0.department) ?? 0 }
+        XCTAssertEqual(positions, positions.sorted())
+    }
+
+    func testIngredientWording() {
+        XCTAssertEqual(CycleIngredient(foodID: "eggs", grams: 58).text(), "1 egg")
+        XCTAssertEqual(CycleIngredient(foodID: "eggs", grams: 58).text(portions: 7), "7 eggs")
+        XCTAssertEqual(CycleIngredient(foodID: "lemon", grams: 30).text(), "½ lemon")
+        XCTAssertEqual(CycleIngredient(foodID: "garlic", grams: 4).text(portions: 5), "5 garlic cloves")
+        XCTAssertEqual(CycleIngredient(foodID: "chicken-breast", grams: 210).text(), "210 g chicken breast")
+        XCTAssertEqual(CycleIngredient(foodID: "milk", grams: 300).text(portions: 7), "2.1 l semi-skimmed milk")
+        XCTAssertEqual(CycleIngredient(foodID: "spray-oil", grams: 1).text(), "spray oil")
     }
 
     func testCatalogueMatchesLongestName() {
         XCTAssertEqual(FoodCatalogue.match("chicken thighs")?.id, "chicken-thigh")
         XCTAssertEqual(FoodCatalogue.match("turkey mince")?.id, "turkey-mince")
-        XCTAssertEqual(FoodCatalogue.match("green beans")?.id, "green-beans")
         XCTAssertEqual(FoodCatalogue.match("chickpeas")?.id, "chickpeas", "Doesn't match 'peas' inside a word")
+        XCTAssertEqual(FoodCatalogue.match("skyr")?.id, "skyr")
         XCTAssertNil(FoodCatalogue.match("unicorn steak"))
     }
 
-    func testRecipeParserReadsAStructuredRecipe() {
-        let text = """
-        Lemon Chicken Traybake
-        Serves 2
-        Prep time: 10 mins
-        Cook time: 35 mins
-        Ingredients
-        400g chicken thighs
-        500g baby potatoes
-        1 lemon
-        2 tbsp olive oil
-        Method
-        1. Heat the oven to 200C.
-        2. Put everything on a baking tray and roast for 35 minutes.
+    // MARK: Barcodes
+
+    func testOpenFoodFactsProductIsRead() throws {
+        let json = """
+        {"status":1,"product":{"product_name":"Protein Yogurt","brands":"Brooklea, Aldi","serving_quantity":"200","serving_size":"200 g",
+         "nutriments":{"energy-kcal_100g":62,"proteins_100g":"10.2","carbohydrates_100g":4.1,"fat_100g":0.4}}}
         """
-        let draft = RecipeParser.parse(text)
-        XCTAssertEqual(draft.title, "Lemon Chicken Traybake")
-        XCTAssertEqual(draft.servings, 2)
-        XCTAssertTrue(draft.servingsWasRead)
-        XCTAssertEqual(draft.prepMinutes, 10)
-        XCTAssertEqual(draft.cookMinutes, 35)
-        XCTAssertEqual(draft.ingredients.count, 4)
-        XCTAssertEqual(draft.steps.count, 2)
-        XCTAssertEqual(draft.steps.first, "Heat the oven to 200C.")
-        XCTAssertTrue(draft.isOnePan)
-        XCTAssertTrue(draft.excluded.isEmpty)
-        XCTAssertEqual(draft.nutrition.confidence, .good)
-        // 400 g thighs + 500 g potatoes + a lemon + 30 ml oil, over two portions ≈ 685 kcal.
-        XCTAssertGreaterThan(draft.nutrition.perPortion.kcal, 600)
-        XCTAssertLessThan(draft.nutrition.perPortion.kcal, 760)
-        XCTAssertGreaterThan(draft.nutrition.perPortion.protein, 35)
+        let result = OpenFoodFacts.parse(Data(json.utf8), barcode: "4088600123456")
+        let product = try result.get()
+        XCTAssertEqual(product.name, "Protein Yogurt")
+        XCTAssertEqual(product.brand, "Brooklea")
+        XCTAssertEqual(product.per100.protein, 10.2, accuracy: 0.001)
+        XCTAssertEqual(product.servingGrams, 200)
+        let serving = product.macros(grams: 200)
+        XCTAssertEqual(serving.kcal, 124, accuracy: 0.01)
+        XCTAssertEqual(serving.protein, 20.4, accuracy: 0.01)
     }
 
-    func testRecipeParserWithoutHeadingsAndUnknownIngredients() {
-        let text = """
-        Mystery stew
-        300g dragon fruit
-        200g beef mince
-        Fry the mince in a frying pan, then add the fruit and simmer in a saucepan for 20 minutes.
-        """
-        let draft = RecipeParser.parse(text)
-        XCTAssertEqual(draft.ingredients.count, 2)
-        XCTAssertEqual(draft.steps.count, 1)
-        XCTAssertFalse(draft.servingsWasRead, "Defaults to two and says so")
-        XCTAssertEqual(draft.servings, 2)
-        XCTAssertEqual(draft.nutrition.unmatched, ["dragon fruit"])
-        XCTAssertEqual(draft.nutrition.confidence, .rough)
-        XCTAssertEqual(draft.cookware, 2)
-        XCTAssertFalse(draft.isOnePan)
+    func testOpenFoodFactsFallsBackToKilojoulesAndReportsMissing() {
+        let kilojoules = #"{"status":1,"product":{"product_name":"Oat bar","nutriments":{"energy_100g":1674}}}"#
+        let product = try? OpenFoodFacts.parse(Data(kilojoules.utf8), barcode: "12345678").get()
+        XCTAssertEqual(product?.per100.kcal ?? 0, 400, accuracy: 0.5)
+        XCTAssertEqual(product?.per100.protein, 0)
+
+        let missing = #"{"status":0,"status_verbose":"product not found"}"#
+        XCTAssertEqual(OpenFoodFacts.parse(Data(missing.utf8), barcode: "12345678"), .failure(.notFound))
+        let noNutrition = #"{"status":1,"product":{"product_name":"Mystery","nutriments":{}}}"#
+        XCTAssertEqual(OpenFoodFacts.parse(Data(noNutrition.utf8), barcode: "12345678"), .failure(.noNutrition))
+        XCTAssertNil(OpenFoodFacts.url(barcode: "123"), "Too short to be a barcode")
     }
 
-    func testExclusionsAreFlagged() {
-        let draft = RecipeParser.parse("Veg bake\nIngredients\n1 courgette\n200g mushrooms\n1 onion")
-        XCTAssertEqual(Set(draft.excluded), ["courgette", "mushroom"])
-        XCTAssertEqual(FoodExclusions.excluded("Cauliflower cheese"), "cauliflower")
-    }
-
-    func testMacroTweaksMarkFlavourChanges() {
-        let ingredients = ["500g beef mince", "300ml double cream", "4 tbsp olive oil", "100g cheddar"].map(IngredientParser.parse)
-        let tweaks = MacroTweaks.suggest(ingredients, servings: 4)
-        let lean = tweaks.first { $0.withFoodID == "beef-mince-5" }
-        XCTAssertNotNil(lean)
-        XCTAssertFalse(lean?.changesFlavour ?? true)
-        XCTAssertTrue(tweaks.first { $0.withFoodID == "creme-fraiche" }?.changesFlavour ?? false, "Cream swap needs approval")
-        let applied = MacroTweaks.apply(lean!, to: ingredients)
-        let before = NutritionEstimator.estimate(ingredients, servings: 4).perPortion.kcal
-        let after = NutritionEstimator.estimate(applied, servings: 4).perPortion.kcal
-        XCTAssertLessThan(after, before)
-        XCTAssertEqual(applied.first?.amount, 500, "Same amount, leaner meat")
-    }
-
-    // MARK: Meal planning
-
-    private func candidate(_ title: String, role: MealRole = .dinner, minutes: Int = 30, slowCooker: Bool = false,
-                           fakeaway: Bool = false, freezable: Bool = false, favourite: Bool = false, excluded: Bool = false,
-                           lastCooked: DayKey? = nil) -> MealCandidate {
-        MealCandidate(id: UUID(), title: title, role: role, servings: role == .lunch ? 5 : 2, prepMinutes: 10,
-                      cookMinutes: minutes - 10, washUpMinutes: 8, usesSlowCooker: slowCooker, isFakeaway: fakeaway,
-                      freezable: freezable, favourite: favourite, excluded: excluded, lastCooked: lastCooked)
-    }
-
-    private let monday = DayKey(year: 2026, month: 10, day: 19)
-
-    private func week(office: Set<Int> = [1, 2, 3, 4, 5], home: Set<Int> = [], late: Set<Int> = [], out: Set<Int> = []) -> [MealDayContext] {
-        (1...7).map { weekday in
-            MealDayContext(day: monday.adding(days: weekday - 1), weekday: weekday, workFromHome: home.contains(weekday),
-                           office: office.contains(weekday) && !home.contains(weekday), eatingOut: out.contains(weekday),
-                           lateFinish: late.contains(weekday))
-        }
-    }
-
-    func testPlanHasSameLunchMondayToFridayAndVariedDinners() {
-        let lunches = [candidate("A lunch", role: .lunch), candidate("B lunch", role: .lunch)]
-        let dinners = (1...8).map { candidate("Dinner \($0)") }
-        let plan = MealPlanner.plan(MealPlanInput(days: week(), candidates: lunches + dinners, freezer: [], rotationWeek: 1))
-        let lunchTitles = plan.filter { $0.slot == .lunch }.map(\.title)
-        XCTAssertEqual(lunchTitles, Array(repeating: "B lunch", count: 5), "Rotation week 1 picks the second lunch")
-        let dinnerTitles = plan.filter { $0.slot == .dinner }.map(\.title)
-        XCTAssertEqual(dinnerTitles.count, 7)
-        XCTAssertEqual(Set(dinnerTitles).count, 7, "No repeats in a week")
-        XCTAssertTrue(plan.filter { $0.slot == .dinner }.allSatisfy { $0.portions == 2 }, "Two identical portions")
-    }
-
-    func testExcludedAndRecentDinnersAreNotPlanned() {
-        let dinners = [candidate("Cauliflower cheese", excluded: true), candidate("Had it yesterday", lastCooked: monday.adding(days: -1)),
-                       candidate("Fine")]
-        let plan = MealPlanner.plan(MealPlanInput(days: Array(week().prefix(1)), candidates: dinners, freezer: [], rotationWeek: 0))
-        XCTAssertEqual(plan.first { $0.slot == .dinner }?.title, "Fine")
-    }
-
-    func testSlowCookerOnlyOnWorkFromHomeDays() {
-        let chilli = candidate("Slow chilli", minutes: 300, slowCooker: true, favourite: true)
-        let other = candidate("Stir fry")
-        let officeMonday = MealPlanner.plan(MealPlanInput(days: Array(week().prefix(1)), candidates: [chilli, other], freezer: [], rotationWeek: 0))
-        XCTAssertEqual(officeMonday.first { $0.slot == .dinner }?.title, "Stir fry", "No morning prep on an office day")
-        let homeMonday = MealPlanner.plan(MealPlanInput(days: Array(week(home: [1]).prefix(1)), candidates: [chilli, other], freezer: [], rotationWeek: 0))
-        XCTAssertEqual(homeMonday.first { $0.slot == .dinner }?.title, "Slow chilli")
-    }
-
-    func testFridayPrefersFakeawayAndLateDaysUseQuickOrFreezer() {
-        let days = week(late: [2])
-        let candidates = [candidate("Katsu", fakeaway: true), candidate("Long roast", minutes: 90), candidate("Quick noodles", minutes: 15)]
-        let plan = MealPlanner.plan(MealPlanInput(days: days, candidates: candidates, freezer: [FreezerMeal(title: "Curry", portions: 4)],
-                                                  rotationWeek: 0))
-        let dinners = Dictionary(uniqueKeysWithValues: plan.filter { $0.slot == .dinner }.map { ($0.day, $0) })
-        XCTAssertEqual(dinners[monday.adding(days: 4)]?.title, "Katsu")
-        XCTAssertEqual(dinners[monday.adding(days: 1)]?.title, "Quick noodles", "Late finish gets the quick one")
-        XCTAssertTrue(dinners.values.contains { $0.fromFreezer && $0.title == "Curry" }, "Freezer fills gaps when recipes run out")
-    }
-
-    func testEatingOutHasNoMeal() {
-        let plan = MealPlanner.plan(MealPlanInput(days: Array(week(out: [1]).prefix(1)), candidates: [candidate("Fine")], freezer: [], rotationWeek: 0))
-        XCTAssertEqual(plan.first { $0.slot == .dinner }?.portions, 0)
-    }
-
-    func testRotationWeekCyclesEveryFourWeeks() {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "Europe/London")!
-        let weeks = (0..<5).map { MealPlanner.rotationWeek(for: monday.adding(days: $0 * 7, calendar: calendar), calendar: calendar) }
-        XCTAssertEqual(weeks[0], weeks[4])
-        XCTAssertEqual(Set(weeks).count, 4)
-    }
-
-    // MARK: Batch cooking (F5)
-
-    func testBatchCookDropsFreezerExtrasToStayUnderAnHour() {
-        let lunch = MealCandidate(id: UUID(), title: "Chicken rice", role: .lunch, servings: 5, prepMinutes: 15, cookMinutes: 25,
-                                  washUpMinutes: 8, usesSlowCooker: false, isFakeaway: false, freezable: true, favourite: false,
-                                  excluded: false, lastCooked: nil)
-        let ragu = MealCandidate(id: UUID(), title: "Ragu", role: .dinner, servings: 4, prepMinutes: 10, cookMinutes: 35,
-                                 washUpMinutes: 8, usesSlowCooker: false, isFakeaway: false, freezable: true, favourite: false,
-                                 excluded: false, lastCooked: nil)
-        let curry = MealCandidate(id: UUID(), title: "Curry", role: .dinner, servings: 4, prepMinutes: 20, cookMinutes: 35,
-                                  washUpMinutes: 8, usesSlowCooker: false, isFakeaway: false, freezable: true, favourite: false,
-                                  excluded: false, lastCooked: nil)
-        let plan = BatchCookPlanner.plan(lunch: lunch, freezerDinners: [ragu, curry])
-        XCTAssertTrue(plan.fits)
-        XCTAssertLessThanOrEqual(plan.minutes, 60)
-        XCTAssertFalse(plan.items.contains { $0.title == "Curry" }, "Dropped rather than pretending it fits")
-        XCTAssertFalse(plan.adjustments.isEmpty)
-
-        let slowLunch = MealCandidate(id: UUID(), title: "Big roast", role: .lunch, servings: 5, prepMinutes: 40, cookMinutes: 60,
-                                      washUpMinutes: 15, usesSlowCooker: false, isFakeaway: false, freezable: false, favourite: false,
-                                      excluded: false, lastCooked: nil)
-        let tooLong = BatchCookPlanner.plan(lunch: slowLunch, freezerDinners: [])
-        XCTAssertFalse(tooLong.fits)
-        XCTAssertTrue(tooLong.adjustments.last?.contains("quicker lunch") ?? false)
-    }
-
-    // MARK: Defrosting (I5) and scenario G
-
-    func testDefrostReminderTheEveningBefore() {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "Europe/London")!
-        let tuesday = monday.adding(days: 1, calendar: calendar)
-        let meal = PlannedMeal(day: tuesday, slot: .dinner, recipeID: nil, title: "Curry", portions: 2, fromFreezer: true, note: nil)
-        let morning = monday.startDate(calendar: calendar).addingTimeInterval(9 * 3600)
-        let reminders = DefrostPlanner.reminders(for: [meal], now: morning, calendar: calendar)
-        XCTAssertEqual(reminders.count, 1)
-        XCTAssertEqual(reminders.first?.date, monday.startDate(calendar: calendar).addingTimeInterval(TimeInterval(20 * 3600 + 30 * 60)))
-        XCTAssertEqual(reminders.first?.body, "Tomorrow's dinner is Curry. Move two portions from the freezer to the fridge tonight.")
-        XCTAssertTrue(DefrostPlanner.reminders(for: [meal], now: morning.addingTimeInterval(14 * 3600), calendar: calendar).isEmpty,
-                      "Not after the moment has passed")
-        XCTAssertTrue(DefrostPlanner.forgottenAdvice("Curry").contains("piping hot"))
-        XCTAssertTrue(DefrostPlanner.forgottenAdvice("Curry").contains("Don't leave"))
-    }
-
-    func testDinnerRescueOffersLowFrictionOptions() {
-        let noodles = candidate("Prawn noodles", minutes: 15)
-        let fajitas = candidate("Fajitas", minutes: 30)
-        let options = DinnerRescue.options(
-            quick: [DinnerRescue.QuickOption(meal: fajitas, missing: ["peppers"], missingCost: Pence(109)),
-                    DinnerRescue.QuickOption(meal: noodles, missing: [], missingCost: .zero)],
-            freezer: [FreezerMeal(title: "Chilli", portions: 2)], foodBudgetLeft: .pounds(120), defrostForgotten: true)
-        XCTAssertEqual(options.map(\.kind), [.cupboard, .freezer, .topUp])
-        XCTAssertEqual(options.first?.title, "Prawn noodles")
-        XCTAssertTrue(options[1].detail.contains("microwave"), "Forgotten defrost uses a safe microwave route")
-        XCTAssertTrue(options[2].detail.contains("Co-op"))
-
-        let lean = DinnerRescue.options(quick: [], freezer: [], foodBudgetLeft: .pounds(10), defrostForgotten: false)
-        XCTAssertEqual(lean.map(\.title), ["Freezer fakeaway"], "No takeaway suggestion when the budget is nearly gone")
-    }
-
-    // MARK: Inventory (I4)
-
-    func testOldReceiptNeverMeansDefinitelyPresent() {
-        let now = Date(timeIntervalSince1970: 1_800_000_000)
-        func receipt(daysAgo: Double, shelf: Int = 7) -> Presence {
-            InventoryEstimator.presence(InventorySnapshot(addedAt: now.addingTimeInterval(-daysAgo * 86_400), source: .receipt,
-                                                          confirmedAt: nil, outAt: nil, shelfLifeDays: shelf,
-                                                          usedSinceAdded: false, portions: nil), now: now)
-        }
-        XCTAssertEqual(receipt(daysAgo: 0), .probably, "Even today's receipt isn't 'definitely'")
-        XCTAssertEqual(receipt(daysAgo: 5), .maybe)
-        XCTAssertEqual(receipt(daysAgo: 30), .probablyNot)
-
-        let told = InventoryEstimator.presence(InventorySnapshot(addedAt: nil, source: .userStated, confirmedAt: now, outAt: nil,
-                                                                 shelfLifeDays: 7, usedSinceAdded: false, portions: nil), now: now)
-        XCTAssertEqual(told, .have)
-        let usedSince = InventoryEstimator.presence(InventorySnapshot(addedAt: now, source: .receipt, confirmedAt: nil, outAt: nil,
-                                                                      shelfLifeDays: 7, usedSinceAdded: true, portions: nil), now: now)
-        XCTAssertEqual(usedSince, .maybe)
-        let ranOut = InventoryEstimator.presence(InventorySnapshot(addedAt: now.addingTimeInterval(-3600), source: .receipt,
-                                                                   confirmedAt: nil, outAt: now, shelfLifeDays: 7,
-                                                                   usedSinceAdded: false, portions: nil), now: now)
-        XCTAssertEqual(ranOut, .out)
-    }
-
-    // MARK: Shopping (I2)
-
-    func testShoppingListConsolidatesRoundsAndSkipsWhatsIn() {
-        let needs = [
-            ShoppingNeed(IngredientParser.parse("400g chicken breast"), forMeal: "Fajitas"),
-            ShoppingNeed(IngredientParser.parse("400g chicken breast"), forMeal: "Katsu"),
-            ShoppingNeed(IngredientParser.parse("2 peppers"), forMeal: "Fajitas"),
-            ShoppingNeed(IngredientParser.parse("2 tbsp olive oil"), forMeal: "Fajitas"),
-            ShoppingNeed(IngredientParser.parse("250g rice"), forMeal: "Katsu"),
-            ShoppingNeed(IngredientParser.parse("1 lemon"), forMeal: "Katsu"),
-        ]
-        let presence: (FoodItem) -> Presence? = { food in
-            switch food.id {
-            case "rice": .probably
-            case "lemon": .maybe
-            default: nil
-            }
-        }
-        let lines = ShoppingListBuilder.build(needs: needs, presence: presence, extras: ["washing up liquid", "unicorn food"])
-        let byID = Dictionary(uniqueKeysWithValues: lines.map { ($0.id, $0) })
-        XCTAssertEqual(byID["chicken-breast"]?.packs, 2, "800 g → two 650 g packs")
-        XCTAssertEqual(byID["chicken-breast"]?.reasons, ["Fajitas", "Katsu"])
-        XCTAssertEqual(byID["peppers"]?.packs, 1)
-        XCTAssertNil(byID["olive-oil"], "Staples aren't added unless they've run out")
-        XCTAssertNil(byID["rice"], "Probably in already")
-        XCTAssertTrue(byID["lemon"]?.checkFirst ?? false)
-        XCTAssertNotNil(byID["washing-up-liquid"])
-        XCTAssertEqual(byID["unicorn food"]?.department, .other)
-        let departments = lines.map(\.department)
-        XCTAssertEqual(departments, departments.sorted { AisleDepartment.allCases.firstIndex(of: $0)! < AisleDepartment.allCases.firstIndex(of: $1)! },
-                       "In Aldi walking order")
-        XCTAssertGreaterThan(ShoppingListBuilder.estimate(lines).value, 0)
-    }
-
-    func testBudgetIsACeilingNotATarget() {
-        let calm = HouseholdBudget(spent: .pounds(150), dayOfMonth: 15, daysInMonth: 30)
-        XCTAssertTrue(calm.summary.contains("not a target"))
-        XCTAssertNil(calm.warning(forList: .pounds(60)))
-        let near = HouseholdBudget(spent: .pounds(370), dayOfMonth: 25, daysInMonth: 30)
-        XCTAssertNotNil(near.warning(forList: .pounds(45)))
-        let over = HouseholdBudget(spent: .pounds(410), dayOfMonth: 28, daysInMonth: 30)
-        XCTAssertTrue(over.isOver)
-        XCTAssertEqual(over.remaining, .zero)
-    }
-
-    // MARK: Receipts (I3)
-
-    func testReceiptParserReadsAnAldiReceipt() {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "Europe/London")!
-        let text = """
-        ALDI
-        Stores Ltd
-        CHICKEN BREAST FILLETS 4.49 A
-        2 x SEMI SKIMMED MILK 2.90 A
-        BASMATI RICE 1.49 A
-        WASHING UP LIQUID 0.99 B
-        TOTAL 9.87
-        VISA CONTACTLESS 9.87
-        18/10/26 14:32
-        """
-        let receipt = ReceiptParser.parse(text, calendar: calendar)
-        XCTAssertEqual(receipt.merchant, .aldi)
-        XCTAssertEqual(receipt.totalPence, 987)
-        XCTAssertEqual(receipt.lines.count, 4)
-        XCTAssertEqual(receipt.lines[1].quantity, 2)
-        XCTAssertEqual(receipt.lines[1].foodID, "milk")
-        XCTAssertEqual(receipt.lines[0].foodID, "chicken-breast")
-        XCTAssertFalse(receipt.needsReview)
-        XCTAssertEqual(receipt.date.map { DayKey($0, calendar: calendar) }, DayKey(year: 2026, month: 10, day: 18))
-    }
-
-    func testReceiptThatDoesntAddUpNeedsReview() {
-        let receipt = ReceiptParser.parse("Co-op\nMILK 1.45\nBR3AD 1.10\nTOTAL 5.00\n12/10/2026")
-        XCTAssertEqual(receipt.merchant, .coop)
-        XCTAssertTrue(receipt.needsReview)
-        let takeaway = ReceiptParser.parse("Just Eat\nTotal £24.50")
-        XCTAssertEqual(takeaway.merchant, .takeaway)
-        XCTAssertTrue(takeaway.needsReview, "No date")
-    }
-
-    func testReceiptFingerprintIdentifiesDuplicates() {
-        let day = DayKey(year: 2026, month: 10, day: 18)
-        XCTAssertEqual(ReceiptParser.fingerprint(merchant: .aldi, day: day, totalPence: 987),
-                       ReceiptParser.fingerprint(merchant: .aldi, day: day, totalPence: 987))
-        XCTAssertNotEqual(ReceiptParser.fingerprint(merchant: .aldi, day: day, totalPence: 987),
-                          ReceiptParser.fingerprint(merchant: .coop, day: day, totalPence: 987))
-    }
-
-    // MARK: Conversation
-
-    func testStarterRecipesAvoidExclusionsAndParseCleanly() {
-        for recipe in StarterRecipes.all {
-            let text = ([recipe.title] + recipe.ingredients).joined(separator: " ")
-            XCTAssertNil(FoodExclusions.excluded(text), recipe.title)
-            let parsed = recipe.ingredients.map(IngredientParser.parse)
-            XCTAssertTrue(parsed.allSatisfy { $0.foodID != nil }, "\(recipe.title): \(parsed.filter { $0.foodID == nil }.map(\.original))")
-            let estimate = NutritionEstimator.estimate(parsed, servings: recipe.servings)
-            XCTAssertNotEqual(estimate.confidence, .rough, recipe.title)
-            if recipe.role != .breakfast {
-                XCTAssertGreaterThan(estimate.perPortion.protein, 25, "\(recipe.title) is high protein")
-            }
-        }
+    func testDayTotalsByMeal() {
+        let day = DayNutrition.summarise([
+            (meal: .breakfast, macros: Macros(kcal: 500, protein: 50, carbs: 50, fat: 8)),
+            (meal: .evening, macros: Macros(kcal: 600, protein: 40, carbs: 60, fat: 20)),
+            (meal: .evening, macros: Macros(kcal: 100, protein: 2, carbs: 10, fat: 5)),
+        ])
+        XCTAssertEqual(day.total.kcal, 1_200)
+        XCTAssertEqual(day.byMeal[.evening]?.kcal, 700)
+        XCTAssertNil(day.byMeal[.lunch])
     }
 }

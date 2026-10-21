@@ -269,7 +269,8 @@ enum Persistence {
         HealthSyncState.self, BankTransfer.self, PaymentOrder.self, AuditEvent.self, GoldAllocation.self,
         // Gym and rehab
         WorkoutSession.self, SetLog.self, SymptomLog.self,
-        // Kitchen
+        // Kitchen: the food log, plus retired kitchen tables kept so existing stores open (KitchenModels.swift)
+        FoodLogEntry.self, SavedProduct.self,
         Recipe.self, MealPlanEntry.self, InventoryItem.self, ReceiptRecord.self, ShoppingItem.self,
         // Retired 2.0 coaching data, kept so existing stores open (RetiredModels.swift)
         Commitment.self, CommitmentEvent.self, Routine.self, DayRecord.self, CoachMessage.self,

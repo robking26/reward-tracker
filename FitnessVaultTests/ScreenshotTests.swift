@@ -49,31 +49,26 @@ final class ScreenshotTests: XCTestCase {
         let model = PreviewFixtures.model()
         let training = PreviewFixtures.training()
         let kitchen = PreviewFixtures.kitchen()
-        kitchen.adjustFreezer(title: "Beef ragu pasta", by: 4)
-        kitchen.adjustFreezer(title: "Slow cooker turkey chilli", by: 2)
-        kitchen.generateShoppingList()
-        kitchen.addToShopping("bin bags")
-        if let first = kitchen.shopping.first { kitchen.toggle(first) }
-        _ = kitchen.confirm("eggs", portions: nil)
-        _ = kitchen.confirm("milk", portions: nil)
-        _ = kitchen.markOut("bread")
-        let lines = [ReceiptLine(name: "CHICKEN BREAST FILLETS", quantity: 1, pricePence: 449, foodID: "chicken-breast", uncertain: false)]
-        _ = kitchen.saveReceipt(merchant: .aldi, date: .now.addingTimeInterval(-3 * 86_400), totalPence: 6_842,
-                                lines: lines, needsReview: false, manual: false)
-        _ = kitchen.saveReceipt(merchant: .takeaway, date: .now.addingTimeInterval(-86_400), totalPence: 2_450,
-                                lines: [], needsReview: false, manual: true)
+        kitchen.logCycle(.breakfast, on: kitchen.today)
+        let yoghurt = FoodProduct(barcode: "4088600123456", name: "Protein Yogurt Strawberry", brand: "Brooklea",
+                                  per100: Macros(kcal: 62, protein: 10, carbs: 4, fat: 0.4), servingGrams: 200, servingText: "200 g")
+        kitchen.log(yoghurt, grams: 200, amountText: "200 g", meal: .snack)
+        kitchen.logManual(name: "Chicken stir-fry", macros: Macros(kcal: 640, protein: 48, carbs: 70, fat: 14), meal: .evening)
+        let monday = kitchen.shoppingMonday(next: false)
+        if let first = kitchen.shoppingList(.lunch, weekStarting: monday).first {
+            kitchen.toggle(first, slot: .lunch, monday: monday)
+        }
 
         for section in KitchenSection.allCases {
             let view = NavigationStack { KitchenView(showingSettings: .constant(false), section: section) }
-            try await capture("kitchen-\(section.id.lowercased().replacingOccurrences(of: " ", with: "-"))", height: 2_200,
-                              view, model, training, kitchen)
+            try await capture("kitchen-\(section.id.lowercased())", height: 2_200, view, model, training, kitchen)
         }
         try await capture("kitchen-top", height: 852,
                           NavigationStack { KitchenView(showingSettings: .constant(false)) }, model, training, kitchen)
-        if let recipe = kitchen.activeRecipes.first(where: { $0.role.suitsDinner }) {
-            try await capture("kitchen-recipe", height: 2_000,
-                              NavigationStack { RecipeDetailView(recipe: recipe) }, model, training, kitchen)
-        }
+        try await capture("kitchen-lunch", height: 2_000,
+                          NavigationStack { CycleMealDetailView(meal: MealCycle.meal(.lunch, week: 1)) }, model, training, kitchen)
+        try await capture("kitchen-amount", height: 852,
+                          NavigationStack { ProductAmountView(product: yoghurt) {} }, model, training, kitchen)
     }
 
     // MARK: - Rendering

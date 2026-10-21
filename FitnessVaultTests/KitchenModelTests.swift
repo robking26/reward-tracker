@@ -9,149 +9,118 @@ final class KitchenModelTests: XCTestCase {
         calendar.timeZone = TimeZone(identifier: "Europe/London")!
         return calendar
     }()
-    private let monday = DayKey(year: 2026, month: 10, day: 19)
+    private let wednesday = DayKey(year: 2026, month: 10, day: 21)
 
-    private func at(_ hour: Int, _ minute: Int = 0, day: DayKey? = nil) -> Date {
-        (day ?? monday).startDate(calendar: london).addingTimeInterval(TimeInterval((hour * 60 + minute) * 60))
+    private func at(_ hour: Int, day: DayKey? = nil) -> Date {
+        (day ?? wednesday).date(atMinute: hour * 60, calendar: london)
     }
 
     private struct Harness {
         var kitchen: KitchenModel
         var reminders: RecordingReminderScheduler
         var clock: TestClock
+        var defaults: UserDefaults
+        var container: ModelContainer
     }
 
-    private func make(at date: Date, defaults: UserDefaults? = nil) -> Harness {
+    private let yoghurt = FoodProduct(barcode: "4088600123456", name: "Protein Yogurt", brand: "Brooklea",
+                                      per100: Macros(kcal: 62, protein: 10, carbs: 4, fat: 0.4),
+                                      servingGrams: 200, servingText: "200 g")
+
+    private func make(at date: Date) -> Harness {
         let clock = TestClock(date)
         let container = Persistence.makeContainer(inMemory: true)
-        let store = defaults ?? UserDefaults(suiteName: "kitchen.test.\(UUID().uuidString)")!
-        let reminders = RecordingReminderScheduler()
-        let kitchen = KitchenModel(container: container, reminders: reminders, countdowns: RecordingCountdowns(),
-                                   defaults: store, calendar: london, now: { clock.date })
-        kitchen.start()
-        return Harness(kitchen: kitchen, reminders: reminders, clock: clock)
-    }
-
-    func testStartSeedsRecipesAndPlansTheWeek() {
-        let h = make(at: at(9))
-        XCTAssertEqual(h.kitchen.recipes.count, StarterRecipes.all.count)
-        let days = (0..<7).map { monday.adding(days: $0, calendar: london) }
-        for day in days {
-            XCTAssertNotNil(h.kitchen.dinner(on: day), "Dinner planned for \(day)")
-        }
-        let lunches = h.kitchen.plan.filter { $0.slot == .lunch }
-        XCTAssertEqual(lunches.count, 5, "Monday to Friday")
-        XCTAssertEqual(Set(lunches.map(\.title)).count, 1, "The same batch-cooked lunch all week")
-        let dinners = h.kitchen.plan.filter { $0.slot == .dinner && $0.recipeID != nil && !$0.fromFreezer }.map(\.title)
-        XCTAssertEqual(Set(dinners).count, dinners.count, "No dinner twice in a week")
-
-        // Starting again doesn't seed twice or duplicate the plan.
-        h.kitchen.start()
-        XCTAssertEqual(h.kitchen.recipes.count, StarterRecipes.all.count)
-        XCTAssertEqual(h.kitchen.plan.filter { $0.slot == .lunch }.count, 5)
-    }
-
-    func testInventoryCorrections() {
-        let h = make(at: at(18))
-        _ = h.kitchen.markOut("milk")
-        let milk = FoodCatalogue.byID["milk"]!
-        XCTAssertEqual(h.kitchen.presence(of: milk), .out)
-        _ = h.kitchen.addToShopping("milk")
-        XCTAssertTrue(h.kitchen.shopping.contains { $0.key == "milk" })
-
-        _ = h.kitchen.confirm("chilli", portions: 3)
-        XCTAssertEqual(h.kitchen.freezerMeals().first { $0.title == "Slow cooker turkey chilli" }?.portions, 3)
-
-        _ = h.kitchen.confirm("eggs", portions: nil)
-        XCTAssertEqual(h.kitchen.presence(of: FoodCatalogue.byID["eggs"]!), .have)
-    }
-
-    func testTickingAListItemUpdatesTheInventory() {
-        let h = make(at: at(10))
-        h.kitchen.generateShoppingList()
-        XCTAssertFalse(h.kitchen.shopping.isEmpty)
-        h.kitchen.addToShopping("milk")
-        let item = h.kitchen.shopping.first { $0.key == "milk" }!
-        h.kitchen.toggle(item)
-        XCTAssertEqual(h.kitchen.presence(of: FoodCatalogue.byID["milk"]!), .have)
-        // Rebuilding keeps ticked and hand-added lines.
-        h.kitchen.generateShoppingList()
-        XCTAssertTrue(h.kitchen.shopping.contains { $0.key == "milk" && $0.ticked })
-        h.kitchen.clearTicked()
-        XCTAssertFalse(h.kitchen.shopping.contains { $0.key == "milk" })
-    }
-
-    func testEatingAFreezableDinnerFreezesTheSpares() {
-        let h = make(at: at(19))
-        let tonight = h.kitchen.tonight!
-        let ragu = h.kitchen.recipes.first { $0.title == "Beef ragu pasta" }!
-        h.kitchen.swap(tonight, to: ragu)
-        let note = h.kitchen.markCooked(tonight)
-        XCTAssertEqual(note, "Two portions of Beef ragu pasta into the freezer.")
-        XCTAssertEqual(h.kitchen.freezerMeals().first { $0.title == "Beef ragu pasta" }?.portions, 2)
-        XCTAssertEqual(ragu.timesCooked, 1)
-        XCTAssertNotNil(ragu.lastCookedAt)
-    }
-
-    func testDefrostReminderAndForgottenDefrost() {
-        let h = make(at: at(9))
-        h.kitchen.adjustFreezer(title: "Chicken curry (freezer favourite)", by: 4)
-        let tuesday = monday.adding(days: 1, calendar: london)
-        let tomorrow = h.kitchen.dinner(on: tuesday)!
-        h.kitchen.useFreezer(tomorrow, meal: FreezerMeal(title: "Chicken curry (freezer favourite)", portions: 4, recipeID: nil))
-        let reminder = h.reminders.latest.first { $0.id.hasPrefix(DefrostPlanner.prefix) }
-        XCTAssertEqual(reminder?.date, at(20, 30))
-        XCTAssertTrue(reminder?.body.contains("Move two portions") ?? false)
-
-        // Next day: it wasn't moved to the fridge.
-        h.clock.date = at(17, day: tuesday)
-        h.kitchen.refresh()
-        XCTAssertTrue(h.kitchen.tonightNeedsDefrosting)
-        XCTAssertFalse(h.kitchen.rescueOptions(defrostForgotten: true).isEmpty)
-
-        h.kitchen.markDefrosted(h.kitchen.tonight!)
-        XCTAssertFalse(h.kitchen.tonightNeedsDefrosting)
-    }
-
-    func testReceiptsRefuseDuplicatesAndCountTowardsTheCeiling() {
-        let h = make(at: at(12))
-        let lines = [ReceiptLine(name: "CHICKEN BREAST FILLETS", quantity: 1, pricePence: 449, foodID: "chicken-breast", uncertain: false)]
-        XCTAssertEqual(h.kitchen.saveReceipt(merchant: .aldi, date: at(11), totalPence: 4_230, lines: lines, needsReview: false, manual: false), .saved)
-        XCTAssertEqual(h.kitchen.saveReceipt(merchant: .aldi, date: at(15), totalPence: 4_230, lines: lines, needsReview: false, manual: false),
-                       .duplicate, "Same shop, same day, same total")
-        XCTAssertEqual(h.kitchen.saveReceipt(merchant: .takeaway, date: at(20), totalPence: 2_450, lines: [], needsReview: false, manual: true), .saved)
-        XCTAssertEqual(h.kitchen.budget.spent, Pence(6_680))
-        XCTAssertEqual(h.kitchen.budget.remaining, Pence(40_000 - 6_680))
-        XCTAssertEqual(h.kitchen.presence(of: FoodCatalogue.byID["chicken-breast"]!), .probably, "A receipt is never 'definitely'")
-    }
-
-    func testDinnerRescueWithNothingPlanned() {
-        let h = make(at: at(18))
-        let options = h.kitchen.rescueOptions(defrostForgotten: false)
-        XCTAssertFalse(options.isEmpty)
-        XCTAssertLessThanOrEqual(options.count, 3)
-        XCTAssertTrue(options.contains { $0.kind == .takeaway }, "Full budget allows a takeaway option")
-    }
-
-    func testHomeWorkdaysPersistAndGateSlowCookerMeals() {
         let defaults = UserDefaults(suiteName: "kitchen.test.\(UUID().uuidString)")!
-        let h = make(at: at(6), defaults: defaults)
-        let week = h.kitchen.dayContexts(from: monday)
-        XCTAssertTrue(week.prefix(5).allSatisfy { $0.office && !$0.workFromHome }, "Office by default")
-        XCTAssertTrue(week.suffix(2).allSatisfy { !$0.office && !$0.workFromHome }, "Weekends aren't workdays")
+        let reminders = RecordingReminderScheduler()
+        let kitchen = KitchenModel(container: container, products: FixedProductLookup(products: [yoghurt.barcode: yoghurt]),
+                                   reminders: reminders, defaults: defaults, calendar: london, now: { clock.date })
+        kitchen.start()
+        return Harness(kitchen: kitchen, reminders: reminders, clock: clock, defaults: defaults, container: container)
+    }
 
-        h.kitchen.setHomeWorkday(1, true)
-        h.kitchen.setHomeWorkday(3, true)
-        XCTAssertEqual(h.kitchen.dayContexts(from: monday).filter(\.workFromHome).map(\.weekday), [1, 3])
+    func testTheCycleStartsThisWeekAndCanBeMoved() {
+        let h = make(at: at(9))
+        XCTAssertEqual(h.kitchen.currentWeek, 1, "First use starts week 1 this Monday")
+        XCTAssertEqual(h.kitchen.meal(.lunch, on: wednesday).id, MealCycle.lunches[0].id)
 
-        let reopened = KitchenModel(container: Persistence.makeContainer(inMemory: true), reminders: RecordingReminderScheduler(),
-                                    countdowns: RecordingCountdowns(), defaults: defaults, calendar: london, now: { h.clock.date })
-        XCTAssertEqual(reopened.homeWorkdays, [1, 3])
+        h.kitchen.setCurrentWeek(5)
+        XCTAssertEqual(h.kitchen.currentWeek, 5)
+        XCTAssertEqual(h.kitchen.nextWeek, 6)
+        XCTAssertEqual(h.kitchen.meal(.breakfast, on: wednesday).week, 5)
 
-        // Any slow-cooker reminder lands at 07:10 on the day.
-        for note in h.kitchen.reminderPlan() where note.id.hasPrefix(KitchenModel.reminderPrefix + "slow.") {
-            let day = DayKey(string: String(note.id.dropFirst((KitchenModel.reminderPrefix + "slow.").count)))!
-            XCTAssertEqual(note.date, day.date(atMinute: 7 * 60 + 10, calendar: london))
-        }
+        // Next Monday moves on; the setting survives a relaunch.
+        h.clock.date = at(9, day: DayKey(year: 2026, month: 10, day: 26))
+        let relaunched = KitchenModel(container: h.container, products: FixedProductLookup(), reminders: RecordingReminderScheduler(),
+                                      defaults: h.defaults, calendar: london, now: { h.clock.date })
+        XCTAssertEqual(relaunched.currentWeek, 6)
+    }
+
+    func testStartClearsTheOldDinnerReminders() {
+        let h = make(at: at(9))
+        XCTAssertEqual(h.reminders.plans.last, [], "Defrost and slow-cooker reminders are gone")
+    }
+
+    func testLunchOnlyOnWorkDays() {
+        let h = make(at: at(9))
+        XCTAssertTrue(h.kitchen.isLunchDay(wednesday))
+        XCTAssertFalse(h.kitchen.isLunchDay(DayKey(year: 2026, month: 10, day: 24)), "Saturday")
+        XCTAssertFalse(h.kitchen.isLunchDay(DayKey(year: 2026, month: 10, day: 25)), "Sunday")
+    }
+
+    func testLoggingTheCycleMealsAddsUpTheDay() {
+        let h = make(at: at(8))
+        h.kitchen.logCycle(.breakfast, on: wednesday)
+        h.kitchen.logCycle(.breakfast, on: wednesday)
+        XCTAssertEqual(h.kitchen.entries(on: wednesday).count, 1, "Logging twice doesn't double it")
+        XCTAssertTrue(h.kitchen.hasLoggedCycle(.breakfast, on: wednesday))
+
+        h.kitchen.logCycle(.lunch, on: wednesday)
+        let day = h.kitchen.nutrition(on: wednesday)
+        let expected = MealCycle.meal(.breakfast, week: 1).macros.kcal + MealCycle.meal(.lunch, week: 1).macros.kcal
+        XCTAssertEqual(day.total.kcal, expected, accuracy: 0.01)
+        XCTAssertGreaterThanOrEqual(day.total.protein, 100)
+    }
+
+    func testBarcodeLookupLogAndRemember() async {
+        let h = make(at: at(19))
+        let result = await h.kitchen.lookUp(barcode: "4088600123456")
+        guard case .success(let product) = result else { return XCTFail("Should find the yoghurt") }
+        h.kitchen.log(product, grams: 200, amountText: "200 g", meal: .evening)
+        let entries = h.kitchen.entries(on: wednesday)
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries.first?.kcal ?? 0, 124, accuracy: 0.01)
+        XCTAssertEqual(entries.first?.meal, .evening)
+        XCTAssertEqual(entries.first?.source, .barcode)
+        XCTAssertEqual(h.kitchen.recentProducts.map(\.barcode), ["4088600123456"], "Remembered for next time")
+
+        let unknown = await h.kitchen.lookUp(barcode: "5000000000000")
+        XCTAssertEqual(unknown, .failure(.notFound))
+
+        h.kitchen.delete(entries[0])
+        XCTAssertTrue(h.kitchen.entries(on: wednesday).isEmpty)
+    }
+
+    func testManualEntryAndDays() {
+        let h = make(at: at(20))
+        h.kitchen.logManual(name: "  Chippy tea ", macros: Macros(kcal: 950, protein: 35, carbs: 110, fat: 40), meal: .evening)
+        XCTAssertEqual(h.kitchen.entries(on: wednesday).first?.name, "Chippy tea")
+        h.clock.date = at(8, day: wednesday.adding(days: 1, calendar: london))
+        h.kitchen.refresh()
+        XCTAssertTrue(h.kitchen.entries(on: h.kitchen.today).isEmpty, "A new day starts empty")
+        XCTAssertEqual(h.kitchen.nutrition(on: wednesday).total.kcal, 950)
+    }
+
+    func testShoppingTicksAreKeptPerWeekAndList() {
+        let h = make(at: at(10))
+        let monday = h.kitchen.shoppingMonday(next: false)
+        let lines = h.kitchen.shoppingList(.lunch, weekStarting: monday)
+        let chicken = lines.first { $0.foodID == "chicken-breast" }!
+        h.kitchen.toggle(chicken, slot: .lunch, monday: monday)
+        XCTAssertTrue(h.kitchen.isTicked(chicken, slot: .lunch, monday: monday))
+        XCTAssertFalse(h.kitchen.isTicked(chicken, slot: .breakfast, monday: monday), "Lists are separate")
+        XCTAssertFalse(h.kitchen.isTicked(chicken, slot: .lunch, monday: h.kitchen.shoppingMonday(next: true)), "Weeks are separate")
+        h.kitchen.clearTicks(slot: .lunch, monday: monday)
+        XCTAssertFalse(h.kitchen.isTicked(chicken, slot: .lunch, monday: monday))
+        XCTAssertEqual(h.kitchen.shoppingList(.lunch, weekStarting: h.kitchen.shoppingMonday(next: true)).first?.foodID != nil, true)
     }
 }
