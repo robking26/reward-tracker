@@ -68,6 +68,7 @@ struct WorkoutSetupView: View {
     @State private var minutes = 60
     @State private var rehabFirst = true
     @State private var loaded = false
+    @State private var info: Exercise?
 
     private static let durations = [30, 45, 60, 75, 90]
 
@@ -139,8 +140,14 @@ struct WorkoutSetupView: View {
                     }
                     VStack(spacing: 0) {
                         ForEach(plan.exercises.indices, id: \.self) { index in
-                            TimelineExerciseRow(number: index + 1, item: plan.exercises[index],
-                                                isLast: index == plan.exercises.count - 1, tint: choice.tint)
+                            Button {
+                                info = plan.exercises[index].exercise
+                            } label: {
+                                TimelineExerciseRow(number: index + 1, item: plan.exercises[index],
+                                                    isLast: index == plan.exercises.count - 1, tint: choice.tint)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
                 }
@@ -168,6 +175,10 @@ struct WorkoutSetupView: View {
         }
         .navigationTitle("New workout")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(item: $info) { exercise in
+            NavigationStack { ExerciseInfoView(exercise: exercise) }
+                .presentationBackground(Palette.background)
+        }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button("Cancel", action: onCancel) }
         }
@@ -295,8 +306,15 @@ private struct TimelineExerciseRow: View {
             }
             .padding(.bottom, isLast ? 0 : Spacing.m)
             Spacer(minLength: 0)
+            if ExerciseVideos.videoID(for: item.exerciseID) != nil {
+                Image(systemName: "play.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(rowTint.opacity(0.8))
+                    .accessibilityHidden(true)
+            }
         }
         .accessibilityElement(children: .combine)
+        .accessibilityHint("Shows a demo and swaps")
     }
 }
 
@@ -338,9 +356,10 @@ struct ActiveWorkoutView: View {
     @State private var confirmEnd = false
     @State private var restFinished = 0
     @State private var logged = 0
+    @State private var info: Exercise?
 
     enum Sheet: String, Identifiable {
-        case busy, knee, reorder, add
+        case swap, knee, reorder, add
         var id: String { rawValue }
     }
 
@@ -386,7 +405,7 @@ struct ActiveWorkoutView: View {
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    Button { sheet = .busy } label: { Label("Equipment busy", systemImage: "person.2.slash") }
+                    Button { sheet = .swap } label: { Label("Swap this exercise", systemImage: "arrow.left.arrow.right") }
                     Button { sheet = .knee } label: { Label("My knee hurts", systemImage: "cross.case") }
                     Button { sheet = .reorder } label: { Label("Change the order", systemImage: "arrow.up.arrow.down") }
                     Button { sheet = .add } label: { Label("Add an exercise", systemImage: "plus") }
@@ -402,7 +421,13 @@ struct ActiveWorkoutView: View {
         .sheet(item: $sheet) { sheet in
             NavigationStack {
                 switch sheet {
-                case .busy: BusyEquipmentSheet()
+                case .swap:
+                    if let exercise = training.current?.exercise {
+                        let canDoLater: Bool = training.setsDone == 0 && !training.isLastExercise
+                        let later: (() -> Void)? = canDoLater ? doCurrentLater : nil
+                        ExerciseInfoView(exercise: exercise, swapOptions: training.alternativesForCurrent(),
+                                         onSwap: { training.swapCurrent(to: $0) }, onLater: later)
+                    }
                 case .knee:
                     KneeCheckView(timing: .during) { pain, swelling, sharp in
                         training.reportKneePain(pain: pain, swelling: swelling, sharp: sharp)
@@ -413,6 +438,11 @@ struct ActiveWorkoutView: View {
             }
             .presentationDetents([.medium, .large])
             .presentationBackground(Palette.background)
+        }
+        .sheet(item: $info) { exercise in
+            NavigationStack { ExerciseInfoView(exercise: exercise) }
+                .presentationDetents([.medium, .large])
+                .presentationBackground(Palette.background)
         }
         .onAppear(perform: resetInputs)
         .onChange(of: training.currentIndex) { resetInputs() }
@@ -475,6 +505,21 @@ struct ActiveWorkoutView: View {
                 }
             }
 
+            HStack(spacing: Spacing.s) {
+                Button {
+                    sheet = .swap
+                } label: {
+                    Label("Watch demo", systemImage: "play.rectangle.fill")
+                }
+                .buttonStyle(SecondaryButtonStyle(tint: tint, fill: tint.opacity(0.14)))
+                Button {
+                    sheet = .swap
+                } label: {
+                    Label("Swap", systemImage: "arrow.left.arrow.right")
+                }
+                .buttonStyle(SecondaryButtonStyle())
+            }
+
             if training.needsWarmUp, let warm = item.warmUpKg {
                 HStack(spacing: Spacing.s) {
                     IconTile(symbol: "flame.fill", tint: Palette.kitchen, size: 36)
@@ -533,6 +578,14 @@ struct ActiveWorkoutView: View {
                     .foregroundStyle(Palette.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
                 PrescriptionChips(item: next)
+                if let exercise = next.exercise {
+                    Button {
+                        info = exercise
+                    } label: {
+                        Label("Watch the demo", systemImage: "play.rectangle.fill")
+                    }
+                    .buttonStyle(SecondaryButtonStyle(tint: Palette.accent, fill: Palette.accent.opacity(0.14)))
+                }
                 if let cue = next.exercise?.cue {
                     Text(cue)
                         .font(.subheadline)
@@ -603,6 +656,10 @@ struct ActiveWorkoutView: View {
                 .surface()
             }
         }
+    }
+
+    private func doCurrentLater() {
+        training.doCurrentLater()
     }
 
     private func resetInputs() {
@@ -732,40 +789,6 @@ private struct RestRing: View {
 }
 
 // MARK: - Sheets
-
-struct BusyEquipmentSheet: View {
-    @Environment(TrainingModel.self) private var training
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        List {
-            Section("Swap for") {
-                let options = training.alternativesForCurrent()
-                if options.isEmpty {
-                    Text("No equivalent here. Do it later instead.").foregroundStyle(Palette.textSecondary)
-                }
-                ForEach(options) { exercise in
-                    Button(exercise.name) {
-                        training.swapCurrent(to: exercise)
-                        dismiss()
-                    }
-                }
-            }
-            if training.setsDone == 0 && !training.isLastExercise {
-                Section {
-                    Button("Do it later") {
-                        training.doCurrentLater()
-                        dismiss()
-                    }
-                }
-            }
-        }
-        .scrollContentBackground(.hidden)
-        .navigationTitle("Equipment busy")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
-    }
-}
 
 struct ReorderSheet: View {
     @Environment(TrainingModel.self) private var training

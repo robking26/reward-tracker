@@ -1,0 +1,55 @@
+import Foundation
+
+/// A short YouTube form demo for each exercise, played inside the app. Every ID is checked in CI with YouTube's
+/// oEmbed endpoint (scripts/check_exercise_videos.py): it must be public and allow embedding.
+enum ExerciseVideos {
+    static let byExercise: [String: String] = [
+        "inclineDBBench": "8fXfwG4ftaQ",
+        "flatDBBench": "SidmT09GXz8",
+        "seatedDBShoulderPress": "WKEl69bIGus",
+        "barbellRow": "ZmguKZV3lJ0",
+        "latPulldown": "oMJmAHRZXBk",
+        "hammerCurl": "zC3nLlEvin4",
+        "ezBarCurl": "SDFZBaJcTsU",
+        "tricepsMachine": "Zg0tT27iYuY",
+        "skullCrusher": "GaK2da6B2zM",
+        "lateralRaise": "OK1k6NdNo1I",
+        "trapMachine": "hmtnyIGgR9A",
+        "chestPressMachine": "Nv7TPc6btPk",
+        "seatedCableRow": "EU7bOadUsNI",
+        "machineShoulderPress": "Gkk-6q7Rq-s",
+        "cablePushdown": "ylk5P1FqdLE",
+        "barbellSquat": "yUm28cOUXNo",
+        "deadlift": "Ymr0AIcnaJ8",
+        "cleanAndPress": "lhlIOLVVT4M",
+        "singleLegPress": "ZW7FTFzurMM",
+        "boxSquat": "fVOrkHf_54k",
+        "romanianDeadlift": "hQgFixeXdZo",
+        "hipThrust": "S_uZP4UH6J0",
+        "stepUp": "2pybDQnWIBc",
+        "plank": "6LqqeBtFn9M",
+        "cableCrunch": "0KEP6A1deBE",
+        "gluteBridge": "R1OXPHRqehw",
+        "sideLyingAbduction": "CTmFNSDJTR8",
+        "bandedLateralWalk": "s_W3Gk0wEoQ",
+        "stepDown": "iuyfQnazxzM",
+        "singleLegBalance": "Dtgh2_LFkBQ",
+        "gobletSquat": "-utXQMqTuVA",
+        "pushUp": "WDIpL0pjun0",
+        "dumbbellRow": "PgpQ4-jHiq4",
+        "inclineMachinePress": "ig0NyNlSce4",
+        "facePull": "eTCBSFlCJ_s",
+        "cableCurl": "C68nhss07U8",
+        "overheadTricepsExtension": "a9oPnZReIRE",
+        "cableLateralRaise": "qghfvzcoS2I",
+        "legCurl": "S367qaHeYWU",
+        "cableKickback": "VSgMyiOu0uE",
+        "deadBug": "g_BYB0R-4Ws",
+        "wallSit": "JaZNYM3zAP0",
+        "clamshell": "m_ZPapmqeNM",
+    ]
+
+    static func videoID(for exerciseID: String) -> String? { byExercise[exerciseID] }
+
+    static func watchURL(_ videoID: String) -> URL? { URL(string: "https://www.youtube.com/watch?v=\(videoID)") }
+}

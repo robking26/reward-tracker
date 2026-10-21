@@ -2,6 +2,25 @@ import XCTest
 @testable import FitnessVault
 
 final class ExerciseLibraryTests: XCTestCase {
+    func testEveryExerciseHasTwoSwapsAndADemo() {
+        for exercise in ExerciseLibrary.all {
+            XCTAssertGreaterThanOrEqual(exercise.alternatives.count, 2, "\(exercise.id) needs swaps")
+            XCTAssertFalse(exercise.alternatives.contains(exercise.id), "\(exercise.id) can't swap for itself")
+            XCTAssertNotNil(ExerciseVideos.videoID(for: exercise.id), "\(exercise.id) needs a demo video")
+        }
+        for (exerciseID, video) in ExerciseVideos.byExercise {
+            XCTAssertNotNil(ExerciseLibrary.exercise(exerciseID), "Video for an unknown exercise: \(exerciseID)")
+            XCTAssertEqual(video.count, 11, "\(exerciseID): YouTube IDs are 11 characters")
+        }
+    }
+
+    func testLowerBodySwapsNeverLoadTheKneeMore() {
+        for exercise in ExerciseLibrary.all where exercise.kneeLoad >= .moderate {
+            let gentler = exercise.alternatives.compactMap(ExerciseLibrary.exercise).filter { $0.kneeLoad < exercise.kneeLoad }
+            XCTAssertFalse(gentler.isEmpty, "\(exercise.id) needs a gentler swap for an irritable knee")
+        }
+    }
+
     func testBriefStartingLoads() {
         XCTAssertEqual(ExerciseLibrary.exercise("inclineDBBench")?.startingKg, 16)
         XCTAssertEqual(ExerciseLibrary.exercise("inclineDBBench")?.warmUpKg, 12)
@@ -18,6 +37,7 @@ final class ExerciseLibraryTests: XCTestCase {
             }
         }
         XCTAssertGreaterThanOrEqual(ExerciseLibrary.exercise("barbellSquat")!.restSeconds, 120)
+        XCTAssertEqual(Set(ExerciseLibrary.all.map(\.id)).count, ExerciseLibrary.all.count, "Unique ids")
         XCTAssertGreaterThanOrEqual(ExerciseLibrary.exercise("deadlift")!.restSeconds, 120)
     }
 }
