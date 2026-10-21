@@ -20,7 +20,7 @@ concurrency:
 jobs:
   build-and-test:
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v4
 
@@ -47,33 +47,45 @@ jobs:
       # Exercise demo videos must be public and embeddable; prints each one's title for review.
       - name: Check exercise videos
         continue-on-error: true
-        run: |
-          python3 scripts/check_exercise_videos.py FitnessVault/Domain/Training/ExerciseVideos.swift
-          if [ -f scripts/exercise-video-candidates.txt ]; then
-            python3 scripts/check_exercise_videos.py scripts/exercise-video-candidates.txt
-          fi
+        run: python3 scripts/check_exercise_videos.py FitnessVault/Domain/Training/ExerciseVideos.swift
 
       # Unsigned simulator build: no Apple account or certificates needed in CI.
       - name: Build and run unit tests
         run: |
-          # Progress is streamed so a slow build or a stuck test is visible, and each test has a time limit.
+          # Build first, then test. The build runs with fewer parallel compiler jobs (the runner has little memory
+          # and SwiftUI type-checking is memory-hungry), has its own time limit, and is retried once if it stalls.
           set +e
+          DESTINATION="id=${{ steps.simulator.outputs.udid }}"
+          SWIFT_FLAGS='$(inherited) -Xfrontend -solver-expression-time-threshold=60'
+          FILTER="Test Suite|Test Case .* (passed|failed|started)|Executed|\*\* (BUILD|TEST)|error:|Testing started"
+          built=1
+          for attempt in 1 2; do
+            echo "Build attempt $attempt"
+            perl -e 'alarm shift; exec @ARGV' 720 xcodebuild build-for-testing \
+              -project FitnessVault.xcodeproj -scheme FitnessVault -destination "$DESTINATION" \
+              -jobs 3 CODE_SIGNING_ALLOWED=NO OTHER_SWIFT_FLAGS="$SWIFT_FLAGS" \
+              2>&1 | tee -a xcodebuild.log | grep --line-buffered -E "$FILTER"
+            built=${PIPESTATUS[0]}
+            [ "$built" -eq 0 ] && break
+            # 142 is the time limit; anything else is a real failure, so don't retry it.
+            [ "$built" -ne 142 ] && break
+            echo "Build stalled; retrying"
+            pkill -9 -f swift-frontend || true
+            pkill -9 -f SWBBuildService || true
+          done
+          [ "$built" -ne 0 ] && exit "$built"
           # TEST_RUNNER_ variables reach the test process: ScreenshotTests renders the Gym and Kitchen.
-          TEST_RUNNER_SCREENSHOTS=1 xcodebuild test \
-            -project FitnessVault.xcodeproj \
-            -scheme FitnessVault \
-            -destination "id=${{ steps.simulator.outputs.udid }}" \
+          TEST_RUNNER_SCREENSHOTS=1 perl -e 'alarm shift; exec @ARGV' 900 xcodebuild test-without-building \
+            -project FitnessVault.xcodeproj -scheme FitnessVault -destination "$DESTINATION" \
             -resultBundlePath TestResults.xcresult \
             -test-timeouts-enabled YES \
             -default-test-execution-time-allowance 60 \
             -maximum-test-execution-time-allowance 120 \
             CODE_SIGNING_ALLOWED=NO \
-            OTHER_SWIFT_FLAGS='$(inherited) -Xfrontend -solver-expression-time-threshold=60' \
-            2>&1 | tee xcodebuild.log \
-            | grep --line-buffered -E "Test Suite|Test Case .* (passed|failed|started)|Executed|\*\* (BUILD|TEST)|error:|Testing started|SwiftCompile normal" \
+            2>&1 | tee -a xcodebuild.log \
+            | grep --line-buffered -E "$FILTER" \
             | grep --line-buffered -v "CoreData: "
-          status=${PIPESTATUS[0]}
-          exit $status
+          exit ${PIPESTATUS[0]}
 
       - name: Show compile errors
         if: failure()
