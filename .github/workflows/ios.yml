@@ -74,18 +74,34 @@ jobs:
             pkill -9 -f SWBBuildService || true
           done
           [ "$built" -ne 0 ] && exit "$built"
-          # TEST_RUNNER_ variables reach the test process: ScreenshotTests renders the Gym and Kitchen.
-          TEST_RUNNER_SCREENSHOTS=1 perl -e 'alarm shift; exec @ARGV' 900 xcodebuild test-without-building \
-            -project FitnessVault.xcodeproj -scheme FitnessVault -destination "$DESTINATION" \
-            -resultBundlePath TestResults.xcresult \
-            -test-timeouts-enabled YES \
-            -default-test-execution-time-allowance 60 \
-            -maximum-test-execution-time-allowance 120 \
-            CODE_SIGNING_ALLOWED=NO \
-            2>&1 | tee -a xcodebuild.log \
-            | grep --line-buffered -E "$FILTER" \
-            | grep --line-buffered -v "CoreData: "
-          exit ${PIPESTATUS[0]}
+          # The simulator sometimes hangs while starting up on these runners, so it's booted (with a time limit)
+          # before testing, and a test run that stalls is retried once on a freshly erased simulator.
+          UDID="${{ steps.simulator.outputs.udid }}"
+          tested=1
+          for attempt in 1 2; do
+            echo "Test attempt $attempt"
+            xcrun simctl boot "$UDID" 2>/dev/null
+            perl -e 'alarm shift; exec @ARGV' 240 xcrun simctl bootstatus "$UDID" -b > /dev/null
+            rm -rf TestResults.xcresult
+            # TEST_RUNNER_ variables reach the test process: ScreenshotTests renders the Gym and Kitchen.
+            TEST_RUNNER_SCREENSHOTS=1 perl -e 'alarm shift; exec @ARGV' 600 xcodebuild test-without-building \
+              -project FitnessVault.xcodeproj -scheme FitnessVault -destination "$DESTINATION" \
+              -resultBundlePath TestResults.xcresult \
+              -test-timeouts-enabled YES \
+              -default-test-execution-time-allowance 60 \
+              -maximum-test-execution-time-allowance 120 \
+              CODE_SIGNING_ALLOWED=NO \
+              2>&1 | tee -a xcodebuild.log \
+              | grep --line-buffered -E "$FILTER" \
+              | grep --line-buffered -v "CoreData: "
+            tested=${PIPESTATUS[0]}
+            [ "$tested" -ne 142 ] && break
+            echo "Tests stalled; resetting the simulator and retrying"
+            pkill -9 -f xcodebuild || true
+            xcrun simctl shutdown "$UDID" 2>/dev/null
+            xcrun simctl erase "$UDID"
+          done
+          exit "$tested"
 
       - name: Show compile errors
         if: failure()
