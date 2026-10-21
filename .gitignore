@@ -10,3 +10,4 @@ build/
 # Secrets must never be committed
 *.xcconfig.local
 Secrets.swift
+screenshots/

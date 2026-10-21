@@ -1,0 +1,136 @@
+import SwiftData
+import SwiftUI
+import UIKit
+import XCTest
+@testable import FitnessVault
+
+/// Renders the Gym and Kitchen screens with realistic sample data and saves JPEGs to `screenshots/`, so design
+/// changes can be reviewed from CI. Runs only when CI sets SCREENSHOTS=1 (via TEST_RUNNER_SCREENSHOTS).
+@MainActor
+final class ScreenshotTests: XCTestCase {
+    private var enabled: Bool { ProcessInfo.processInfo.environment["SCREENSHOTS"] == "1" }
+
+    private var folder: URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("screenshots", isDirectory: true)
+    }
+
+    func testGymScreens() async throws {
+        try XCTSkipUnless(enabled, "Screenshots are only rendered in CI")
+        let model = PreviewFixtures.model()
+        let container = Persistence.makeContainer(inMemory: true)
+        Self.addTrainingHistory(container: container)
+        let training = TrainingModel(container: container, restAlerts: RecordingRestAlerts())
+        let kitchen = PreviewFixtures.kitchen()
+
+        try await capture("gym-tab", height: 852, GymView(showingSettings: .constant(false)), model, training, kitchen)
+        try await capture("gym-tab-full", height: 2_600, GymView(showingSettings: .constant(false)), model, training, kitchen)
+        try await capture("gym-setup", height: 1_400, WorkoutFlowView(), model, training, kitchen)
+        try await capture("gym-rehab-setup", height: 1_000, WorkoutFlowView(rehabOnly: true), model, training, kitchen)
+
+        let plan = training.makePlan(focus: .upper, variant: 0, availableMinutes: 60, rehabFirst: false)
+        training.start(plan)
+        try await capture("gym-active", height: 1_300, WorkoutFlowView(), model, training, kitchen)
+        training.logSet(weight: plan.exercises.first?.weightKg, reps: plan.exercises.first?.targetReps ?? 10)
+        try await capture("gym-active-resting", height: 1_300, WorkoutFlowView(), model, training, kitchen)
+        training.logSet(weight: plan.exercises.first?.weightKg, reps: 10)
+        training.logSet(weight: plan.exercises.first?.weightKg, reps: 9)
+        try await capture("gym-active-next-up", height: 1_300, WorkoutFlowView(), model, training, kitchen)
+        training.end()
+    }
+
+    func testKitchenScreens() async throws {
+        try XCTSkipUnless(enabled, "Screenshots are only rendered in CI")
+        let model = PreviewFixtures.model()
+        let training = PreviewFixtures.training()
+        let kitchen = PreviewFixtures.kitchen()
+        kitchen.adjustFreezer(title: "Beef ragu pasta", by: 4)
+        kitchen.adjustFreezer(title: "Slow cooker turkey chilli", by: 2)
+        kitchen.generateShoppingList()
+        kitchen.addToShopping("bin bags")
+        if let first = kitchen.shopping.first { kitchen.toggle(first) }
+        _ = kitchen.confirm("eggs", portions: nil)
+        _ = kitchen.confirm("milk", portions: nil)
+        _ = kitchen.markOut("bread")
+        let lines = [ReceiptLine(name: "CHICKEN BREAST FILLETS", quantity: 1, pricePence: 449, foodID: "chicken-breast", uncertain: false)]
+        _ = kitchen.saveReceipt(merchant: .aldi, date: .now.addingTimeInterval(-3 * 86_400), totalPence: 6_842,
+                                lines: lines, needsReview: false, manual: false)
+        _ = kitchen.saveReceipt(merchant: .takeaway, date: .now.addingTimeInterval(-86_400), totalPence: 2_450,
+                                lines: [], needsReview: false, manual: true)
+
+        for section in KitchenSection.allCases {
+            let view = NavigationStack { KitchenView(showingSettings: .constant(false), section: section) }
+            try await capture("kitchen-\(section.id.lowercased().replacingOccurrences(of: " ", with: "-"))", height: 2_200,
+                              view, model, training, kitchen)
+        }
+        try await capture("kitchen-top", height: 852,
+                          NavigationStack { KitchenView(showingSettings: .constant(false)) }, model, training, kitchen)
+        if let recipe = kitchen.activeRecipes.first(where: { $0.role.suitsDinner }) {
+            try await capture("kitchen-recipe", height: 2_000,
+                              NavigationStack { RecipeDetailView(recipe: recipe) }, model, training, kitchen)
+        }
+    }
+
+    // MARK: - Rendering
+
+    private func capture<V: View>(_ name: String, height: CGFloat, _ view: V,
+                                  _ model: AppModel, _ training: TrainingModel, _ kitchen: KitchenModel) async throws {
+        let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+        let window = scene.map { UIWindow(windowScene: $0) } ?? UIWindow()
+        window.frame = CGRect(x: 0, y: 0, width: 393, height: height)
+        window.overrideUserInterfaceStyle = .dark
+        let root = view
+            .environment(model)
+            .environment(training)
+            .environment(kitchen)
+            .preferredColorScheme(.dark)
+        window.rootViewController = UIHostingController(rootView: root)
+        window.makeKeyAndVisible()
+        try await Task.sleep(for: .seconds(2))
+
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1.5
+        let renderer = UIGraphicsImageRenderer(bounds: window.bounds, format: format)
+        let image = renderer.image { _ in
+            _ = window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+        }
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        // JPEG keeps the log small enough to read back.
+        let data = try XCTUnwrap(image.jpegData(compressionQuality: 0.6))
+        try data.write(to: folder.appendingPathComponent(name + ".jpg"))
+        window.isHidden = true
+        window.rootViewController = nil
+    }
+
+    // MARK: - Sample data
+
+    /// Six weeks of alternating upper and lower sessions with slowly rising weights, plus knee check-ins.
+    private static func addTrainingHistory(container: ModelContainer) {
+        var date = Date.now.addingTimeInterval(-42 * 86_400)
+        let history = TrainingModel(container: container, restAlerts: RecordingRestAlerts(), now: { date })
+        var index = 0
+        while date < Date.now.addingTimeInterval(-86_400) {
+            let focus: TrainingFocus = index % 2 == 0 ? .upper : .lower
+            let plan = history.makePlan(focus: focus, variant: (index / 2) % 2, availableMinutes: 60, rehabFirst: true)
+            history.start(plan)
+            var guardCount = 0
+            while history.current != nil && guardCount < 60 {
+                guardCount += 1
+                if history.awaitingReady {
+                    history.ready()
+                    continue
+                }
+                let item = history.current
+                history.logSet(weight: item?.weightKg, reps: item?.targetReps ?? 10)
+                date = date.addingTimeInterval(150)
+            }
+            history.end()
+            let pain = index % 5 == 0 ? 3 : 1
+            _ = history.logSymptom(timing: .nextDay, pain: pain, swelling: false, sharp: false)
+            index += 1
+            date = date.addingTimeInterval(index % 3 == 0 ? 3 * 86_400 : 2 * 86_400)
+        }
+    }
+}

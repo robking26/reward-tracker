@@ -58,9 +58,11 @@ jobs:
             -default-test-execution-time-allowance 60 \
             -maximum-test-execution-time-allowance 120 \
             CODE_SIGNING_ALLOWED=NO \
+            TEST_RUNNER_SCREENSHOTS=1 \
             OTHER_SWIFT_FLAGS='$(inherited) -Xfrontend -solver-expression-time-threshold=60' \
             2>&1 | tee xcodebuild.log \
-            | grep --line-buffered -E "Test Suite|Test Case .* (passed|failed|started)|Executed|\*\* (BUILD|TEST)|error:|SwiftCompile normal|Testing started"
+            | grep --line-buffered -E "Test Suite|Test Case .* (passed|failed|started)|Executed|\*\* (BUILD|TEST)|error:|Testing started" \
+            | grep --line-buffered -v "CoreData: "
           status=${PIPESTATUS[0]}
           exit $status
 
@@ -77,3 +79,13 @@ jobs:
             TestResults.xcresult
             xcodebuild.log
           if-no-files-found: ignore
+
+      # Design review: prints the screens rendered by ScreenshotTests as base64 lines, so they can be read from the log.
+      - name: Print screenshots
+        if: always()
+        run: |
+          shopt -s nullglob
+          for file in screenshots/*.jpg; do
+            name=$(basename "$file" .jpg)
+            base64 -i "$file" | tr -d '\n' | fold -w 8000 | sed "s/^/SHOT ${name} /"
+          done
