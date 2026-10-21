@@ -77,6 +77,8 @@ final class KitchenDomainTests: XCTestCase {
         XCTAssertEqual(chicken?.pricePence, 2 * 449)
         XCTAssertEqual(list.first { $0.foodID == "spray-oil" }?.checkFirst, true, "Staples are checked, not bought")
         XCTAssertEqual(list.first { $0.foodID == "rice" }?.checkFirst, true, "Long-life packs usually last more than a week")
+        XCTAssertEqual(list.first { $0.foodID == "kidney-beans" }?.checkFirst, false, "Tins the week uses up are bought")
+        XCTAssertEqual(list.first { $0.foodID == "salsa" }?.checkFirst, false, "A jar the week empties is bought")
         let estimate = CycleShopping.estimate(list)
         XCTAssertEqual(estimate.value, list.filter { !$0.checkFirst }.reduce(0) { $0 + $1.pricePence })
     }

@@ -288,7 +288,7 @@ struct CycleShoppingLine: Sendable, Hashable, Identifiable {
     /// e.g. "2 × 650 g".
     let packs: String
     let pricePence: Int
-    /// Long-life things that usually last more than a week: check the cupboard before buying.
+    /// Staples, and long-life packs a week barely uses: check the cupboard before buying.
     let checkFirst: Bool
 
     var id: String { foodID }
@@ -304,7 +304,7 @@ enum CycleShopping {
             let total = ingredient.grams * Double(count)
             let packCount = packsNeeded(food, grams: total)
             let packText = packDescription(food, count: packCount)
-            let checkFirst = food.isStaple || food.shelfLifeDays >= 90
+            let checkFirst = food.isStaple || barelyUsed(food, grams: total, packs: packCount)
             lines.append(CycleShoppingLine(foodID: food.id, name: food.name, department: food.department,
                                            needed: ingredient.text(portions: count), packs: packText,
                                            pricePence: packCount * food.pack.pricePence, checkFirst: checkFirst))
@@ -320,6 +320,19 @@ enum CycleShopping {
     /// Estimated cost of the lines you'll actually buy (long-life things you might have are left out).
     static func estimate(_ lines: [CycleShoppingLine]) -> Pence {
         Pence(lines.filter { !$0.checkFirst }.reduce(0) { $0 + $1.pricePence })
+    }
+
+    /// Long-life packs a week only dents (rice, oats, protein powder) are probably already in the cupboard.
+    /// Tins and jars the week uses up still go on the list.
+    static func barelyUsed(_ food: FoodItem, grams: Double, packs: Int) -> Bool {
+        guard food.shelfLifeDays >= 90, packs == 1 else { return false }
+        let packGrams: Double
+        if food.pack.unit == .items {
+            packGrams = food.pack.amount * (food.gramsPerItem ?? grams)
+        } else {
+            packGrams = food.pack.amount
+        }
+        return grams < packGrams * 0.6
     }
 
     static func packsNeeded(_ food: FoodItem, grams: Double) -> Int {
