@@ -933,9 +933,9 @@ private struct SymptomToggle: View {
                 Text(title)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Palette.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
                 Spacer(minLength: 0)
-                Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(isOn ? Palette.warning : Palette.textTertiary)
             }
             .padding(14)
             .background(fill, in: shape)
