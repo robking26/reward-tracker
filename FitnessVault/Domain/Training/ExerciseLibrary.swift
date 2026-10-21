@@ -131,7 +131,7 @@ enum ExerciseLibrary {
 
         // Core (optional)
         lift("plank", "Plank", .core, "Bodyweight", warm: nil, start: nil, increment: 0, sets: 3, reps: 30, minReps: 20, rest: 45,
-             unit: .seconds, alternatives: ["deadBug"]),
+             unit: .seconds, alternatives: ["deadBug", "cableCrunch"]),
         lift("cableCrunch", "Cable crunch", .core, "Cable", warm: nil, start: nil, increment: 2.5, sets: 3, reps: 12, minReps: 10,
              rest: 45, alternatives: ["deadBug", "plank"]),
 
