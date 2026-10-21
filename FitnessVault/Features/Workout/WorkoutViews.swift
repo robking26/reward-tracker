@@ -38,8 +38,8 @@ enum SessionChoice: String, CaseIterable, Identifiable {
     }
     var subtitle: String {
         switch self {
-        case .upper: "Push and pull"
-        case .lower: "Legs, knee-aware"
+        case .upper: "Push, pull"
+        case .lower: "Legs"
         case .rehab: "Knee only"
         }
     }
@@ -83,7 +83,7 @@ struct WorkoutSetupView: View {
         let plan = self.plan
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.l) {
-                HStack(spacing: Spacing.s) {
+                HStack(alignment: .top, spacing: Spacing.s) {
                     ForEach(SessionChoice.allCases) { option in
                         SessionOptionCard(option: option, selected: option == choice) {
                             withAnimation(.snappy) { choice = option }
@@ -223,12 +223,11 @@ private struct SessionOptionCard: View {
                     Text(option.subtitle)
                         .font(.caption)
                         .foregroundStyle(Palette.textTertiary)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(1)
                 }
             }
             .padding(14)
-            .frame(maxWidth: .infinity, minHeight: 128, alignment: .topLeading)
+            .frame(maxWidth: .infinity, minHeight: 120, alignment: .topLeading)
             .background(selected ? option.tint.opacity(0.14) : Palette.surface, in: shape)
             .overlay { shape.strokeBorder(selected ? option.tint : Color.clear, lineWidth: 2) }
         }
@@ -541,7 +540,7 @@ struct ActiveWorkoutView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .heroCard(tint: Palette.accent, symbol: "forward.fill")
+            .heroCard(tint: Palette.accent)
         } else {
             finishedCard
         }
@@ -590,8 +589,9 @@ struct ActiveWorkoutView: View {
 
     @ViewBuilder
     private var remaining: some View {
-        if let plan = training.plan, training.currentIndex + 1 < plan.exercises.count {
-            let start = training.currentIndex + 1
+        let skip = training.awaitingReady ? 2 : 1
+        if let plan = training.plan, training.currentIndex + skip < plan.exercises.count {
+            let start = training.currentIndex + skip
             VStack(alignment: .leading, spacing: Spacing.s) {
                 SectionTitle(title: "Still to come", detail: "\(plan.exercises.count - start)")
                 VStack(spacing: 0) {

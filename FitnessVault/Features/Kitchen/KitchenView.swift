@@ -5,7 +5,7 @@ import SwiftUI
 enum KitchenSection: String, CaseIterable, Identifiable {
     case plan = "Meals"
     case list = "List"
-    case stock = "In stock"
+    case stock = "Stock"
     case recipes = "Recipes"
     case spending = "Spend"
 
@@ -31,9 +31,8 @@ struct KitchenView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.m) {
                 DinnerCard()
-                PillTabs(items: KitchenSection.allCases, selection: $section, tint: Palette.kitchen,
+                PillTabs(items: KitchenSection.allCases, selection: $section, tint: Palette.kitchen, stacked: true,
                          title: { $0.rawValue }, symbol: { $0.symbol })
-                    .padding(.vertical, Spacing.xxs)
                 Group {
                     switch section {
                     case .plan: MealPlanSection()
@@ -70,6 +69,26 @@ enum MealStyle {
     static func tint(slot: MealSlot, fromFreezer: Bool) -> Color {
         if fromFreezer { return Palette.frost }
         return slot == .lunch ? Palette.fresh : Palette.kitchen
+    }
+
+    /// Dish-name keywords, checked in order, for recipe artwork.
+    private static let dishSymbols: KeyValuePairs<String, String> = [
+        "salmon": "fish.fill", "prawn": "fish.fill", "fish": "fish.fill", "cod": "fish.fill",
+        "oats": "mug.fill", "yoghurt": "mug.fill", "porridge": "mug.fill",
+        "curry": "flame.fill", "chilli": "flame.fill", "tikka": "flame.fill", "fajita": "flame.fill",
+        "tray bake": "oven.fill", "traybake": "oven.fill", "katsu": "oven.fill",
+        "fried rice": "frying.pan.fill", "noodle": "frying.pan.fill", "one-pot": "frying.pan.fill", "orzo": "frying.pan.fill",
+        "wrap": "takeoutbag.and.cup.and.straw.fill", "burrito": "takeoutbag.and.cup.and.straw.fill",
+        "flatbread": "takeoutbag.and.cup.and.straw.fill", "salad": "leaf.fill",
+    ]
+
+    /// Artwork symbol for a recipe: from its name when it says what it is, otherwise from its role.
+    static func symbol(recipe: Recipe) -> String {
+        let title = recipe.title.lowercased()
+        for (keyword, artwork) in dishSymbols where title.contains(keyword) {
+            return artwork
+        }
+        return symbol(role: recipe.role, slowCooker: recipe.usesSlowCooker)
     }
 
     static func symbol(role: MealRole, slowCooker: Bool) -> String {
@@ -344,7 +363,7 @@ struct RecipePickerView: View {
                         } label: {
                             TileRow(title: recipe.title,
                                     subtitle: "\(recipe.prepMinutes + recipe.cookMinutes) min · \(recipe.washUpMinutes) min washing up",
-                                    symbol: MealStyle.symbol(role: recipe.role, slowCooker: recipe.usesSlowCooker),
+                                    symbol: MealStyle.symbol(recipe: recipe),
                                     tint: MealStyle.tint(slot: slot, fromFreezer: false))
                                 .contentShape(Rectangle())
                         }

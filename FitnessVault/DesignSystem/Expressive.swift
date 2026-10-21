@@ -137,19 +137,20 @@ struct HeroCardModifier: ViewModifier {
             .padding(Spacing.l)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
-                ZStack(alignment: .topTrailing) {
-                    Palette.surface
-                    wash
-                    if let symbol {
-                        Image(systemName: symbol)
-                            .font(.system(size: 150, weight: .bold))
-                            .foregroundStyle(tint.opacity(0.10))
-                            .rotationEffect(.degrees(-12))
-                            .offset(x: 34, y: -26)
-                            .accessibilityHidden(true)
+                // The artwork is an overlay, so its size never stretches the card's background.
+                shape.fill(Palette.surface)
+                    .overlay(wash)
+                    .overlay(alignment: .topTrailing) {
+                        if let symbol {
+                            Image(systemName: symbol)
+                                .font(.system(size: 120, weight: .bold))
+                                .foregroundStyle(tint.opacity(0.08))
+                                .rotationEffect(.degrees(-12))
+                                .offset(x: 28, y: -18)
+                                .accessibilityHidden(true)
+                        }
                     }
-                }
-                .clipShape(shape)
+                    .clipShape(shape)
             }
             .overlay {
                 shape.strokeBorder(contrast == .increased ? Palette.border : tint.opacity(0.18), lineWidth: 1)
@@ -237,12 +238,66 @@ struct PillTabs<Item: Hashable & Identifiable>: View {
     let items: [Item]
     @Binding var selection: Item
     var tint: Color = Palette.accent
+    /// Equal-width tabs with the icon above the title, always fitting the width.
+    var stacked = false
     let title: (Item) -> String
     let symbol: (Item) -> String
     @Namespace private var namespace
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
+        if stacked {
+            HStack(spacing: 4) {
+                ForEach(items) { item in
+                    stackedTab(item)
+                }
+            }
+            .padding(4)
+            .background(Palette.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        } else {
+            scrolling
+        }
+    }
+
+    private func select(_ item: Item) {
+        if reduceMotion {
+            selection = item
+        } else {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { selection = item }
+        }
+    }
+
+    private func stackedTab(_ item: Item) -> some View {
+        let selected = item == selection
+        let ink: Color = selected ? Palette.onAccent : Palette.textSecondary
+        return Button {
+            select(item)
+        } label: {
+            VStack(spacing: 4) {
+                Image(systemName: symbol(item))
+                    .font(.system(size: 16, weight: .semibold))
+                Text(title(item))
+                    .font(.caption.weight(.semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .foregroundStyle(ink)
+            .frame(maxWidth: .infinity, minHeight: 56)
+            .background {
+                if selected {
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(tint)
+                        .matchedGeometryEffect(id: "pill", in: namespace)
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title(item))
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private var scrolling: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
                 ForEach(items) { item in
@@ -259,11 +314,7 @@ struct PillTabs<Item: Hashable & Identifiable>: View {
         let selected = item == selection
         let ink: Color = selected ? Palette.onAccent : Palette.textSecondary
         return Button {
-            if reduceMotion {
-                selection = item
-            } else {
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { selection = item }
-            }
+            select(item)
         } label: {
             Label(title(item), systemImage: symbol(item))
                 .font(.subheadline.weight(.semibold))
@@ -515,15 +566,29 @@ struct DishArtwork: View {
         let second = Self.hues[(seed / 7 + 3) % Self.hues.count]
         let gradient = LinearGradient(colors: [first.opacity(0.85), second.opacity(0.55)],
                                       startPoint: .topLeading, endPoint: .bottomTrailing)
-        ZStack {
-            gradient
-            Image(systemName: symbol)
-                .font(.system(size: height * 0.42, weight: .semibold))
-                .foregroundStyle(Palette.background.opacity(0.55))
-                .rotationEffect(.degrees(-8))
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: height)
+        gradient
+            .overlay(alignment: .topLeading) {
+                Circle()
+                    .fill(Color.white.opacity(0.14))
+                    .frame(width: height * 0.9, height: height * 0.9)
+                    .offset(x: -height * 0.3, y: -height * 0.35)
+            }
+            .overlay(alignment: .bottomTrailing) {
+                Circle()
+                    .strokeBorder(Color.white.opacity(0.18), lineWidth: 2)
+                    .frame(width: height * 0.7, height: height * 0.7)
+                    .offset(x: height * 0.2, y: height * 0.25)
+            }
+            .overlay {
+                Image(systemName: symbol)
+                    .font(.system(size: height * 0.38, weight: .semibold))
+                    .foregroundStyle(Palette.background.opacity(0.6))
+                    .rotationEffect(.degrees(-8))
+                    .shadow(color: Color.white.opacity(0.25), radius: 0, x: 0, y: 1)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: height)
+            .clipped()
         .accessibilityHidden(true)
     }
 }

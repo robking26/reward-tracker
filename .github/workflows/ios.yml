@@ -88,4 +88,5 @@ jobs:
           for file in screenshots/*.jpg; do
             name=$(basename "$file" .jpg)
             base64 -i "$file" | tr -d '\n' | fold -w 8000 | sed "s/^/SHOT ${name} /"
+            echo
           done

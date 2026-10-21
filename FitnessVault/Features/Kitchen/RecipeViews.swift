@@ -24,7 +24,6 @@ struct RecipeLibrarySection: View {
                         }
                     }
                 }
-                .scrollClipDisabled()
                 Button {
                     importing = true
                 } label: {
@@ -115,7 +114,7 @@ struct RecipeTile: View {
         let shape = RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
         VStack(alignment: .leading, spacing: 0) {
             ZStack(alignment: .topTrailing) {
-                DishArtwork(title: recipe.title, symbol: MealStyle.symbol(role: recipe.role, slowCooker: recipe.usesSlowCooker),
+                DishArtwork(title: recipe.title, symbol: MealStyle.symbol(recipe: recipe),
                             height: 104)
                 if recipe.favourite {
                     Image(systemName: "star.fill")
@@ -181,7 +180,7 @@ struct RecipeDetailView: View {
         let unmatched = NutritionEstimator.estimate(recipe.ingredients, servings: recipe.servings).unmatched
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.l) {
-                DishArtwork(title: recipe.title, symbol: MealStyle.symbol(role: recipe.role, slowCooker: recipe.usesSlowCooker),
+                DishArtwork(title: recipe.title, symbol: MealStyle.symbol(recipe: recipe),
                             height: 200)
                     .clipShape(RoundedRectangle(cornerRadius: Radius2.hero, style: .continuous))
 
