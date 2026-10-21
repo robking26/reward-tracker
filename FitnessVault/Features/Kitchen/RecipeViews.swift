@@ -7,33 +7,51 @@ import UniformTypeIdentifiers
 struct RecipeLibrarySection: View {
     @Environment(KitchenModel.self) private var kitchen
     @State private var importing = false
+    @State private var filter: RecipeFilter = .all
+
+    private let columns = [GridItem(.flexible(), spacing: Spacing.s), GridItem(.flexible(), spacing: Spacing.s)]
 
     var body: some View {
+        let recipes = kitchen.activeRecipes.filter { filter.includes($0) }
         VStack(alignment: .leading, spacing: Spacing.m) {
-            SmallActionButton(title: "Add a recipe", symbol: "plus") { importing = true }
-            ForEach([MealRole.lunch, .dinner, .both, .breakfast]) { role in
-                let recipes = kitchen.activeRecipes.filter { $0.role == role }
-                if !recipes.isEmpty {
-                    VStack(alignment: .leading, spacing: Spacing.xs) {
-                        Text(role.title + "s")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Palette.textSecondary)
-                        ForEach(recipes, id: \.id) { recipe in
-                            NavigationLink {
-                                RecipeDetailView(recipe: recipe)
-                            } label: {
-                                RecipeRow(recipe: recipe)
+            HStack(spacing: Spacing.s) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(RecipeFilter.allCases) { option in
+                            FilterChip(title: option.title, selected: option == filter) {
+                                withAnimation(.snappy) { filter = option }
                             }
-                            .buttonStyle(.plain)
                         }
                     }
-                    .surface()
+                }
+                .scrollClipDisabled()
+                Button {
+                    importing = true
+                } label: {
+                    RoundIconLabel(symbol: "plus", size: 40, tint: Palette.onAccent, fill: Palette.kitchen)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Add a recipe")
+            }
+            if recipes.isEmpty {
+                Text("No recipes here yet.")
+                    .font(.subheadline)
+                    .foregroundStyle(Palette.textSecondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Spacing.xl)
+            } else {
+                LazyVGrid(columns: columns, spacing: Spacing.s) {
+                    ForEach(recipes, id: \.id) { recipe in
+                        NavigationLink {
+                            RecipeDetailView(recipe: recipe)
+                        } label: {
+                            RecipeTile(recipe: recipe)
+                        }
+                        .buttonStyle(CardButtonStyle())
+                    }
                 }
             }
-            Text("Nutrition is estimated from typical UK values and always shown as an estimate. Imported recipes are kept for your own use.")
-                .font(.caption)
-                .foregroundStyle(Palette.textTertiary)
-                .fixedSize(horizontal: false, vertical: true)
+            Footnote("Nutrition is estimated from typical UK values per portion. Imported recipes are kept for your own use.")
         }
         .sheet(isPresented: $importing) {
             RecipeImportView()
@@ -42,32 +60,110 @@ struct RecipeLibrarySection: View {
     }
 }
 
-struct RecipeRow: View {
+enum RecipeFilter: String, CaseIterable, Identifiable {
+    case all, favourites, dinner, lunch, freezable, quick
+
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .all: "All"
+        case .favourites: "Favourites"
+        case .dinner: "Dinners"
+        case .lunch: "Lunches"
+        case .freezable: "Freezes well"
+        case .quick: "Under 30 min"
+        }
+    }
+
+    func includes(_ recipe: Recipe) -> Bool {
+        switch self {
+        case .all: true
+        case .favourites: recipe.favourite
+        case .dinner: recipe.role.suitsDinner
+        case .lunch: recipe.role.suitsLunch
+        case .freezable: recipe.freezable
+        case .quick: recipe.prepMinutes + recipe.cookMinutes <= 30
+        }
+    }
+}
+
+struct FilterChip: View {
+    let title: String
+    let selected: Bool
+    var tint: Color = Palette.kitchen
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(selected ? Palette.onAccent : Palette.textSecondary)
+                .padding(.horizontal, 14)
+                .frame(minHeight: 40)
+                .background(selected ? tint : Palette.surface, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+/// A recipe card: gradient artwork, title and the two numbers that matter.
+struct RecipeTile: View {
     let recipe: Recipe
 
     var body: some View {
-        HStack(spacing: Spacing.s) {
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: Spacing.xxs) {
-                    Text(recipe.title).foregroundStyle(Palette.textPrimary)
-                    if recipe.favourite {
-                        Image(systemName: "star.fill").font(.caption).foregroundStyle(Palette.accent)
-                    }
+        let shape = RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack(alignment: .topTrailing) {
+                DishArtwork(title: recipe.title, symbol: MealStyle.symbol(role: recipe.role, slowCooker: recipe.usesSlowCooker),
+                            height: 104)
+                if recipe.favourite {
+                    Image(systemName: "star.fill")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(Palette.kitchen)
+                        .frame(width: 28, height: 28)
+                        .background(Palette.background.opacity(0.7), in: Circle())
+                        .padding(Spacing.xs)
                 }
-                Text(summary)
-                    .font(.caption)
-                    .foregroundStyle(recipe.excludedIngredient == nil ? Palette.textTertiary : Palette.warning)
             }
-            Spacer()
-            Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(Palette.textTertiary)
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                Text(recipe.title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Palette.textPrimary)
+                    .lineLimit(2, reservesSpace: true)
+                    .multilineTextAlignment(.leading)
+                if let excluded = recipe.excludedIngredient {
+                    Text("Contains \(excluded)")
+                        .font(.caption)
+                        .foregroundStyle(Palette.warning)
+                        .lineLimit(1)
+                } else {
+                    HStack(spacing: Spacing.xs) {
+                        Label("\(recipe.prepMinutes + recipe.cookMinutes)′", systemImage: "clock")
+                        Label("\(Int(recipe.protein.rounded()))g", systemImage: "bolt.fill")
+                    }
+                    .font(.caption.weight(.semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(Palette.textTertiary)
+                    .labelStyle(CompactLabelStyle())
+                }
+            }
+            .padding(Spacing.s)
         }
-        .frame(minHeight: 44)
-        .contentShape(Rectangle())
+        .background(Palette.surface)
+        .clipShape(shape)
+        .contentShape(shape)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("\(recipe.prepMinutes + recipe.cookMinutes) minutes, \(Int(recipe.protein.rounded())) grams of protein")
     }
+}
 
-    private var summary: String {
-        if let excluded = recipe.excludedIngredient { return "Contains \(excluded), so it's never suggested" }
-        return "≈ \(Int(recipe.kcal.rounded())) kcal · \(Int(recipe.protein.rounded())) g protein · \(recipe.prepMinutes + recipe.cookMinutes) min"
+private struct CompactLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 3) {
+            configuration.icon.font(.caption2.weight(.bold))
+            configuration.title
+        }
     }
 }
 
@@ -82,68 +178,142 @@ struct RecipeDetailView: View {
 
     var body: some View {
         let tweaks = MacroTweaks.suggest(recipe.ingredients, servings: recipe.servings)
-        List {
-            Section {
-                LabeledContent("Per portion", value: "≈ \(Int(recipe.kcal.rounded())) kcal")
-                LabeledContent("Protein", value: "≈ \(Int(recipe.protein.rounded())) g")
-                LabeledContent("Carbs · fat", value: "≈ \(Int(recipe.carbs.rounded())) g · \(Int(recipe.fat.rounded())) g")
-                LabeledContent("How sure", value: recipe.confidence.title)
-                Button("Correct these numbers") { correcting = true }
-            } header: {
-                Text("Nutrition (estimate)")
-            } footer: {
-                let unmatched = NutritionEstimator.estimate(recipe.ingredients, servings: recipe.servings).unmatched
-                if !unmatched.isEmpty && recipe.confidence != .confirmed {
-                    Text("Not counted: \(unmatched.joined(separator: ", ")).")
-                }
-            }
-            Section("Time") {
-                LabeledContent("Prep", value: "\(recipe.prepMinutes) min")
-                LabeledContent("Cook", value: "\(recipe.cookMinutes) min")
-                LabeledContent("Washing up", value: "about \(recipe.washUpMinutes) min")
-                LabeledContent("Serves", value: "\(recipe.servings)")
-            }
-            if !tweaks.isEmpty {
-                Section {
-                    ForEach(tweaks) { tweak in
-                        Button {
-                            if tweak.changesFlavour { pendingTweak = tweak } else { kitchen.apply(tweak, to: recipe) }
-                        } label: {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(tweak.title).foregroundStyle(Palette.textPrimary)
-                                Text(tweak.detail).font(.caption).foregroundStyle(Palette.textTertiary)
-                            }
+        let unmatched = NutritionEstimator.estimate(recipe.ingredients, servings: recipe.servings).unmatched
+        ScrollView {
+            VStack(alignment: .leading, spacing: Spacing.l) {
+                DishArtwork(title: recipe.title, symbol: MealStyle.symbol(role: recipe.role, slowCooker: recipe.usesSlowCooker),
+                            height: 200)
+                    .clipShape(RoundedRectangle(cornerRadius: Radius2.hero, style: .continuous))
+
+                VStack(alignment: .leading, spacing: Spacing.s) {
+                    Text(recipe.title)
+                        .font(.display(30))
+                        .foregroundStyle(Palette.textPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    ChipFlow().callAsFunction {
+                        Chip(text: recipe.role.title, symbol: "fork.knife")
+                        Chip(text: "Serves \(recipe.servings)", symbol: "person.2.fill")
+                        Chip(text: "\(recipe.prepMinutes + recipe.cookMinutes) min", symbol: "clock.fill")
+                        Chip(text: "\(recipe.washUpMinutes) min wash-up", symbol: "drop.fill")
+                        if recipe.freezable {
+                            Chip(text: "Freezes well", symbol: "snowflake", tint: Palette.frost, fill: Palette.frost.opacity(0.14))
+                        }
+                        if recipe.usesSlowCooker {
+                            Chip(text: "Slow cooker", symbol: "flame.fill", tint: Palette.kitchen, fill: Palette.kitchen.opacity(0.14))
                         }
                     }
-                } header: {
-                    Text("Better macros, same dish")
-                } footer: {
-                    Text("Anything that changes the flavour asks first.")
                 }
-            }
-            Section("Ingredients") {
-                ForEach(recipe.ingredients) { ingredient in
-                    Text(ingredient.original)
+
+                VStack(alignment: .leading, spacing: Spacing.s) {
+                    HStack {
+                        Text("Per portion")
+                            .font(.headline)
+                            .foregroundStyle(Palette.textPrimary)
+                        Spacer()
+                        Text(recipe.confidence.title)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Palette.textTertiary)
+                    }
+                    HStack(spacing: Spacing.xs) {
+                        MacroTile(value: Int(recipe.kcal.rounded()), unit: "kcal", tint: Palette.kitchen)
+                        MacroTile(value: Int(recipe.protein.rounded()), unit: "protein", tint: Palette.accent)
+                        MacroTile(value: Int(recipe.carbs.rounded()), unit: "carbs", tint: Palette.frost)
+                        MacroTile(value: Int(recipe.fat.rounded()), unit: "fat", tint: Palette.rose)
+                    }
+                    if !unmatched.isEmpty && recipe.confidence != .confirmed {
+                        Footnote("Not counted: \(unmatched.joined(separator: ", ")).")
+                    }
+                    Button("Correct these numbers") { correcting = true }
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Palette.kitchen)
                 }
-            }
-            Section("Method") {
-                ForEach(Array(recipe.steps.enumerated()), id: \.offset) { item in
-                    Text("\(item.offset + 1). \(item.element)")
+
+                if !tweaks.isEmpty {
+                    VStack(alignment: .leading, spacing: Spacing.xs) {
+                        CardHeader(title: "Better macros, same dish", symbol: "wand.and.stars", tint: Palette.accent,
+                                   subtitle: "Anything that changes the flavour asks first")
+                        ForEach(tweaks) { tweak in
+                            Button {
+                                if tweak.changesFlavour { pendingTweak = tweak } else { kitchen.apply(tweak, to: recipe) }
+                            } label: {
+                                TileRow(title: tweak.title, subtitle: tweak.detail, symbol: "arrow.triangle.swap", tint: Palette.accent) {
+                                    Image(systemName: "plus.circle.fill")
+                                        .font(.title3)
+                                        .foregroundStyle(Palette.accent)
+                                }
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .surface()
                 }
-            }
-            Section {
-                Toggle("Freezes well", isOn: Binding(get: { recipe.freezable }, set: { recipe.freezable = $0; kitchen.save(); kitchen.reload() }))
-                Toggle("Fakeaway", isOn: Binding(get: { recipe.isFakeaway }, set: { recipe.isFakeaway = $0; kitchen.save(); kitchen.reload() }))
-                Picker("Use for", selection: Binding(get: { recipe.role }, set: { recipe.role = $0; kitchen.save(); kitchen.reload() })) {
-                    ForEach(MealRole.allCases) { Text($0.title).tag($0) }
+
+                VStack(alignment: .leading, spacing: Spacing.s) {
+                    CardHeader(title: "Ingredients", symbol: "basket.fill", tint: Palette.fresh,
+                               subtitle: "\(recipe.ingredients.count) items")
+                    ForEach(recipe.ingredients) { ingredient in
+                        HStack(alignment: .firstTextBaseline, spacing: Spacing.s) {
+                            Circle().fill(Palette.fresh).frame(width: 6, height: 6)
+                            Text(ingredient.original)
+                                .font(.subheadline)
+                                .foregroundStyle(Palette.textPrimary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
                 }
-                Button("Remove from the library", role: .destructive) {
+                .surface()
+
+                VStack(alignment: .leading, spacing: Spacing.m) {
+                    CardHeader(title: "Method", symbol: "list.number", tint: Palette.kitchen,
+                               subtitle: "\(recipe.steps.count) steps")
+                    ForEach(recipe.steps.indices, id: \.self) { index in
+                        HStack(alignment: .top, spacing: Spacing.s) {
+                            Text("\(index + 1)")
+                                .font(.footnote.weight(.bold))
+                                .monospacedDigit()
+                                .foregroundStyle(Palette.onAccent)
+                                .frame(width: 26, height: 26)
+                                .background(Palette.kitchen, in: Circle())
+                            Text(recipe.steps[index])
+                                .font(.subheadline)
+                                .foregroundStyle(Palette.textPrimary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+                .surface()
+
+                VStack(spacing: 0) {
+                    Toggle("Freezes well", isOn: Binding(get: { recipe.freezable }, set: { recipe.freezable = $0; kitchen.save(); kitchen.reload() }))
+                        .frame(minHeight: 48)
+                    RowDivider(inset: 0)
+                    Toggle("Fakeaway", isOn: Binding(get: { recipe.isFakeaway }, set: { recipe.isFakeaway = $0; kitchen.save(); kitchen.reload() }))
+                        .frame(minHeight: 48)
+                    RowDivider(inset: 0)
+                    LabeledContent("Use for") {
+                        Picker("Use for", selection: Binding(get: { recipe.role }, set: { recipe.role = $0; kitchen.save(); kitchen.reload() })) {
+                            ForEach(MealRole.allCases) { Text($0.title).tag($0) }
+                        }
+                        .labelsHidden()
+                    }
+                    .frame(minHeight: 48)
+                }
+                .tint(Palette.kitchen)
+                .foregroundStyle(Palette.textPrimary)
+                .surface(padding: Spacing.m)
+
+                Button(role: .destructive) {
                     kitchen.archive(recipe)
                     dismiss()
+                } label: {
+                    Label("Remove from the library", systemImage: "trash")
                 }
+                .buttonStyle(SecondaryButtonStyle(tint: Palette.error))
             }
+            .padding(.horizontal, Spacing.page)
+            .padding(.bottom, Spacing.xl)
         }
-        .scrollContentBackground(.hidden)
         .pageBackground()
         .navigationTitle(recipe.title)
         .navigationBarTitleDisplayMode(.inline)
@@ -153,6 +323,7 @@ struct RecipeDetailView: View {
                     kitchen.toggleFavourite(recipe)
                 } label: {
                     Image(systemName: recipe.favourite ? "star.fill" : "star")
+                        .foregroundStyle(Palette.kitchen)
                 }
                 .accessibilityLabel(recipe.favourite ? "Remove from favourites" : "Add to favourites")
             }
@@ -169,6 +340,31 @@ struct RecipeDetailView: View {
                 .presentationDetents([.medium])
                 .presentationBackground(Palette.background)
         }
+    }
+}
+
+/// One macro: a big rounded number over its name, in a tinted tile.
+private struct MacroTile: View {
+    let value: Int
+    let unit: String
+    let tint: Color
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text("\(value)")
+                .font(.display(22))
+                .monospacedDigit()
+                .foregroundStyle(Palette.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            Text(unit == "kcal" ? unit : "g \(unit)")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(tint)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, minHeight: 64)
+        .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+        .accessibilityElement(children: .combine)
     }
 }
 

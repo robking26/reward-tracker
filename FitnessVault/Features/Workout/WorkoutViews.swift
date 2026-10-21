@@ -33,7 +33,28 @@ enum SessionChoice: String, CaseIterable, Identifiable {
         switch self {
         case .upper: "Upper"
         case .lower: "Lower"
-        case .rehab: "Rehab only"
+        case .rehab: "Rehab"
+        }
+    }
+    var subtitle: String {
+        switch self {
+        case .upper: "Push and pull"
+        case .lower: "Legs, knee-aware"
+        case .rehab: "Knee only"
+        }
+    }
+    var symbol: String {
+        switch self {
+        case .upper: "figure.strengthtraining.traditional"
+        case .lower: "figure.step.training"
+        case .rehab: "figure.cooldown"
+        }
+    }
+    var tint: Color {
+        switch self {
+        case .upper: Palette.accent
+        case .lower: Palette.frost
+        case .rehab: Palette.rehab
         }
     }
 }
@@ -48,6 +69,8 @@ struct WorkoutSetupView: View {
     @State private var rehabFirst = true
     @State private var loaded = false
 
+    private static let durations = [30, 45, 60, 75, 90]
+
     private var plan: WorkoutPlan {
         switch choice {
         case .rehab: training.makeRehabPlan()
@@ -58,56 +81,95 @@ struct WorkoutSetupView: View {
 
     var body: some View {
         let plan = self.plan
-        List {
-            Section {
-                Picker("Session", selection: $choice) {
-                    ForEach(SessionChoice.allCases) { Text($0.title).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                if choice != .rehab {
-                    Stepper("\(minutes) minutes in the gym", value: $minutes, in: 30...90, step: 5)
-                    Toggle(isOn: $rehabFirst) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Knee rehab first")
-                            Text("Recommended: straight after your warm-up, so it doesn't get skipped at the end.")
-                                .font(.caption)
-                                .foregroundStyle(Palette.textTertiary)
+        ScrollView {
+            VStack(alignment: .leading, spacing: Spacing.l) {
+                HStack(spacing: Spacing.s) {
+                    ForEach(SessionChoice.allCases) { option in
+                        SessionOptionCard(option: option, selected: option == choice) {
+                            withAnimation(.snappy) { choice = option }
                         }
                     }
                 }
-            }
-            if training.kneeStatus != .settled {
-                Section {
-                    Label("Knee: \(training.kneeStatus.title.lowercased()). Lower-body loads are held and heavy knee work is swapped.",
-                          systemImage: "exclamationmark.triangle")
-                        .font(.footnote)
-                        .foregroundStyle(Palette.warning)
+
+                if choice != .rehab {
+                    VStack(alignment: .leading, spacing: Spacing.s) {
+                        Text("Time in the gym")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Palette.textSecondary)
+                        HStack(spacing: 6) {
+                            ForEach(Self.durations, id: \.self) { value in
+                                DurationChip(minutes: value, selected: value == minutes, tint: choice.tint) {
+                                    withAnimation(.snappy) { minutes = value }
+                                }
+                            }
+                        }
+                        Toggle(isOn: $rehabFirst) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Knee rehab first")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(Palette.textPrimary)
+                                Text("Straight after the warm-up, so it doesn't get skipped.")
+                                    .font(.caption)
+                                    .foregroundStyle(Palette.textTertiary)
+                            }
+                        }
+                        .tint(Palette.rehab)
+                        .surface()
+                    }
+                }
+
+                if training.kneeStatus != .settled {
+                    HStack(alignment: .top, spacing: Spacing.s) {
+                        IconTile(symbol: "exclamationmark.triangle.fill", tint: Palette.warning, size: 34)
+                        Text("Knee \(training.kneeStatus.title.lowercased()): lower-body loads are held and heavy knee work is swapped.")
+                            .font(.footnote)
+                            .foregroundStyle(Palette.textPrimary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .surface(fill: Palette.warning.opacity(0.12))
+                }
+
+                VStack(alignment: .leading, spacing: Spacing.m) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(plan.title)
+                            .font(.display(30))
+                            .foregroundStyle(Palette.textPrimary)
+                        Spacer()
+                        Chip(text: "≈ \(plan.estimatedMinutes) min", symbol: "clock", tint: choice.tint, fill: choice.tint.opacity(0.14))
+                    }
+                    VStack(spacing: 0) {
+                        ForEach(plan.exercises.indices, id: \.self) { index in
+                            TimelineExerciseRow(number: index + 1, item: plan.exercises[index],
+                                                isLast: index == plan.exercises.count - 1, tint: choice.tint)
+                        }
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    ForEach(plan.notes, id: \.self) { note in
+                        Footnote(note)
+                    }
+                    Footnote("Weights marked \"check\" are starting estimates. Log what you actually lift; that's what progression uses.")
                 }
             }
-            Section("\(plan.title) · about \(plan.estimatedMinutes) min") {
-                ForEach(plan.exercises) { item in
-                    PlannedRow(item: item)
+            .padding(.horizontal, Spacing.page)
+            .padding(.top, Spacing.s)
+            .padding(.bottom, Spacing.xl)
+        }
+        .safeAreaInset(edge: .bottom) {
+            BottomAction {
+                Button {
+                    training.start(plan)
+                } label: {
+                    Label("Start \(plan.title)", systemImage: "play.fill")
                 }
-            }
-            if !plan.notes.isEmpty {
-                Section {
-                    ForEach(plan.notes, id: \.self) { Text($0).font(.footnote).foregroundStyle(Palette.textSecondary) }
-                }
-            }
-            Section {
-                Text("Weights marked \"check\" are starting estimates from your brief or a new exercise. Log what you actually lift; that's what progression uses.")
-                    .font(.footnote)
-                    .foregroundStyle(Palette.textTertiary)
+                .buttonStyle(PrimaryButtonStyle(tint: choice.tint))
             }
         }
-        .scrollContentBackground(.hidden)
-        .navigationTitle("Workout")
+        .navigationTitle("New workout")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button("Cancel", action: onCancel) }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Start") { training.start(plan) }.fontWeight(.semibold)
-            }
         }
         .onChange(of: choice) { _, new in
             guard new != .rehab else { return }
@@ -127,41 +189,142 @@ struct WorkoutSetupView: View {
     }
 }
 
-struct PlannedRow: View {
-    let item: PlannedExercise
+/// The pinned bottom action, on a fade so content scrolls underneath.
+struct BottomAction<Content: View>: View {
+    @ViewBuilder var content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            HStack {
-                Text(item.exercise?.name ?? item.exerciseID)
-                    .foregroundStyle(Palette.textPrimary)
-                if item.isRehab {
-                    Text("Rehab").font(.caption2.weight(.semibold)).foregroundStyle(Palette.accent)
-                }
-                if item.isOptional {
-                    Text("Optional").font(.caption2).foregroundStyle(Palette.textTertiary)
+        content
+            .padding(.horizontal, Spacing.page)
+            .padding(.top, Spacing.l)
+            .padding(.bottom, Spacing.xs)
+            .background {
+                LinearGradient(colors: [Palette.background.opacity(0), Palette.background, Palette.background],
+                               startPoint: .top, endPoint: .bottom)
+                    .ignoresSafeArea()
+            }
+    }
+}
+
+private struct SessionOptionCard: View {
+    let option: SessionChoice
+    let selected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: Spacing.m) {
+                IconTile(symbol: option.symbol, tint: option.tint, size: 40, filled: selected)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(option.title)
+                        .font(.headline)
+                        .foregroundStyle(Palette.textPrimary)
+                    Text(option.subtitle)
+                        .font(.caption)
+                        .foregroundStyle(Palette.textTertiary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            Text(prescription)
-                .font(.caption)
+            .padding(14)
+            .frame(maxWidth: .infinity, minHeight: 128, alignment: .topLeading)
+            .background(selected ? option.tint.opacity(0.14) : Palette.surface, in: shape)
+            .overlay { shape.strokeBorder(selected ? option.tint : Color.clear, lineWidth: 2) }
+        }
+        .buttonStyle(CardButtonStyle())
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+private struct DurationChip: View {
+    let minutes: Int
+    let selected: Bool
+    let tint: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text("\(minutes)")
+                .font(.subheadline.weight(.bold))
                 .monospacedDigit()
-                .foregroundStyle(Palette.textSecondary)
-            if let note = item.note {
-                Text(note).font(.caption2).foregroundStyle(Palette.textTertiary)
+                .foregroundStyle(selected ? Palette.onAccent : Palette.textPrimary)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .background(selected ? tint : Palette.surface, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(minutes) minutes")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+/// A numbered exercise on a vertical timeline.
+private struct TimelineExerciseRow: View {
+    let number: Int
+    let item: PlannedExercise
+    let isLast: Bool
+    let tint: Color
+
+    var body: some View {
+        let rowTint: Color = item.isRehab ? Palette.rehab : tint
+        HStack(alignment: .top, spacing: Spacing.s) {
+            VStack(spacing: 0) {
+                Text("\(number)")
+                    .font(.footnote.weight(.bold))
+                    .monospacedDigit()
+                    .foregroundStyle(rowTint)
+                    .frame(width: 30, height: 30)
+                    .background(rowTint.opacity(0.16), in: Circle())
+                if !isLast {
+                    Rectangle()
+                        .fill(Palette.elevated)
+                        .frame(width: 2)
+                        .frame(maxHeight: .infinity)
+                }
             }
+            VStack(alignment: .leading, spacing: 6) {
+                Text(item.exercise?.name ?? item.exerciseID)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Palette.textPrimary)
+                PrescriptionChips(item: item)
+                if let note = item.note {
+                    Text(note)
+                        .font(.caption)
+                        .foregroundStyle(Palette.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(.bottom, isLast ? 0 : Spacing.m)
+            Spacer(minLength: 0)
         }
         .accessibilityElement(children: .combine)
     }
+}
 
-    private var prescription: String {
+/// Sets × reps, weight and tags as chips.
+struct PrescriptionChips: View {
+    let item: PlannedExercise
+
+    var body: some View {
         let unit = item.exercise?.unit.label ?? "reps"
-        var text = "\(item.sets) × \(item.targetReps) \(unit)"
-        if let kg = item.weightKg {
-            text += " · \(WeightFormat.text(kg, perSide: item.exercise?.perSide ?? false))"
-            if item.isValidation { text += " (check)" }
+        ChipFlow().callAsFunction {
+            Chip(text: "\(item.sets) × \(item.targetReps) \(unit)")
+            if let kg = item.weightKg {
+                Chip(text: WeightFormat.text(kg, perSide: item.exercise?.perSide ?? false), symbol: "scalemass")
+            }
+            if item.isValidation {
+                Chip(text: "Check weight", tint: Palette.warning, fill: Palette.warning.opacity(0.14))
+            }
+            if item.isRehab {
+                Chip(text: "Rehab", tint: Palette.rehab, fill: Palette.rehab.opacity(0.14))
+            }
+            if item.supersetWithNext {
+                Chip(text: "Superset", symbol: "link", tint: Palette.frost, fill: Palette.frost.opacity(0.14))
+            }
+            if item.isOptional {
+                Chip(text: "Optional", tint: Palette.textTertiary)
+            }
         }
-        if item.supersetWithNext { text += " · superset" }
-        return text
     }
 }
 
@@ -184,34 +347,43 @@ struct ActiveWorkoutView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.l) {
+            VStack(alignment: .leading, spacing: Spacing.m) {
+                progressHeader
                 if let advice = training.lastAdvice {
-                    NoticeBanner(symbol: "cross.case", title: "Knee", message: advice)
+                    HStack(alignment: .top, spacing: Spacing.s) {
+                        IconTile(symbol: "cross.case.fill", tint: Palette.rehab, size: 34)
+                        Text(advice)
+                            .font(.footnote)
+                            .foregroundStyle(Palette.textPrimary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .surface(fill: Palette.rehab.opacity(0.12))
                 }
                 if let current = training.current {
+                    if training.isResting {
+                        RestRing(endsAt: training.restEndsAt ?? .now, totalSeconds: current.restSeconds) { training.skipRest() }
+                    }
                     if training.awaitingReady {
                         nextUp
                     } else {
                         exerciseCard(current)
                     }
-                    restBanner
                 } else {
-                    VStack(alignment: .leading, spacing: Spacing.s) {
-                        Text("That's everything").font(.title2.weight(.semibold)).foregroundStyle(Palette.textPrimary)
-                        Text("Good session. End it to save.").foregroundStyle(Palette.textSecondary)
-                    }
-                    .surface(radius: Radius.hero, padding: Spacing.l)
+                    finishedCard
                 }
                 remaining
             }
             .padding(.horizontal, Spacing.page)
+            .padding(.top, Spacing.s)
             .padding(.bottom, Spacing.xl)
         }
+        .safeAreaInset(edge: .bottom) { bottomAction }
         .navigationTitle(training.plan?.title ?? "Workout")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button("End") { confirmEnd = true }
+                    .foregroundStyle(Palette.error)
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
@@ -256,136 +428,176 @@ struct ActiveWorkoutView: View {
         .sensoryFeedback(.success, trigger: logged)
     }
 
+    private var progressHeader: some View {
+        let total = training.plan?.exercises.count ?? 0
+        let index = min(training.currentIndex + 1, max(total, 1))
+        return VStack(alignment: .leading, spacing: Spacing.xs) {
+            SegmentedProgress(total: total, done: training.currentIndex)
+            Text(training.current == nil ? "All \(total) exercises done" : "Exercise \(index) of \(total)")
+                .font(.caption.weight(.semibold))
+                .monospacedDigit()
+                .foregroundStyle(Palette.textTertiary)
+        }
+    }
+
     private func exerciseCard(_ item: PlannedExercise) -> some View {
         let exercise = item.exercise
-        let step = (exercise?.incrementKg ?? 0) > 0 ? exercise!.incrementKg : 1
+        let step = (exercise?.incrementKg ?? 0) > 0 ? (exercise?.incrementKg ?? 1) : 1
+        let perSide = exercise?.perSide ?? false
+        let tint: Color = item.isRehab ? Palette.rehab : Palette.accent
+        let done = training.setsDone
         return VStack(alignment: .leading, spacing: Spacing.m) {
             HStack {
-                Text(item.isRehab ? "Rehab" : (exercise?.equipment ?? ""))
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(item.isRehab ? Palette.accent : Palette.textSecondary)
+                Chip(text: item.isRehab ? "Rehab" : (exercise?.equipment ?? "Exercise"),
+                     symbol: item.isRehab ? "cross.case.fill" : "dumbbell.fill", tint: tint, fill: tint.opacity(0.15))
                 Spacer()
-                Text("Set \(min(training.setsDone + 1, item.sets)) of \(item.sets)")
-                    .font(.subheadline.weight(.medium))
+                SetDots(total: item.sets, done: done, tint: tint)
+            }
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                Text(exercise?.name ?? item.exerciseID)
+                    .font(.display(30))
+                    .foregroundStyle(Palette.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("Set \(min(done + 1, item.sets)) of \(item.sets)")
+                    .font(.subheadline.weight(.semibold))
                     .monospacedDigit()
-                    .foregroundStyle(Palette.textSecondary)
-            }
-            Text(exercise?.name ?? item.exerciseID)
-                .font(.title.weight(.semibold))
-                .foregroundStyle(Palette.textPrimary)
-            if let cue = exercise?.cue {
-                Text(cue).font(.subheadline).foregroundStyle(Palette.textSecondary)
-            }
-            if let note = item.note {
-                Text(note).font(.footnote).foregroundStyle(Palette.textTertiary)
+                    .foregroundStyle(tint)
+                if let cue = exercise?.cue {
+                    Text(cue)
+                        .font(.subheadline)
+                        .foregroundStyle(Palette.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                if let note = item.note {
+                    Text(note)
+                        .font(.footnote)
+                        .foregroundStyle(Palette.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
 
             if training.needsWarmUp, let warm = item.warmUpKg {
-                HStack {
-                    Text("Warm-up: \(WeightFormat.text(warm, perSide: exercise?.perSide ?? false)) × \(item.targetReps)")
-                        .font(.subheadline)
-                        .foregroundStyle(Palette.textPrimary)
+                HStack(spacing: Spacing.s) {
+                    IconTile(symbol: "flame.fill", tint: Palette.kitchen, size: 36)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Warm-up set")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Palette.textPrimary)
+                        Text("\(WeightFormat.text(warm, perSide: perSide)) × \(item.targetReps)")
+                            .font(.footnote)
+                            .monospacedDigit()
+                            .foregroundStyle(Palette.textSecondary)
+                    }
                     Spacer()
                     Button("Done") { training.logWarmUp(weight: warm, reps: item.targetReps) }
-                        .buttonStyle(.bordered)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Palette.kitchen)
+                        .padding(.horizontal, Spacing.m)
+                        .frame(minHeight: 40)
+                        .background(Palette.kitchen.opacity(0.15), in: Capsule())
                 }
                 .padding(Spacing.s)
-                .background(Palette.elevated, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+                .background(Palette.inset, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
             }
 
-            if exercise?.usesWeight ?? false {
-                Stepper(value: $weight, in: 0...400, step: step) {
-                    Text(weight > 0 ? WeightFormat.text(weight, perSide: exercise?.perSide ?? false) : "Set the weight")
-                        .font(.title3.weight(.semibold))
-                        .monospacedDigit()
-                        .foregroundStyle(Palette.textPrimary)
+            HStack(spacing: Spacing.s) {
+                if exercise?.usesWeight ?? false {
+                    NumberStepper(title: perSide ? "kg each" : "kg", value: weight > 0 ? WeightText.number(weight) : "–", tint: tint,
+                                  onMinus: { weight = max(0, weight - step) }, onPlus: { weight = min(400, weight + step) })
                 }
+                NumberStepper(title: exercise?.unit.label ?? "reps", value: "\(reps)", tint: tint,
+                              onMinus: { reps = max(0, reps - 1) }, onPlus: { reps = min(100, reps + 1) })
             }
-            Stepper(value: $reps, in: 0...100) {
-                Text("\(reps) \(exercise?.unit.label ?? "reps")")
-                    .font(.title3.weight(.semibold))
-                    .monospacedDigit()
-                    .foregroundStyle(Palette.textPrimary)
-            }
-
-            Button {
-                training.logSet(weight: (exercise?.usesWeight ?? false) && weight > 0 ? weight : nil, reps: reps)
-                logged += 1
-            } label: {
-                Text("Log set")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity, minHeight: 50)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(Palette.accent)
-            .foregroundStyle(Palette.onAccent)
         }
-        .surface(radius: Radius.hero, padding: Spacing.l)
+        .heroCard(tint: tint)
     }
 
-    @ViewBuilder
-    private var restBanner: some View {
-        if let end = training.restEndsAt, end > Date.now {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Rest").font(.subheadline.weight(.semibold)).foregroundStyle(Palette.textSecondary)
-                    Text(timerInterval: Date.now...end, countsDown: true)
-                        .font(.system(.largeTitle, design: .rounded).weight(.medium))
-                        .dynamicTypeSize(...DynamicTypeSize.accessibility2)
-                        .monospacedDigit()
-                        .foregroundStyle(Palette.textPrimary)
-                }
-                Spacer()
-                Button("Skip") { training.skipRest() }.buttonStyle(.bordered)
-            }
-            .surface()
-            .accessibilityElement(children: .combine)
+    private var finishedCard: some View {
+        VStack(alignment: .leading, spacing: Spacing.s) {
+            IconTile(symbol: "trophy.fill", tint: Palette.accent, size: 48, filled: true)
+            Text("That's everything")
+                .font(.display(30))
+                .foregroundStyle(Palette.textPrimary)
+            Text("Good session. End it to save.")
+                .foregroundStyle(Palette.textSecondary)
         }
+        .heroCard(tint: Palette.accent, symbol: "checkmark.seal.fill")
     }
 
     @ViewBuilder
     private var nextUp: some View {
-        VStack(alignment: .leading, spacing: Spacing.s) {
-            if let next = training.upNext {
-                Text("Next up").font(.subheadline.weight(.semibold)).foregroundStyle(Palette.textSecondary)
+        if let next = training.upNext {
+            VStack(alignment: .leading, spacing: Spacing.m) {
+                Chip(text: "NEXT UP", symbol: "arrow.right", tint: Palette.onAccent, fill: Palette.accent)
                 Text(next.exercise?.name ?? next.exerciseID)
-                    .font(.title.weight(.semibold))
+                    .font(.display(30))
                     .foregroundStyle(Palette.textPrimary)
-                PlannedRow(item: next)
-                Button {
-                    training.ready()
-                } label: {
-                    Text("Ready")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity, minHeight: 50)
+                    .fixedSize(horizontal: false, vertical: true)
+                PrescriptionChips(item: next)
+                if let cue = next.exercise?.cue {
+                    Text(cue)
+                        .font(.subheadline)
+                        .foregroundStyle(Palette.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(Palette.accent)
-                .foregroundStyle(Palette.onAccent)
-            } else {
-                Text("That's everything").font(.title2.weight(.semibold)).foregroundStyle(Palette.textPrimary)
+            }
+            .heroCard(tint: Palette.accent, symbol: "forward.fill")
+        } else {
+            finishedCard
+        }
+    }
+
+    @ViewBuilder
+    private var bottomAction: some View {
+        if let current = training.current {
+            BottomAction {
+                if training.awaitingReady && training.upNext != nil {
+                    Button {
+                        training.ready()
+                    } label: {
+                        Label("Ready", systemImage: "arrow.right")
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                } else if training.awaitingReady {
+                    Button {
+                        onEnd(training.end())
+                    } label: {
+                        Label("End and save", systemImage: "checkmark")
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                } else {
+                    Button {
+                        let usesWeight = current.exercise?.usesWeight ?? false
+                        training.logSet(weight: usesWeight && weight > 0 ? weight : nil, reps: reps)
+                        logged += 1
+                    } label: {
+                        Label("Log set", systemImage: "checkmark")
+                    }
+                    .buttonStyle(PrimaryButtonStyle(tint: current.isRehab ? Palette.rehab : Palette.accent))
+                }
+            }
+        } else {
+            BottomAction {
                 Button {
                     onEnd(training.end())
                 } label: {
-                    Text("End and save").font(.headline).frame(maxWidth: .infinity, minHeight: 50)
+                    Label("End and save", systemImage: "checkmark")
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(Palette.accent)
-                .foregroundStyle(Palette.onAccent)
+                .buttonStyle(PrimaryButtonStyle())
             }
         }
-        .surface(radius: Radius.hero, padding: Spacing.l)
     }
 
     @ViewBuilder
     private var remaining: some View {
         if let plan = training.plan, training.currentIndex + 1 < plan.exercises.count {
+            let start = training.currentIndex + 1
             VStack(alignment: .leading, spacing: Spacing.s) {
-                SectionHeader("Still to come")
-                VStack(spacing: Spacing.xs) {
-                    ForEach(Array(plan.exercises.dropFirst(training.currentIndex + 1))) { item in
-                        PlannedRow(item: item)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                SectionTitle(title: "Still to come", detail: "\(plan.exercises.count - start)")
+                VStack(spacing: 0) {
+                    ForEach(start..<plan.exercises.count, id: \.self) { index in
+                        TimelineExerciseRow(number: index + 1, item: plan.exercises[index],
+                                            isLast: index == plan.exercises.count - 1, tint: Palette.textSecondary)
                     }
                 }
                 .surface()
@@ -397,6 +609,125 @@ struct ActiveWorkoutView: View {
         guard let item = training.current else { return }
         weight = item.weightKg ?? 0
         reps = item.targetReps
+    }
+}
+
+enum WeightText {
+    /// "22.5" or "20": the number alone, for big steppers.
+    static func number(_ kg: Double) -> String {
+        kg.truncatingRemainder(dividingBy: 1) == 0 ? String(Int(kg)) : String(format: "%.1f", kg)
+    }
+}
+
+/// A big number between round minus and plus buttons.
+private struct NumberStepper: View {
+    let title: String
+    let value: String
+    let tint: Color
+    let onMinus: () -> Void
+    let onPlus: () -> Void
+
+    var body: some View {
+        VStack(spacing: Spacing.xs) {
+            Text(value)
+                .font(.display(40))
+                .monospacedDigit()
+                .foregroundStyle(Palette.textPrimary)
+                .contentTransition(.numericText())
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Palette.textTertiary)
+                .lineLimit(1)
+            HStack(spacing: Spacing.s) {
+                Button(action: onMinus) { RoundIconLabel(symbol: "minus", size: 44) }
+                    .accessibilityLabel("Less")
+                Button(action: onPlus) { RoundIconLabel(symbol: "plus", size: 44, tint: Palette.onAccent, fill: tint) }
+                    .accessibilityLabel("More")
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.vertical, Spacing.m)
+        .frame(maxWidth: .infinity)
+        .background(Palette.inset, in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("\(value) \(title)")
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: onPlus()
+            case .decrement: onMinus()
+            @unknown default: break
+            }
+        }
+    }
+}
+
+/// One dot per set: filled once logged.
+private struct SetDots: View {
+    let total: Int
+    let done: Int
+    let tint: Color
+
+    var body: some View {
+        HStack(spacing: 5) {
+            ForEach(0..<max(total, 1), id: \.self) { index in
+                Circle()
+                    .fill(index < done ? tint : Palette.elevated)
+                    .frame(width: 10, height: 10)
+            }
+        }
+        .accessibilityElement()
+        .accessibilityLabel("\(done) of \(total) sets done")
+    }
+}
+
+/// The rest countdown as a ring that empties, with Skip.
+private struct RestRing: View {
+    let endsAt: Date
+    let totalSeconds: Int
+    let skip: () -> Void
+
+    var body: some View {
+        HStack(spacing: Spacing.l) {
+            TimelineView(.periodic(from: .now, by: 0.5)) { context in
+                let left = max(0, endsAt.timeIntervalSince(context.date))
+                let fraction = totalSeconds > 0 ? left / Double(totalSeconds) : 0
+                ZStack {
+                    Circle().stroke(Palette.accent.opacity(0.15), lineWidth: 10)
+                    Circle()
+                        .trim(from: 0, to: min(1, fraction))
+                        .stroke(Palette.accent, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                        .animation(.linear(duration: 0.5), value: fraction)
+                    Text(timerInterval: Date.now...max(endsAt, Date.now), countsDown: true)
+                        .font(.display(26))
+                        .monospacedDigit()
+                        .foregroundStyle(Palette.textPrimary)
+                        .multilineTextAlignment(.center)
+                        .frame(width: 92)
+                }
+                .frame(width: 120, height: 120)
+            }
+            VStack(alignment: .leading, spacing: Spacing.s) {
+                Text("Rest")
+                    .font(.display(26))
+                    .foregroundStyle(Palette.textPrimary)
+                Text("Breathe. Next set when the ring empties.")
+                    .font(.footnote)
+                    .foregroundStyle(Palette.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button("Skip rest", action: skip)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Palette.accent)
+                    .padding(.horizontal, Spacing.m)
+                    .frame(minHeight: 40)
+                    .background(Palette.accent.opacity(0.15), in: Capsule())
+            }
+            Spacer(minLength: 0)
+        }
+        .surface(radius: Radius2.hero, padding: Spacing.l)
+        .accessibilityElement(children: .combine)
     }
 }
 

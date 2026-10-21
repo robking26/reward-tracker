@@ -49,7 +49,8 @@ jobs:
         run: |
           # Progress is streamed so a slow build or a stuck test is visible, and each test has a time limit.
           set +e
-          xcodebuild test \
+          # TEST_RUNNER_ variables reach the test process: ScreenshotTests renders the Gym and Kitchen.
+          TEST_RUNNER_SCREENSHOTS=1 xcodebuild test \
             -project FitnessVault.xcodeproj \
             -scheme FitnessVault \
             -destination "id=${{ steps.simulator.outputs.udid }}" \
@@ -58,7 +59,6 @@ jobs:
             -default-test-execution-time-allowance 60 \
             -maximum-test-execution-time-allowance 120 \
             CODE_SIGNING_ALLOWED=NO \
-            TEST_RUNNER_SCREENSHOTS=1 \
             OTHER_SWIFT_FLAGS='$(inherited) -Xfrontend -solver-expression-time-threshold=60' \
             2>&1 | tee xcodebuild.log \
             | grep --line-buffered -E "Test Suite|Test Case .* (passed|failed|started)|Executed|\*\* (BUILD|TEST)|error:|Testing started" \

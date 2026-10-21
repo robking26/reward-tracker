@@ -10,6 +10,71 @@ struct ChartPoint: Identifiable, Hashable {
     var id: Date { date }
 }
 
+/// Quiet chart axes: tertiary labels, faint grid lines, no axis line.
+private struct QuietAxes: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .chartXAxis {
+                AxisMarks(values: .automatic(desiredCount: 4)) { _ in
+                    AxisValueLabel().foregroundStyle(Palette.textTertiary)
+                }
+            }
+            .chartYAxis {
+                AxisMarks(position: .trailing, values: .automatic(desiredCount: 3)) { _ in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3])).foregroundStyle(Palette.border)
+                    AxisValueLabel().foregroundStyle(Palette.textTertiary)
+                }
+            }
+    }
+}
+
+private extension View {
+    func quietAxes() -> some View { modifier(QuietAxes()) }
+}
+
+/// A big number with a smaller unit and a caption, used at the top of progress cards.
+private struct HeadlineValue: View {
+    let value: String
+    var unit: String = ""
+    var caption: String? = nil
+    var captionTint: Color = Palette.textSecondary
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(value)
+                    .font(.display(32))
+                    .monospacedDigit()
+                    .foregroundStyle(Palette.textPrimary)
+                if !unit.isEmpty {
+                    Text(unit)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Palette.textSecondary)
+                }
+            }
+            if let caption {
+                Text(caption)
+                    .font(.footnote.weight(.medium))
+                    .monospacedDigit()
+                    .foregroundStyle(captionTint)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// Text for a card with nothing to show yet.
+private struct EmptyCardText: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .font(.subheadline)
+            .foregroundStyle(Palette.textSecondary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
 // MARK: - Body (O-A): trends, not truths
 
 struct BodyTrendCard: View {
@@ -32,54 +97,43 @@ struct BodyTrendCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.s) {
-            Text("Body")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Palette.textSecondary)
+        let trend = self.trend
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            CardHeader(title: "Body", symbol: "figure.arms.open", tint: Palette.rose, subtitle: "Trend, not a verdict")
             if weights.isEmpty {
-                Text("No weigh-ins in Apple Health yet. Smart scales or the Health app both work. Readings are shown as a trend, not a verdict.")
-                    .font(.subheadline)
-                    .foregroundStyle(Palette.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                EmptyCardText(text: "No weigh-ins in Apple Health yet. Smart scales or the Health app both work.")
             } else {
                 if let latest = trend.last {
-                    HStack(alignment: .firstTextBaseline, spacing: Spacing.xs) {
-                        Text(String(format: "%.1f kg", latest.value))
-                            .font(.title2.weight(.semibold))
-                            .monospacedDigit()
-                            .foregroundStyle(Palette.textPrimary)
-                        if let first = trend.first, trend.count > 7 {
-                            let change = latest.value - first.value
-                            Text(String(format: "%+.1f kg trend", change))
-                                .font(.subheadline)
-                                .monospacedDigit()
-                                .foregroundStyle(Palette.textSecondary)
-                        }
-                    }
+                    HeadlineValue(value: String(format: "%.1f", latest.value), unit: "kg", caption: changeText(trend))
                 }
                 Chart {
                     ForEach(weights) { point in
                         PointMark(x: .value("Date", point.date), y: .value("kg", point.value))
                             .foregroundStyle(Palette.textTertiary.opacity(0.5))
-                            .symbolSize(12)
+                            .symbolSize(10)
                     }
                     ForEach(trend) { point in
                         LineMark(x: .value("Date", point.date), y: .value("Trend", point.value))
-                            .foregroundStyle(Palette.accent)
+                            .foregroundStyle(Palette.rose)
+                            .lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round))
                             .interpolationMethod(.catmullRom)
                     }
                 }
                 .chartYScale(domain: .automatic(includesZero: false))
+                .quietAxes()
                 .frame(height: 150)
                 .accessibilityLabel("Weight trend")
                 if let fat = fats.last {
-                    Text(String(format: "Body fat estimate: %.1f%%", fat.value))
-                        .font(.footnote)
-                        .foregroundStyle(Palette.textSecondary)
+                    Chip(text: String(format: "Body fat ≈ %.1f%%", fat.value), symbol: "percent")
                 }
             }
         }
         .surface()
+    }
+
+    private func changeText(_ trend: [ChartPoint]) -> String? {
+        guard let first = trend.first, let last = trend.last, trend.count > 7 else { return nil }
+        return String(format: "%+.1f kg over 90 days", last.value - first.value)
     }
 }
 
@@ -96,40 +150,56 @@ struct StrengthCard: View {
         let records = training.records()
         let points = records.filter { $0.exerciseID == selected }
             .compactMap { record in record.topWeight.map { ChartPoint(date: record.date, value: $0) } }
-        VStack(alignment: .leading, spacing: Spacing.s) {
-            HStack {
-                Text("Strength")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Palette.textSecondary)
-                Spacer()
-                Picker("Lift", selection: $selected) {
-                    ForEach(Self.lifts, id: \.self) { id in
-                        Text(ExerciseLibrary.exercise(id)?.name ?? id).tag(id)
+        let perSide = ExerciseLibrary.exercise(selected)?.perSide ?? false
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            CardHeader(title: "Strength", symbol: "chart.line.uptrend.xyaxis", tint: Palette.accent) {
+                Menu {
+                    Picker("Lift", selection: $selected) {
+                        ForEach(Self.lifts, id: \.self) { id in
+                            Text(ExerciseLibrary.exercise(id)?.name ?? id).tag(id)
+                        }
                     }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(ExerciseLibrary.exercise(selected)?.name ?? selected)
+                            .lineLimit(1)
+                        Image(systemName: "chevron.up.chevron.down").font(.caption2.weight(.bold))
+                    }
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Palette.textPrimary)
+                    .padding(.horizontal, 12)
+                    .frame(minHeight: 34)
+                    .background(Palette.elevated, in: Capsule())
                 }
-                .pickerStyle(.menu)
             }
             if points.isEmpty {
-                Text("Log a session with this lift and its working weight shows here.")
-                    .font(.subheadline)
-                    .foregroundStyle(Palette.textSecondary)
+                EmptyCardText(text: "Log a session with this lift and its working weight shows here.")
             } else {
                 if let first = points.first, let last = points.last {
-                    let perSide = ExerciseLibrary.exercise(selected)?.perSide ?? false
-                    Text("\(WeightFormat.text(last.value, perSide: perSide)) now · \(WeightFormat.text(last.value - first.value)) since you started")
-                        .font(.subheadline)
-                        .foregroundStyle(Palette.textPrimary)
+                    HeadlineValue(value: WeightFormat.text(last.value, perSide: perSide),
+                                  caption: "\(WeightFormat.text(last.value - first.value)) since you started",
+                                  captionTint: last.value >= first.value ? Palette.accent : Palette.textSecondary)
                 }
                 Chart {
                     ForEach(points) { point in
+                        AreaMark(x: .value("Date", point.date), y: .value("kg", point.value))
+                            .foregroundStyle(LinearGradient(colors: [Palette.accent.opacity(0.35), Palette.accent.opacity(0)],
+                                                            startPoint: .top, endPoint: .bottom))
+                            .interpolationMethod(.monotone)
                         LineMark(x: .value("Date", point.date), y: .value("kg", point.value))
                             .foregroundStyle(Palette.accent)
-                        PointMark(x: .value("Date", point.date), y: .value("kg", point.value))
+                            .lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round))
+                            .interpolationMethod(.monotone)
+                    }
+                    if let last = points.last {
+                        PointMark(x: .value("Date", last.date), y: .value("kg", last.value))
                             .foregroundStyle(Palette.accent)
+                            .symbolSize(70)
                     }
                 }
                 .chartYScale(domain: .automatic(includesZero: false))
-                .frame(height: 120)
+                .quietAxes()
+                .frame(height: 140)
             }
         }
         .surface()
@@ -144,19 +214,19 @@ struct WorkoutsPerWeekCard: View {
 
     var body: some View {
         let weeks = lastWeeks(8)
-        VStack(alignment: .leading, spacing: Spacing.s) {
-            Text("Gym sessions · last 8 weeks")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Palette.textSecondary)
-            Text("\(weeks.map(\.count).reduce(0, +)) sessions in total")
-                .font(.title2.weight(.semibold))
-                .foregroundStyle(Palette.textPrimary)
+        let total = weeks.map(\.count).reduce(0, +)
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            CardHeader(title: "Sessions", symbol: "chart.bar.fill", tint: Palette.frost, subtitle: "Last 8 weeks")
+            HeadlineValue(value: "\(total)", unit: total == 1 ? "session" : "sessions",
+                          caption: String(format: "%.1f a week on average", Double(total) / 8))
             Chart {
                 ForEach(weeks, id: \.start) { week in
-                    BarMark(x: .value("Week", week.start, unit: .weekOfYear), y: .value("Sessions", week.count))
-                        .foregroundStyle(Palette.accent)
+                    BarMark(x: .value("Week", week.start, unit: .weekOfYear), y: .value("Sessions", week.count), width: .ratio(0.6))
+                        .foregroundStyle(week.isCurrent ? Palette.frost : Palette.frost.opacity(0.45))
+                        .cornerRadius(6)
                 }
             }
+            .quietAxes()
             .frame(height: 120)
         }
         .surface()
@@ -165,6 +235,7 @@ struct WorkoutsPerWeekCard: View {
     private struct Week {
         var start: Date
         var count: Int
+        var isCurrent: Bool
     }
 
     private func lastWeeks(_ count: Int) -> [Week] {
@@ -180,7 +251,7 @@ struct WorkoutsPerWeekCard: View {
                 guard let day = DayKey(string: session.day) else { return false }
                 return day >= start && day < end
             }.count
-            return Week(start: start.startDate(calendar: calendar), count: sessions)
+            return Week(start: start.startDate(calendar: calendar), count: sessions, isCurrent: offset == 0)
         }
     }
 }
@@ -196,31 +267,28 @@ struct WalkingCard: View {
         let days = (0..<14).reversed().map { model.today.adding(days: -$0, calendar: model.calendar) }
         let steps = days.map { model.metrics(for: $0).steps }
         let bars = zip(days, steps).map { ChartPoint(date: $0.startDate(calendar: model.calendar), value: Double($1)) }
-        VStack(alignment: .leading, spacing: Spacing.s) {
-            Text("Walking · last 14 days")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Palette.textSecondary)
+        let hit = steps.filter { $0 >= target }.count
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            CardHeader(title: "Walking", symbol: "figure.walk", tint: Palette.fresh, subtitle: "Last 14 days") {
+                Chip(text: "Aim \(target.formatted())", symbol: "target", tint: Palette.fresh, fill: Palette.fresh.opacity(0.14))
+            }
             if let baseline = WalkingTargets.baseline(Array(steps.dropLast())) {
-                Text("Usual day \(baseline.formatted()) steps · aiming for \(target.formatted())")
-                    .font(.headline)
-                    .foregroundStyle(Palette.textPrimary)
+                HeadlineValue(value: baseline.formatted(), unit: "steps", caption: "Usual day · aim hit on \(hit) of 14")
                 Chart {
                     ForEach(bars) { bar in
-                        BarMark(x: .value("Day", bar.date, unit: .day), y: .value("Steps", bar.value))
-                            .foregroundStyle(bar.value >= Double(target) ? Palette.accent : Palette.accent.opacity(0.4))
+                        BarMark(x: .value("Day", bar.date, unit: .day), y: .value("Steps", bar.value), width: .ratio(0.62))
+                            .foregroundStyle(bar.value >= Double(target) ? Palette.fresh : Palette.fresh.opacity(0.32))
+                            .cornerRadius(4)
                     }
                     RuleMark(y: .value("Target", target))
                         .foregroundStyle(Palette.textTertiary)
                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
                 }
-                .frame(height: 120)
-                Text("The target only rises by 500 a week when you've hit it on five days and the knee is settled. Long-term aim: 12,500.")
-                    .font(.caption)
-                    .foregroundStyle(Palette.textTertiary)
+                .quietAxes()
+                .frame(height: 130)
+                Footnote("The aim only rises by 500 a week when you've hit it on five days and the knee is settled. Long-term: 12,500.")
             } else {
-                Text("Your step baseline appears once Apple Health has a few days of walking.")
-                    .font(.subheadline)
-                    .foregroundStyle(Palette.textSecondary)
+                EmptyCardText(text: "Your step baseline appears once Apple Health has a few days of walking.")
             }
         }
         .surface()
@@ -235,34 +303,40 @@ struct SwimCard: View {
 
     var body: some View {
         let next = SwimPlan.next(swims.map { SwimRecord(date: $0.date, minutes: $0.minutes, metres: $0.metres) })
-        VStack(alignment: .leading, spacing: Spacing.s) {
-            Text("Swimming")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Palette.textSecondary)
+        let kilometres = Double(swims.map(\.metres).reduce(0, +)) / 1_000
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            CardHeader(title: "Swimming", symbol: "figure.pool.swim", tint: Palette.frost, subtitle: "Towards Darwen Masters")
             if swims.isEmpty {
-                Text("Swims recorded on your Apple Watch appear here.")
-                    .font(.subheadline)
-                    .foregroundStyle(Palette.textSecondary)
+                EmptyCardText(text: "Swims recorded on your Apple Watch appear here.")
             } else {
-                Text("\(swims.count) swims · \(Double(swims.map(\.metres).reduce(0, +)) / 1_000, specifier: "%.1f") km")
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(Palette.textPrimary)
-                ForEach(swims.suffix(3).reversed(), id: \.date) { swim in
-                    HStack {
-                        Text(swim.date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated)))
-                        Spacer()
-                        Text("\(swim.minutes) min · \(swim.metres) m").monospacedDigit()
+                HeadlineValue(value: String(format: "%.1f", kilometres), unit: "km", caption: "\(swims.count) swims in 90 days")
+                VStack(spacing: 0) {
+                    ForEach(swims.suffix(3).reversed(), id: \.date) { swim in
+                        HStack {
+                            Text(swim.date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated)))
+                                .foregroundStyle(Palette.textPrimary)
+                            Spacer()
+                            Text("\(swim.minutes) min · \(swim.metres) m")
+                                .monospacedDigit()
+                                .foregroundStyle(Palette.textSecondary)
+                        }
+                        .font(.footnote)
+                        .padding(.vertical, Spacing.xs)
                     }
-                    .font(.footnote)
-                    .foregroundStyle(Palette.textSecondary)
                 }
             }
-            Text("Next swim: \(next.note)")
-                .font(.footnote)
-                .foregroundStyle(Palette.textPrimary)
-            Text("Building towards Darwen Masters at your own pace.")
-                .font(.caption)
-                .foregroundStyle(Palette.textTertiary)
+            HStack(alignment: .top, spacing: Spacing.s) {
+                Image(systemName: "arrow.right.circle.fill")
+                    .foregroundStyle(Palette.frost)
+                    .accessibilityHidden(true)
+                Text("Next swim: \(next.note)")
+                    .font(.footnote)
+                    .foregroundStyle(Palette.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(Spacing.s)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Palette.frost.opacity(0.10), in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
         }
         .surface()
     }
@@ -276,46 +350,56 @@ struct KneeCard: View {
 
     var body: some View {
         let logs = training.symptomLogs().filter { $0.date > Date.now.addingTimeInterval(-28 * 86_400) }
-        VStack(alignment: .leading, spacing: Spacing.s) {
-            HStack {
-                Text("Knee")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Palette.textSecondary)
-                Spacer()
-                Text(training.kneeStatus.title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(training.kneeStatus == .settled ? Palette.success : Palette.warning)
+        let settled = training.kneeStatus == .settled
+        let statusTint: Color = settled ? Palette.success : Palette.warning
+        let steps = milestones
+        let done = steps.filter(\.done).count
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            CardHeader(title: "Knee", symbol: "cross.case.fill", tint: Palette.rehab, subtitle: "Pain, last 4 weeks") {
+                Chip(text: training.kneeStatus.title, symbol: settled ? "checkmark" : "exclamationmark.triangle.fill",
+                     tint: statusTint, fill: statusTint.opacity(0.15))
             }
             if logs.isEmpty {
-                Text("No check-ins in the last four weeks.")
-                    .font(.subheadline)
-                    .foregroundStyle(Palette.textSecondary)
+                EmptyCardText(text: "No check-ins in the last four weeks.")
             } else {
                 Chart {
                     ForEach(logs, id: \.id) { log in
-                        PointMark(x: .value("Date", log.date), y: .value("Pain", log.pain))
-                            .foregroundStyle(log.timing == .nextDay ? Palette.warning : Palette.accent)
+                        BarMark(x: .value("Date", log.date, unit: .day), y: .value("Pain", max(log.pain, 0)), width: .fixed(6))
+                            .foregroundStyle(log.pain >= 3 ? Palette.warning : Palette.rehab)
+                            .cornerRadius(3)
                     }
                 }
                 .chartYScale(domain: 0...10)
+                .quietAxes()
                 .frame(height: 100)
             }
-            Button("Log a knee check") { checking = true }
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Palette.accent)
-
-            Divider().overlay(Palette.border)
-            Text("Road to five-a-side")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Palette.textSecondary)
-            ForEach(milestones, id: \.title) { milestone in
-                Label(milestone.title, systemImage: milestone.done ? "checkmark.circle.fill" : "circle")
-                    .font(.footnote)
-                    .foregroundStyle(milestone.done ? Palette.success : Palette.textSecondary)
+            Button {
+                checking = true
+            } label: {
+                Label("Log a knee check", systemImage: "plus")
             }
-            Text("Each step needs a settled knee, and running or changing direction needs your physio's go-ahead. October 2027 is a hope, not a deadline.")
-                .font(.caption)
-                .foregroundStyle(Palette.textTertiary)
+            .buttonStyle(SecondaryButtonStyle(tint: Palette.rehab, fill: Palette.rehab.opacity(0.14)))
+
+            VStack(alignment: .leading, spacing: Spacing.s) {
+                HStack {
+                    Text("Road to five-a-side")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Palette.textPrimary)
+                    Spacer()
+                    Text("\(done) of \(steps.count)")
+                        .font(.footnote.weight(.semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(Palette.textTertiary)
+                }
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(steps.indices, id: \.self) { index in
+                        MilestoneRow(title: steps[index].title, done: steps[index].done, isLast: index == steps.count - 1)
+                    }
+                }
+            }
+            .padding(Spacing.m)
+            .background(Palette.inset, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+            Footnote("Each step needs a settled knee, and running or changing direction needs your physio's go-ahead. October 2027 is a hope, not a deadline.")
         }
         .surface()
         .sheet(isPresented: $checking) {
@@ -347,6 +431,43 @@ struct KneeCard: View {
             Milestone(title: "Changes of direction, with your physio's OK", done: false),
             Milestone(title: "Casual five-a-side", done: false),
         ]
+    }
+}
+
+/// A step on a vertical timeline: a filled dot when done, joined to the next by a line.
+private struct MilestoneRow: View {
+    let title: String
+    let done: Bool
+    let isLast: Bool
+
+    var body: some View {
+        HStack(alignment: .top, spacing: Spacing.s) {
+            VStack(spacing: 0) {
+                ZStack {
+                    Circle().fill(done ? Palette.success : Palette.elevated)
+                    if done {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 9, weight: .heavy))
+                            .foregroundStyle(Palette.onAccent)
+                    }
+                }
+                .frame(width: 18, height: 18)
+                if !isLast {
+                    Rectangle()
+                        .fill(done ? Palette.success.opacity(0.5) : Palette.elevated)
+                        .frame(width: 2)
+                        .frame(minHeight: 16)
+                }
+            }
+            Text(title)
+                .font(.footnote)
+                .foregroundStyle(done ? Palette.textPrimary : Palette.textSecondary)
+                .padding(.bottom, isLast ? 0 : Spacing.s)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityValue(done ? "Done" : "Not yet")
     }
 }
 
@@ -395,16 +516,11 @@ struct PhotosCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.s) {
-            HStack {
-                Text("Progress photos")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Palette.textSecondary)
-                Spacer()
+            CardHeader(title: "Progress photos", symbol: "camera.fill", tint: Palette.kitchen, subtitle: "Private to this iPhone") {
                 PhotosPicker(selection: $picked, matching: .images) {
-                    Label("Add", systemImage: "plus")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Palette.accent)
+                    RoundIconLabel(symbol: "plus", size: 34, tint: Palette.kitchen, fill: Palette.kitchen.opacity(0.16))
                 }
+                .accessibilityLabel("Add a progress photo")
             }
             if photos.isEmpty {
                 Text("Weekly photos show change the scales miss. They're kept privately inside Vaultality on this iPhone, never in your photo library or shared anywhere.")
@@ -486,7 +602,7 @@ private struct PhotoThumbnail: View {
                 Palette.elevated
             }
         }
-        .frame(width: 72, height: 96)
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .frame(width: 88, height: 118)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }

@@ -9,57 +9,81 @@ struct SpendingSection: View {
 
     var body: some View {
         let budget = kitchen.budget
+        let month = MonthKey(kitchen.now(), calendar: kitchen.calendar).description
+        let receipts = kitchen.receipts.filter { $0.month == month }
+        let ceiling = Double(HouseholdBudget.ceiling.value)
+        let progress = ceiling > 0 ? Double(budget.spent.value) / ceiling : 0
+        let budgetTint: Color = budget.isOver ? Palette.warning : Palette.kitchen
         VStack(alignment: .leading, spacing: Spacing.m) {
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                Text("Household this month")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Palette.textSecondary)
-                Text("\(budget.spent.formatted()) of £400")
-                    .font(.title2.weight(.semibold))
-                    .monospacedDigit()
-                    .foregroundStyle(budget.isOver ? Palette.warning : Palette.textPrimary)
+            VStack(alignment: .leading, spacing: Spacing.m) {
+                HStack(spacing: Spacing.l) {
+                    ZStack {
+                        RingGauge(progress: progress, tint: budgetTint, lineWidth: 14)
+                        VStack(spacing: 0) {
+                            Text("\(Int((progress * 100).rounded()))%")
+                                .font(.display(26))
+                                .monospacedDigit()
+                                .foregroundStyle(Palette.textPrimary)
+                            Text("of £400")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(Palette.textTertiary)
+                        }
+                    }
+                    .frame(width: 124, height: 124)
+                    VStack(alignment: .leading, spacing: Spacing.s) {
+                        BudgetFigure(label: "Spent", amount: budget.spent, tint: Palette.textPrimary)
+                        BudgetFigure(label: "Left", amount: budget.remaining, tint: budgetTint)
+                        BudgetFigure(label: "Even pace today", amount: budget.evenPace, tint: Palette.textSecondary)
+                    }
+                    Spacer(minLength: 0)
+                }
                 Text(budget.summary)
                     .font(.footnote)
                     .foregroundStyle(Palette.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Groceries, toiletries, cleaning, Co-op top-ups, and takeaways or meals out from the food budget.")
-                    .font(.caption)
-                    .foregroundStyle(Palette.textTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
-            .surface()
+            .heroCard(tint: budgetTint, symbol: "sterlingsign")
 
             HStack(spacing: Spacing.s) {
-                SmallActionButton(title: "Scan a receipt", symbol: "doc.text.viewfinder") { capturing = true }
-                SmallActionButton(title: "No receipt", symbol: "square.and.pencil") { addingManually = true }
+                Button {
+                    capturing = true
+                } label: {
+                    Label("Scan a receipt", systemImage: "doc.text.viewfinder")
+                }
+                .buttonStyle(SecondaryButtonStyle(tint: Palette.kitchen, fill: Palette.kitchen.opacity(0.14)))
+                Button {
+                    addingManually = true
+                } label: {
+                    Label("No receipt", systemImage: "square.and.pencil")
+                }
+                .buttonStyle(SecondaryButtonStyle())
             }
 
-            let month = MonthKey(kitchen.now(), calendar: kitchen.calendar).description
-            let receipts = kitchen.receipts.filter { $0.month == month }
             if !receipts.isEmpty {
-                VStack(alignment: .leading, spacing: Spacing.xs) {
-                    ForEach(receipts, id: \.fingerprint) { receipt in
+                SectionTitle(title: "This month", detail: receipts.count == 1 ? "1 receipt" : "\(receipts.count) receipts")
+                VStack(spacing: 0) {
+                    ForEach(receipts.indices, id: \.self) { index in
+                        let receipt = receipts[index]
                         NavigationLink {
                             ReceiptDetailView(receipt: receipt)
                         } label: {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(receipt.merchant.title).foregroundStyle(Palette.textPrimary)
-                                    Text(receipt.needsReview ? "Check this one" : receipt.date.formatted(date: .abbreviated, time: .omitted))
-                                        .font(.caption)
-                                        .foregroundStyle(receipt.needsReview ? Palette.warning : Palette.textTertiary)
-                                }
-                                Spacer()
-                                Text(receipt.total.formatted()).monospacedDigit().foregroundStyle(Palette.textPrimary)
+                            TileRow(title: receipt.merchant.title,
+                                    subtitle: receipt.needsReview ? "Check this one" : receipt.date.formatted(.dateTime.weekday(.abbreviated).day().month()),
+                                    symbol: merchantSymbol(receipt.merchant), tint: merchantTint(receipt.merchant)) {
+                                Text(receipt.total.formatted())
+                                    .font(.body.weight(.semibold))
+                                    .monospacedDigit()
+                                    .foregroundStyle(Palette.textPrimary)
                             }
-                            .frame(minHeight: 44)
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
+                        if index < receipts.count - 1 { RowDivider() }
                     }
                 }
                 .surface()
             }
+            Footnote("Groceries, toiletries, cleaning, Co-op top-ups, and takeaways or meals out. It's a ceiling, not a target, and never a fine.")
         }
         .sheet(isPresented: $capturing) {
             ReceiptCaptureView().presentationBackground(Palette.background)
@@ -71,6 +95,47 @@ struct SpendingSection: View {
             }
             .presentationBackground(Palette.background)
         }
+    }
+}
+
+extension SpendingSection {
+    fileprivate func merchantSymbol(_ merchant: Merchant) -> String {
+        switch merchant {
+        case .aldi: "cart.fill"
+        case .coop: "basket.fill"
+        case .takeaway: "takeoutbag.and.cup.and.straw.fill"
+        case .other: "bag.fill"
+        }
+    }
+
+    fileprivate func merchantTint(_ merchant: Merchant) -> Color {
+        switch merchant {
+        case .aldi: Palette.frost
+        case .coop: Palette.fresh
+        case .takeaway: Palette.rose
+        case .other: Palette.rehab
+        }
+    }
+}
+
+/// A label over an amount, for the budget hero.
+private struct BudgetFigure: View {
+    let label: String
+    let amount: Pence
+    let tint: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(label)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Palette.textTertiary)
+            Text(amount.formatted())
+                .font(.display(20, weight: .semibold))
+                .monospacedDigit()
+                .foregroundStyle(tint)
+                .contentTransition(.numericText(value: Double(amount.value)))
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 

@@ -8,70 +8,82 @@ struct DinnerCard: View {
     @State private var choosingFromMenu = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.s) {
-            Text("Tonight")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Palette.textSecondary)
+        let dinner = kitchen.tonight
+        let tint: Color = dinner?.fromFreezer == true ? Palette.frost : Palette.kitchen
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            HStack {
+                Chip(text: "TONIGHT", symbol: "moon.stars.fill", tint: Palette.onAccent, fill: tint)
+                Spacer()
+                if let dinner, dinner.cooked {
+                    Chip(text: "Eaten", symbol: "checkmark", tint: Palette.success, fill: Palette.success.opacity(0.15))
+                }
+            }
 
-            if let dinner = kitchen.tonight, dinner.portions == 0 {
+            if let dinner, dinner.portions == 0 {
                 Text("Eating out")
-                    .font(.title3.weight(.semibold))
+                    .font(.display(32))
                     .foregroundStyle(Palette.textPrimary)
-                SmallActionButton(title: "Help me pick from the menu", symbol: "menucard") { choosingFromMenu = true }
-            } else if let dinner = kitchen.tonight {
-                Text(dinner.title)
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(dinner.cooked ? Palette.textTertiary : Palette.textPrimary)
-                    .strikethrough(dinner.cooked)
-                if let detail = detail(dinner) {
-                    Text(detail)
-                        .font(.footnote)
-                        .foregroundStyle(Palette.textSecondary)
+                Button {
+                    choosingFromMenu = true
+                } label: {
+                    Label("Help me pick from the menu", systemImage: "menucard.fill")
+                }
+                .buttonStyle(PrimaryButtonStyle(tint: tint))
+            } else if let dinner {
+                VStack(alignment: .leading, spacing: Spacing.s) {
+                    Text(dinner.title)
+                        .font(.display(30))
+                        .foregroundStyle(dinner.cooked ? Palette.textTertiary : Palette.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
-                }
-                if kitchen.tonightNeedsDefrosting {
-                    HStack(spacing: Spacing.s) {
-                        SmallActionButton(title: "It's defrosted", symbol: "checkmark") { kitchen.markDefrosted(dinner) }
-                        SmallActionButton(title: "Forgot", symbol: "snowflake") {
-                            forgotDefrost = true
-                            rescuing = true
+                    ChipFlow().callAsFunction {
+                        ForEach(chips(dinner), id: \.text) { chip in
+                            Chip(text: chip.text, symbol: chip.symbol, tint: Palette.textPrimary, fill: Palette.background.opacity(0.35))
                         }
                     }
-                } else if !dinner.cooked && dinner.portions > 0 {
-                    HStack(spacing: Spacing.s) {
-                        if kitchen.cooking != dinner.id, !dinner.fromFreezer, kitchen.recipe(dinner.recipeID) != nil {
-                            SmallActionButton(title: "Start cooking", symbol: "flame") { kitchen.startCooking(dinner) }
-                        }
-                        SmallActionButton(title: "Eaten", symbol: "checkmark") { kitchen.markCooked(dinner) }
-                        SmallActionButton(title: "Not happening", symbol: "arrow.uturn.left") {
-                            forgotDefrost = false
-                            rescuing = true
-                        }
+                    if let note = note(dinner) {
+                        Text(note)
+                            .font(.footnote)
+                            .foregroundStyle(Palette.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
+                actions(dinner, tint: tint)
             } else {
-                Text("Nothing planned tonight.")
+                Text("Nothing planned")
+                    .font(.display(30))
+                    .foregroundStyle(Palette.textPrimary)
+                Text("Two or three easy options from what's probably in.")
                     .font(.subheadline)
                     .foregroundStyle(Palette.textSecondary)
-                SmallActionButton(title: "Easy options", symbol: "fork.knife") {
+                Button {
                     forgotDefrost = false
                     rescuing = true
+                } label: {
+                    Label("Easy options", systemImage: "sparkles")
                 }
+                .buttonStyle(PrimaryButtonStyle(tint: tint))
             }
 
             if let tomorrow = tomorrowToDefrost {
-                Divider().overlay(Palette.border)
-                HStack(alignment: .top, spacing: Spacing.s) {
-                    Image(systemName: "snowflake").foregroundStyle(Palette.accent).accessibilityHidden(true)
-                    Text("Tomorrow is \(tomorrow.title). Move \(DefrostPlanner.portionsText(tomorrow.portions)) from the freezer to the fridge tonight.")
+                HStack(alignment: .center, spacing: Spacing.s) {
+                    IconTile(symbol: "snowflake", tint: Palette.frost, size: 38)
+                    Text("Tomorrow is \(tomorrow.title). Move \(DefrostPlanner.portionsText(tomorrow.portions)) to the fridge tonight.")
                         .font(.footnote)
                         .foregroundStyle(Palette.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                    Button("Done") { kitchen.markDefrosted(tomorrow) }
+                        .font(.footnote.weight(.bold))
+                        .foregroundStyle(Palette.frost)
+                        .padding(.horizontal, Spacing.s)
+                        .frame(minHeight: 36)
+                        .background(Palette.frost.opacity(0.15), in: Capsule())
                 }
-                SmallActionButton(title: "Done", symbol: "checkmark") { kitchen.markDefrosted(tomorrow) }
+                .padding(Spacing.s)
+                .background(Palette.background.opacity(0.35), in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
             }
         }
-        .surface()
+        .heroCard(tint: tint, symbol: dinner?.fromFreezer == true ? "snowflake" : "fork.knife")
         .sheet(isPresented: $choosingFromMenu) {
             MenuHelperView().presentationBackground(Palette.background)
         }
@@ -82,11 +94,89 @@ struct DinnerCard: View {
         }
     }
 
-    private func detail(_ dinner: MealPlanEntry) -> String? {
-        if dinner.cooked { return "Done." }
-        if dinner.fromFreezer { return dinner.defrosted ? "From the freezer, defrosting in the fridge. Reheat until piping hot." : "From the freezer." }
-        guard let recipe = kitchen.recipe(dinner.recipeID) else { return dinner.note }
-        return "Two portions · about \(recipe.prepMinutes + recipe.cookMinutes) min · \(recipe.washUpMinutes) min washing up"
+    @ViewBuilder
+    private func actions(_ dinner: MealPlanEntry, tint: Color) -> some View {
+        if kitchen.tonightNeedsDefrosting {
+            HStack(spacing: Spacing.s) {
+                Button {
+                    kitchen.markDefrosted(dinner)
+                } label: {
+                    Label("It's defrosted", systemImage: "checkmark")
+                }
+                .buttonStyle(PrimaryButtonStyle(tint: tint))
+                Button {
+                    forgotDefrost = true
+                    rescuing = true
+                } label: {
+                    Text("Forgot")
+                }
+                .buttonStyle(SecondaryButtonStyle())
+                .frame(width: 110)
+            }
+        } else if !dinner.cooked && dinner.portions > 0 {
+            let canCook = kitchen.cooking != dinner.id && !dinner.fromFreezer && kitchen.recipe(dinner.recipeID) != nil
+            VStack(spacing: Spacing.s) {
+                if canCook {
+                    Button {
+                        kitchen.startCooking(dinner)
+                    } label: {
+                        Label("Start cooking", systemImage: "flame.fill")
+                    }
+                    .buttonStyle(PrimaryButtonStyle(tint: tint))
+                }
+                HStack(spacing: Spacing.s) {
+                    if canCook {
+                        Button {
+                            kitchen.markCooked(dinner)
+                        } label: {
+                            Label("Eaten", systemImage: "checkmark")
+                        }
+                        .buttonStyle(SecondaryButtonStyle())
+                    } else {
+                        Button {
+                            kitchen.markCooked(dinner)
+                        } label: {
+                            Label("Eaten", systemImage: "checkmark")
+                        }
+                        .buttonStyle(PrimaryButtonStyle(tint: tint))
+                    }
+                    Button {
+                        forgotDefrost = false
+                        rescuing = true
+                    } label: {
+                        Label("Not happening", systemImage: "arrow.uturn.left")
+                    }
+                    .buttonStyle(SecondaryButtonStyle())
+                }
+            }
+        }
+    }
+
+    private struct DinnerChip {
+        var text: String
+        var symbol: String
+    }
+
+    private func chips(_ dinner: MealPlanEntry) -> [DinnerChip] {
+        var result = [DinnerChip(text: "For two", symbol: "person.2.fill")]
+        if dinner.fromFreezer {
+            result.append(DinnerChip(text: "From the freezer", symbol: "snowflake"))
+            return result
+        }
+        guard let recipe = kitchen.recipe(dinner.recipeID) else { return result }
+        result.append(DinnerChip(text: "\(recipe.prepMinutes + recipe.cookMinutes) min", symbol: "clock.fill"))
+        result.append(DinnerChip(text: "\(Int(recipe.protein.rounded())) g protein", symbol: "bolt.fill"))
+        result.append(DinnerChip(text: "\(Int(recipe.kcal.rounded())) kcal", symbol: "flame.fill"))
+        result.append(DinnerChip(text: "\(recipe.washUpMinutes) min wash-up", symbol: "drop.fill"))
+        return result
+    }
+
+    private func note(_ dinner: MealPlanEntry) -> String? {
+        if dinner.cooked { return nil }
+        if dinner.fromFreezer {
+            return dinner.defrosted ? "Defrosting in the fridge. Reheat until piping hot." : nil
+        }
+        return kitchen.recipe(dinner.recipeID) == nil ? dinner.note : nil
     }
 
     /// From 4pm, a reminder about tomorrow's freezer meal.
@@ -115,14 +205,8 @@ struct DinnerRescueView: View {
                 }
                 Section {
                     ForEach(kitchen.rescueOptions(defrostForgotten: defrostForgotten)) { option in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Label(option.title, systemImage: symbol(option.kind))
-                                .foregroundStyle(Palette.textPrimary)
-                            Text(option.detail)
-                                .font(.caption)
-                                .foregroundStyle(Palette.textSecondary)
-                        }
-                        .padding(.vertical, Spacing.xxs)
+                        TileRow(title: option.title, subtitle: option.detail, symbol: symbol(option.kind),
+                                tint: option.kind == .freezer ? Palette.frost : Palette.kitchen)
                     }
                 } footer: {
                     Text("Based on what's probably in. Any of these is fine.")
