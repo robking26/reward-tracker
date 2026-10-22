@@ -40,8 +40,8 @@ enum SessionChoice: String, CaseIterable, Identifiable {
     }
     var subtitle: String {
         switch self {
-        case .push: "Chest, shoulders"
-        case .pull: "Back, biceps"
+        case .push: "Chest day"
+        case .pull: "Back day"
         case .legs: "Squat day"
         case .extra: "Optional extra"
         case .rehab: "Knee only"
@@ -255,12 +255,13 @@ private struct SessionOptionCard: View {
         Button(action: action) {
             if compact {
                 HStack(spacing: Spacing.s) {
-                    IconTile(symbol: option.symbol, tint: option.tint, size: 36, filled: selected)
+                    IconTile(symbol: option.symbol, tint: option.tint, size: 32, filled: selected)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(option.title)
-                            .font(.headline)
+                            .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Palette.textPrimary)
                             .lineLimit(1)
+                            .minimumScaleFactor(0.85)
                         Text(option.subtitle)
                             .font(.caption)
                             .foregroundStyle(Palette.textTertiary)
@@ -268,7 +269,7 @@ private struct SessionOptionCard: View {
                     }
                     Spacer(minLength: 0)
                 }
-                .padding(12)
+                .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(selected ? option.tint.opacity(0.14) : Palette.surface, in: shape)
                 .overlay { shape.strokeBorder(selected ? option.tint : Color.clear, lineWidth: 2) }

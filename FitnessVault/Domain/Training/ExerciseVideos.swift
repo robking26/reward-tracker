@@ -50,7 +50,7 @@ enum ExerciseVideos {
         "barbellBench": "rT7DgCr-3pg",
         "cableFly": "7UC_8lsE2w0",
         "pecDeck": "-DZXcuPi4vk",
-        "assistedDip": "yP6bZ-yxwGg",
+        "assistedDip": "8zFcJWD9Y_E",
         "assistedPullUp": "gnElpp3Fm50",
         "bentOverDBRow": "--gDUDFKx6Q",
         "machineCurl": "to3m8zws1n8",
