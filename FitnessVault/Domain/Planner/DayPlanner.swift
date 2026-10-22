@@ -120,6 +120,8 @@ struct FreeWindow: Hashable, Sendable {
     var origin: PlaceID
     /// A lunch break inside work hours: walks only.
     var isLunch: Bool = false
+    /// Where you need to be afterwards: back to work for a gap in the working day, otherwise home.
+    var returnTo: PlaceID = .home
 
     var minutes: Int { Int(interval.duration / 60) }
 }
@@ -215,17 +217,23 @@ enum DayPlanner {
         if startsNow { opens = nowStart }
         guard closes > opens else { return [] }
 
-        var blocks: [(interval: DateInterval, endsAt: PlaceID)] = events.filter(\.blocksTime).map { item in
+        typealias Block = (interval: DateInterval, endsAt: PlaceID, isWork: Bool)
+        // On leave, work meetings don't count.
+        var blocks: [Block] = events.filter { $0.blocksTime && !(location == .leave && $0.source == .work) }.map { item in
             let padded = DateInterval(start: item.event.start.addingTimeInterval(-buffer), end: item.event.end.addingTimeInterval(buffer))
-            return (interval: padded, endsAt: PlaceID.home)
+            return (interval: padded, endsAt: PlaceID.home, isWork: false)
         }
+        // "Blocked" and "Lunch walk" in Outlook open gaps in the working day.
+        let freeForMe = events.filter { $0.source == .workFree }.map { DateInterval(start: $0.event.start, end: $0.event.end) }
+        let workPlace: PlaceID = location == .office ? .office : .home
         if let work {
+            var span = work
             if location == .office {
                 let commute = travel(from: .home, to: .office, input: input).minutes
-                let drive = DateInterval(start: work.start.addingTimeInterval(-TimeInterval(commute * 60)), end: work.end)
-                blocks.append((interval: drive, endsAt: PlaceID.office))
-            } else {
-                blocks.append((interval: work, endsAt: PlaceID.home))
+                span = DateInterval(start: work.start.addingTimeInterval(-TimeInterval(commute * 60)), end: work.end)
+            }
+            for piece in subtract(freeForMe, from: span) {
+                blocks.append((interval: piece, endsAt: workPlace, isWork: true))
             }
         }
         blocks.sort { $0.interval.start < $1.interval.start }
@@ -236,7 +244,10 @@ enum DayPlanner {
         for block in blocks {
             if block.interval.start > cursor {
                 let end = min(block.interval.start, closes)
-                if end > cursor { windows.append(FreeWindow(interval: DateInterval(start: cursor, end: end), origin: origin)) }
+                if end > cursor {
+                    windows.append(FreeWindow(interval: DateInterval(start: cursor, end: end), origin: origin,
+                                              returnTo: block.isWork ? workPlace : .home))
+                }
             }
             if block.interval.end > cursor {
                 cursor = block.interval.end
@@ -247,7 +258,13 @@ enum DayPlanner {
         windows = windows.filter { $0.minutes >= 15 }
 
         if let work {
+            let opened = windows.map(\.interval)
             windows += lunchWindows(day: day, location: location, work: work, events: events, input: input, opens: opens)
+                .flatMap { lunch in
+                    subtract(opened, from: lunch.interval)
+                        .filter { $0.duration >= TimeInterval(settings.walkMinutes * 60) }
+                        .map { FreeWindow(interval: $0, origin: lunch.origin, isLunch: true, returnTo: lunch.returnTo) }
+                }
         }
         return windows.sorted { $0.interval.start < $1.interval.start }
     }
@@ -263,7 +280,7 @@ enum DayPlanner {
         let origin: PlaceID = location == .office ? .office : .home
         return subtract(busy, from: DateInterval(start: start, end: end))
             .filter { $0.duration >= TimeInterval(input.settings.walkMinutes * 60) }
-            .map { FreeWindow(interval: $0, origin: origin, isLunch: true) }
+            .map { FreeWindow(interval: $0, origin: origin, isLunch: true, returnTo: origin) }
     }
 
     // MARK: Fitting activities into the week
@@ -385,12 +402,12 @@ enum DayPlanner {
 
         for window in picture.free where !window.isLunch || kind == .walk {
             for (index, part) in subtract(taken, from: window.interval).enumerated() {
-                // After a suggested activity you're back home.
-                let origin = index == 0 && part.start == window.interval.start ? window.origin : .home
+                // After another suggestion you're back where that one returned you.
+                let origin = index == 0 && part.start == window.interval.start ? window.origin : window.returnTo
                 var there = (minutes: 0, estimate: false), back = (minutes: 0, estimate: false)
                 if let venue = kind.venue {
                     there = travel(from: origin, to: venue, input: input)
-                    back = travel(from: venue, to: window.isLunch ? origin : .home, input: input)
+                    back = travel(from: venue, to: window.returnTo, input: input)
                 }
                 let total = TimeInterval((there.minutes + minutes + back.minutes) * 60)
                 var leave = max(part.start, notBefore.map(roundedUp) ?? part.start)
@@ -419,6 +436,10 @@ enum DayPlanner {
     /// After work on work days; mid-morning on days off. Walks go at lunchtime on work days.
     static func preferredStart(_ kind: ActivityKind, picture: DayPicture, input: PlannerInput) -> Date {
         let calendar = input.calendar
+        // A "Lunch walk" in Outlook is the walk.
+        if kind == .walk, let walk = picture.events.first(where: { $0.source == .workFree && DayCalendar.isLunchWalk($0.event) }) {
+            return walk.event.start
+        }
         if let work = picture.work {
             let minute: Int
             switch kind {

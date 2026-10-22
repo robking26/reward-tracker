@@ -34,7 +34,7 @@ struct DaySettingsView: View {
                 } header: {
                     Text("Calendars")
                 } footer: {
-                    Text("Everything in yours counts. Work's 9 am \"Office focus\" or \"Home focus\" sets where you start the day. Becky's events only count once you say they're shared. Outlook appears here once the work account is added in Settings › Calendar › Accounts; Becky's once she shares her iCloud calendar with you.")
+                    Text("Everything in yours counts. Work's 9 am \"Office focus\" or \"Home focus\" sets where you start the day; \"Blocked\" and \"Lunch walk\" are free for you; \"Rob King AL\" is a day off. Becky's events only count once you say they're shared. Outlook appears here once the work account is added in Settings › Calendar › Accounts; Becky's once she shares her iCloud calendar with you.")
                 }
 
                 Section {

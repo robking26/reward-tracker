@@ -58,6 +58,8 @@ enum WorkLocation: String, Codable, Sendable {
     /// A work day without an "Office focus" or "Home focus" at 9 am.
     case unknown
     case dayOff
+    /// "Rob King AL" in Outlook.
+    case leave
 
     var title: String {
         switch self {
@@ -65,10 +67,11 @@ enum WorkLocation: String, Codable, Sendable {
         case .home: "Home day"
         case .unknown: "Work day"
         case .dayOff: "Day off"
+        case .leave: "Annual leave"
         }
     }
 
-    var isWorkDay: Bool { self != .dayOff }
+    var isWorkDay: Bool { self != .dayOff && self != .leave }
 }
 
 /// Whether one of Becky's events involves you. Only you decide; nothing is guessed.
@@ -79,12 +82,14 @@ enum BeckyStatus: String, Sendable {
 /// Where a timeline event came from.
 enum EventSource: Sendable {
     case mine, work, beckyShared, beckyVisible, beckyUnconfirmed
+    /// "Blocked" or "Lunch walk" in Outlook: busy to work, free for you.
+    case workFree
 
     /// Becky's events count only once you've said they're shared.
     var blocksTime: Bool {
         switch self {
         case .mine, .work, .beckyShared: true
-        case .beckyVisible, .beckyUnconfirmed: false
+        case .beckyVisible, .beckyUnconfirmed, .workFree: false
         }
     }
 }
@@ -101,12 +106,28 @@ enum DayCalendar {
     static let officeMarker = "office focus"
     static let homeMarker = "home focus"
 
+    /// Outlook code words: busy to work but free for you, and annual leave. Whole words, any case.
+    static let freeForMeWords = ["blocked", "lunch walk"]
+    static let leaveWords = ["rob king al"]
+
+    static func isFreeForMe(_ event: CalendarEventInfo) -> Bool { matches(event.title, freeForMeWords) }
+    static func isLunchWalk(_ event: CalendarEventInfo) -> Bool { matches(event.title, ["lunch walk"]) }
+    static func isLeave(_ event: CalendarEventInfo) -> Bool { matches(event.title, leaveWords) }
+
+    static func matches(_ text: String, _ words: [String]) -> Bool {
+        let lowered = text.lowercased()
+        return words.contains { word in
+            lowered.range(of: "\\b\(NSRegularExpression.escapedPattern(for: word))\\b", options: .regularExpression) != nil
+        }
+    }
+
     /// The work event at 9 am titled "Office focus" or "Home focus". A weekday with work events but no marker is a
     /// work day with an unknown location; a day with neither is a day off.
     static func workLocation(on day: DayKey, events: [CalendarEventInfo], roles: [String: CalendarRole],
                              calendar: Calendar) -> WorkLocation {
         let nine = day.date(atMinute: 9 * 60, calendar: calendar)
         let work = events.filter { roles[$0.calendarID] == .work && overlaps($0, day: day, calendar: calendar) }
+        if work.contains(where: isLeave) { return .leave }
         for event in work where covers(event, nine) {
             let title = event.title.lowercased()
             if title.contains(officeMarker) { return .office }
@@ -114,7 +135,8 @@ enum DayCalendar {
         }
         let weekday = calendar.component(.weekday, from: day.startDate(calendar: calendar))
         let isWeekday = weekday != 1 && weekday != 7
-        return isWeekday && work.contains(where: { !$0.isAllDay }) ? .unknown : .dayOff
+        let meetings = work.filter { !$0.isAllDay && !isFreeForMe($0) }
+        return isWeekday && !meetings.isEmpty ? .unknown : .dayOff
     }
 
     static func isFocusMarker(_ event: CalendarEventInfo) -> Bool {
@@ -138,7 +160,8 @@ enum DayCalendar {
             case .mine:
                 return DayEvent(event: event, source: .mine)
             case .work:
-                return isFocusMarker(event) ? nil : DayEvent(event: event, source: .work)
+                if isFocusMarker(event) || isLeave(event) { return nil }
+                return DayEvent(event: event, source: isFreeForMe(event) ? .workFree : .work)
             case .becky:
                 switch beckyStatus(event, decisions: decisions) {
                 case .shared: return DayEvent(event: event, source: .beckyShared)

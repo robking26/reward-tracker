@@ -273,6 +273,59 @@ final class DayPlannerTests: XCTestCase {
         XCTAssertFalse(kinds.contains(.swim))
     }
 
+    func testRobKingALIsNotAWorkDay() {
+        let events = [helper.event("Office focus", "work", monday, 540, 570),
+                      helper.event("Rob King AL", "work", monday, 0, 1_440, allDay: true),
+                      helper.event("Stand-up", "work", monday, 570, 585)]
+        XCTAssertEqual(DayCalendar.workLocation(on: monday, events: events, roles: helper.roles, calendar: london), .leave)
+        let picture = DayPlanner.plan(input(days: [monday], events: events, settings: settings(gym: 1, swims: 0, runs: 0),
+                                            travel: travel([(.home, .gym, 10)])))[0]
+        XCTAssertNil(picture.work, "No working hours on leave")
+        XCTAssertEqual(picture.suggestions.first { $0.kind == .gym }?.start, at(monday, 10), "Day-off timing")
+        XCTAssertFalse(picture.events.contains { $0.event.title == "Rob King AL" }, "Shown as the day, not an event")
+        XCTAssertNotEqual(DayCalendar.workLocation(on: monday, events: [helper.event("Rob King all-hands", "work", monday, 600, 660)],
+                                                   roles: helper.roles, calendar: london), .leave)
+    }
+
+    func testBlockedInOutlookIsFreeForYou() throws {
+        let events = [helper.event("Home focus", "work", monday, 540, 570),
+                      helper.event("Blocked", "work", monday, 840, 960),
+                      helper.event("Evening plans", "mine", monday, 1_050, 1_290),
+                      helper.event("Early start", "mine", monday, 360, 530)]
+        let plan = input(days: [monday], events: events, settings: settings(gym: 1, swims: 0, runs: 0),
+                         travel: travel([(.home, .gym, 10)]))
+        let picture = DayPlanner.plan(plan)[0]
+        XCTAssertEqual(picture.events.first { $0.event.title == "Blocked" }?.source, .workFree)
+        XCTAssertTrue(picture.free.contains { $0.interval == DateInterval(start: at(monday, 14), end: at(monday, 16)) && !$0.isLunch })
+        let gym = try XCTUnwrap(picture.suggestions.first { $0.kind == .gym })
+        XCTAssertEqual(gym.leaveAt, at(monday, 14, 30), "Fits inside the blocked time, drive included")
+        XCTAssertEqual(gym.backAt, at(monday, 16))
+    }
+
+    func testBlockedOnAnOfficeDayReturnsToTheOffice() throws {
+        let events = [helper.event("Office focus", "work", monday, 540, 570),
+                      helper.event("Blocked", "work", monday, 720, 870),
+                      helper.event("Evening plans", "mine", monday, 1_050, 1_290),
+                      helper.event("Early start", "mine", monday, 360, 530)]
+        let plan = input(days: [monday], events: events, settings: settings(gym: 1, swims: 0, runs: 0),
+                         travel: travel([(.home, .office, 20), (.office, .gym, 5), (.gym, .home, 30)]))
+        let gym = try XCTUnwrap(DayPlanner.plan(plan)[0].suggestions.first { $0.kind == .gym })
+        XCTAssertEqual(gym.origin, .office)
+        XCTAssertEqual(gym.travelBack, 10, "Back to the office, not home")
+    }
+
+    func testLunchWalkInOutlookIsTheWalk() throws {
+        let events = [helper.event("Home focus", "work", monday, 540, 570),
+                      helper.event("Lunch walk", "work", monday, 750, 780),
+                      helper.event("Evening plans", "mine", monday, 1_050, 1_290)]
+        let plan = input(days: [monday], events: events, settings: settings(gym: 0, swims: 0, runs: 0))
+        let picture = DayPlanner.plan(plan)[0]
+        let walk = try XCTUnwrap(picture.suggestions.first { $0.kind == .walk })
+        XCTAssertEqual(walk.start, at(monday, 12, 30))
+        XCTAssertEqual(DayCalendar.workLocation(on: monday, events: [events[1]], roles: helper.roles, calendar: london), .dayOff,
+                       "A lunch walk alone doesn't make a work day")
+    }
+
     func testMissingDriveTimesFallBackAndSayso() throws {
         let plan = input(days: [monday], settings: settings(gym: 1, swims: 0, runs: 0))
         let gym = try XCTUnwrap(DayPlanner.plan(plan)[0].suggestions.first { $0.kind == .gym })

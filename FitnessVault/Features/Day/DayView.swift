@@ -197,6 +197,7 @@ private struct DayHero: View {
         case .home: "Home focus at 9 am."
         case .unknown: "No office or home focus at 9 am in Outlook, so home is assumed."
         case .dayOff: "Nothing from work today."
+        case .leave: "Rob King AL in Outlook: no work today."
         }
     }
 }
@@ -508,7 +509,7 @@ enum DayStyle {
         case .office: Palette.frost
         case .home: Palette.fresh
         case .unknown: Palette.warning
-        case .dayOff: Palette.accent
+        case .dayOff, .leave: Palette.accent
         }
     }
 
@@ -518,6 +519,7 @@ enum DayStyle {
         case .home: "house.fill"
         case .unknown: "briefcase.fill"
         case .dayOff: "sun.max.fill"
+        case .leave: "beach.umbrella.fill"
         }
     }
 
@@ -527,6 +529,7 @@ enum DayStyle {
         case .work: Palette.frost
         case .beckyShared: Palette.rose
         case .beckyVisible, .beckyUnconfirmed: Palette.textTertiary
+        case .workFree: Palette.fresh
         }
     }
 
@@ -537,6 +540,7 @@ enum DayStyle {
         case .beckyShared: "With Becky"
         case .beckyVisible: "Becky · just so you know"
         case .beckyUnconfirmed: "Becky · shared with you?"
+        case .workFree: "Work · free for you"
         }
     }
 
