@@ -14,7 +14,7 @@ enum TrainingFocus: String, Codable, CaseIterable, Sendable {
         case .push: "Push"
         case .pull: "Pull"
         case .legs: "Legs"
-        case .extra: "Arms and core"
+        case .extra: "Functional and swim"
         case .upper: "Upper body"
         case .lower: "Lower body"
         }
@@ -29,7 +29,7 @@ enum TrainingFocus: String, Codable, CaseIterable, Sendable {
         case .push: "2–3 min rest. Last set of each to failure."
         case .pull: "Full stretch at the bottom. No swinging, no half reps."
         case .legs: "3 min rest on squats. 2–3 seconds down, every rep."
-        case .extra: "Optional, knee-friendly extra. Skip it whenever you need the rest."
+        case .extra: "Optional and shorter: full-body carries, hinge, push and pull, then a core circuit, then a swim. Nothing heavy through the knee."
         case .upper, .lower: nil
         }
     }
@@ -53,7 +53,7 @@ enum KneeLoad: Int, Codable, Comparable, Sendable {
 }
 
 enum RepUnit: String, Codable, Sendable {
-    case reps, seconds, stepsEachWay, repsEachSide
+    case reps, seconds, stepsEachWay, repsEachSide, minutes
 
     var label: String {
         switch self {
@@ -61,6 +61,7 @@ enum RepUnit: String, Codable, Sendable {
         case .seconds: "sec"
         case .stepsEachWay: "steps each way"
         case .repsEachSide: "each side"
+        case .minutes: "min"
         }
     }
 }
@@ -214,6 +215,29 @@ enum ExerciseLibrary {
              cue: "Full stretch at the bottom, pause at the top."),
         lift("standingCalfRaise", "Standing calf raise", .accessory, "Bodyweight", warm: nil, start: nil, increment: 0, reps: 15,
              minReps: 12, rest: 60, alternatives: ["seatedCalfRaise", "singleLegBalance"]),
+
+        // The optional functional day: full body, core-focused, finished in the pool
+        lift("farmersCarry", "Farmer's carry", .main, "Dumbbells", warm: nil, start: nil, perSide: true, increment: 2, sets: 2,
+             reps: 40, minReps: 30, rest: 45, knee: .low, unit: .seconds, alternatives: ["romanianDeadlift", "sidePlank"],
+             cue: "Tall, ribs down, short quick steps. Heavy enough that 40 seconds is hard."),
+        lift("pallofPress", "Pallof press", .core, "Cable", warm: nil, start: nil, increment: 2.5, sets: 3, reps: 10, minReps: 8,
+             rest: 20, unit: .repsEachSide, alternatives: ["deadBug", "sidePlank"],
+             cue: "Side-on to the cable, press out and hold for a second without letting it twist you."),
+        lift("hangingKneeRaise", "Hanging knee raise", .core, "Pull-up bar", warm: nil, start: nil, increment: 0, sets: 3, reps: 10,
+             minReps: 8, rest: 20, alternatives: ["deadBug", "cableCrunch"],
+             cue: "No swinging: curl the hips up, lower slowly."),
+        lift("sidePlank", "Side plank", .core, "Bodyweight", warm: nil, start: nil, increment: 0, sets: 3, reps: 30, minReps: 20,
+             rest: 20, unit: .seconds, alternatives: ["plank", "pallofPress"],
+             cue: "Each side. Elbow under the shoulder, hips high, body in one line."),
+        lift("swim", "Swim", .main, "Pool", warm: nil, start: nil, increment: 0, sets: 1, reps: 15, minReps: 10, rest: 0,
+             unit: .minutes, alternatives: ["rowingMachine", "inclineWalk"],
+             cue: "Steady front crawl, breathing every three strokes. Build the time as the Swimming card suggests."),
+        lift("rowingMachine", "Rowing machine", .main, "Machine", warm: nil, start: nil, increment: 0, sets: 1, reps: 15,
+             minReps: 10, rest: 0, knee: .moderate, unit: .minutes, alternatives: ["inclineWalk", "swim"],
+             cue: "Legs, then lean, then arms. Easy, steady pace."),
+        lift("inclineWalk", "Incline treadmill walk", .main, "Treadmill", warm: nil, start: nil, increment: 0, sets: 1, reps: 20,
+             minReps: 15, rest: 0, knee: .low, unit: .minutes, alternatives: ["swim", "rowingMachine"],
+             cue: "Brisk, without holding the rails. Keep the incline where the knee stays comfortable."),
 
         // Swaps added so every exercise has at least two options, whatever the reason (busy, sore, no kit).
         lift("inclineMachinePress", "Incline chest press machine", .main, "Machine", warm: nil, start: nil, increment: 2.5,

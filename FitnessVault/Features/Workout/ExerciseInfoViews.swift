@@ -1,57 +1,56 @@
 import SwiftUI
-import WebKit
 
-/// A YouTube video played inline. YouTube needs to know which app is embedding it, so the page is loaded with the
-/// app's identifier as its origin; the privacy-enhanced domain sets no cookies until you press play.
-struct YouTubePlayer: UIViewRepresentable {
-    let videoID: String
-
-    func makeUIView(context: Context) -> WKWebView {
-        let configuration = WKWebViewConfiguration()
-        configuration.allowsInlineMediaPlayback = true
-        configuration.mediaTypesRequiringUserActionForPlayback = .all
-        let webView = WKWebView(frame: .zero, configuration: configuration)
-        webView.isOpaque = false
-        webView.backgroundColor = .black
-        webView.scrollView.isScrollEnabled = false
-        return webView
+/// The start and finish positions of an exercise, from the public-domain Free Exercise DB, bundled in the app.
+enum FormDemo {
+    static func frames(for exerciseID: String) -> [UIImage] {
+        (0...1).compactMap { index in
+            Bundle.main.url(forResource: "form-\(exerciseID)-\(index)", withExtension: "jpg")
+                .flatMap { UIImage(contentsOfFile: $0.path) }
+        }
     }
 
-    func updateUIView(_ webView: WKWebView, context: Context) {
-        guard context.coordinator.loaded != videoID else { return }
-        context.coordinator.loaded = videoID
-        let source = "https://www.youtube-nocookie.com/embed/\(videoID)?playsinline=1&rel=0&modestbranding=1"
-        let html = """
-        <!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
-        <style>html,body{margin:0;height:100%;background:#000}iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}</style>
-        </head><body><iframe src="\(source)" allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></body></html>
-        """
-        webView.loadHTMLString(html, baseURL: URL(string: "https://com.robking.fitnessvault"))
-    }
+    static func hasFrames(_ exerciseID: String) -> Bool { frames(for: exerciseID).count == 2 }
 
-    func makeCoordinator() -> Coordinator { Coordinator() }
+    /// Exercises the photo set doesn't cover: the knee rehab moves keep their physio video, and swimming needs none.
+    static let noFrames: Set<String> = ["stepDown", "singleLegBalance", "sideLyingAbduction", "wallSit", "clamshell", "swim"]
 
-    final class Coordinator {
-        var loaded: String?
-    }
+    /// Seconds on each position; a full loop is twice this.
+    static let hold: Double = 1.2
 }
 
-/// The demo video in a 16:9 card, or a placeholder when there isn't one.
-struct ExerciseVideoCard: View {
+/// A short form loop: the start and finish positions crossfading back and forth (2.4 seconds a loop).
+/// With Reduce Motion on, both positions are shown side by side instead.
+struct FormLoopCard: View {
     let exerciseID: String
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+        let frames = FormDemo.frames(for: exerciseID)
         Group {
-            if let video = ExerciseVideos.videoID(for: exerciseID) {
-                YouTubePlayer(videoID: video)
+            if frames.count == 2 {
+                if reduceMotion {
+                    HStack(spacing: 2) {
+                        frameView(frames[0])
+                        frameView(frames[1])
+                    }
+                } else {
+                    TimelineView(.periodic(from: .now, by: FormDemo.hold)) { context in
+                        let tick = Int(context.date.timeIntervalSinceReferenceDate / FormDemo.hold)
+                        ZStack {
+                            frameView(frames[0])
+                            frameView(frames[1])
+                                .opacity(tick % 2 == 0 ? 0 : 1)
+                                .animation(.easeInOut(duration: 0.45), value: tick)
+                        }
+                    }
+                }
             } else {
                 VStack(spacing: Spacing.xs) {
-                    Image(systemName: "play.slash.fill")
+                    Image(systemName: "figure.mixed.cardio")
                         .font(.title)
                         .foregroundStyle(Palette.textTertiary)
-                    Text("No demo for this one yet")
+                    Text("Follow the steps below")
                         .font(.footnote)
                         .foregroundStyle(Palette.textSecondary)
                 }
@@ -59,9 +58,29 @@ struct ExerciseVideoCard: View {
                 .background(Palette.inset)
             }
         }
-        .aspectRatio(16 / 9, contentMode: .fit)
+        .aspectRatio(3 / 2, contentMode: .fit)
         .clipShape(shape)
-        .accessibilityLabel("Demo video")
+        .overlay(alignment: .bottomLeading) {
+            if frames.count == 2 {
+                Label("Form loop", systemImage: "repeat")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(Palette.textPrimary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(.black.opacity(0.55), in: Capsule())
+                    .padding(Spacing.xs)
+            }
+        }
+        .accessibilityElement()
+        .accessibilityLabel(frames.count == 2 ? "Form demonstration: start and finish positions" : "No demonstration")
+    }
+
+    private func frameView(_ image: UIImage) -> some View {
+        Image(uiImage: image)
+            .resizable()
+            .scaledToFill()
+            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+            .clipped()
     }
 }
 
@@ -77,7 +96,7 @@ struct ExerciseInfoView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.l) {
-                ExerciseVideoCard(exerciseID: exercise.id)
+                FormLoopCard(exerciseID: exercise.id)
 
                 VStack(alignment: .leading, spacing: Spacing.s) {
                     Text(exercise.name)
@@ -106,10 +125,15 @@ struct ExerciseInfoView: View {
                     }
                     if let video = ExerciseVideos.videoID(for: exercise.id), let url = ExerciseVideos.watchURL(video) {
                         Link(destination: url) {
-                            Label("Open in YouTube", systemImage: "arrow.up.right.square")
+                            Label("Full video on YouTube", systemImage: "arrow.up.right.square")
                                 .font(.footnote.weight(.semibold))
                                 .foregroundStyle(Palette.textSecondary)
                         }
+                    }
+                    if FormDemo.hasFrames(exercise.id) {
+                        Text("Form photos: Free Exercise DB (public domain).")
+                            .font(.caption2)
+                            .foregroundStyle(Palette.textTertiary)
                     }
                 }
 

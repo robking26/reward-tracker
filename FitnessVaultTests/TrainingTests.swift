@@ -6,7 +6,12 @@ final class ExerciseLibraryTests: XCTestCase {
         for exercise in ExerciseLibrary.all {
             XCTAssertGreaterThanOrEqual(exercise.alternatives.count, 2, "\(exercise.id) needs swaps")
             XCTAssertFalse(exercise.alternatives.contains(exercise.id), "\(exercise.id) can't swap for itself")
-            XCTAssertNotNil(ExerciseVideos.videoID(for: exercise.id), "\(exercise.id) needs a demo video")
+            if FormDemo.noFrames.contains(exercise.id) {
+                XCTAssertTrue(exercise.id == "swim" || ExerciseVideos.videoID(for: exercise.id) != nil,
+                              "\(exercise.id) has no form loop, so it needs a full video")
+            } else {
+                XCTAssertTrue(FormDemo.hasFrames(exercise.id), "\(exercise.id) needs a form loop")
+            }
         }
         for (exerciseID, video) in ExerciseVideos.byExercise {
             XCTAssertNotNil(ExerciseLibrary.exercise(exerciseID), "Video for an unknown exercise: \(exerciseID)")
@@ -74,7 +79,7 @@ final class ProgramGeneratorTests: XCTestCase {
         XCTAssertTrue(ProgramGenerator.plan(input(.pull)).notes.contains("Full stretch at the bottom. No swinging, no half reps."))
         XCTAssertTrue(ProgramGenerator.plan(input(.legs)).notes.contains("3 min rest on squats. 2–3 seconds down, every rep."))
         XCTAssertEqual(ProgramGenerator.plan(input(.push)).title, "Push")
-        XCTAssertEqual(ProgramGenerator.plan(input(.extra)).title, "Arms and core")
+        XCTAssertEqual(ProgramGenerator.plan(input(.extra)).title, "Functional and swim")
     }
 
     func testFullSessionsFitNinetyMinutes() {
@@ -128,6 +133,11 @@ final class ProgramGeneratorTests: XCTestCase {
         let plan = ProgramGenerator.plan(input(.extra))
         XCTAssertFalse(main(plan).isEmpty)
         XCTAssertTrue(plan.exercises.allSatisfy { ($0.exercise?.kneeLoad ?? .none) <= .low })
+        XCTAssertEqual(plan.exercises.last?.exerciseID, "swim", "Finishes with a swim")
+        let core = main(plan).filter { $0.exercise?.role == .core }
+        XCTAssertGreaterThanOrEqual(core.count, 3, "Ab-focused")
+        XCTAssertEqual(plan.exercises.first { $0.exerciseID == "pushUp" }?.sets, 2, "Shorter: two sets of the full-body moves")
+        XCTAssertLessThan(plan.estimatedMinutes, ProgramGenerator.plan(input(.pull)).estimatedMinutes + 1)
     }
 
     func testEveryProgrammeExerciseHasADemoAndSwaps() {
@@ -135,7 +145,7 @@ final class ProgramGeneratorTests: XCTestCase {
             for id in ProgramGenerator.templates(focus, variant: 0) {
                 let exercise = ExerciseLibrary.exercise(id)
                 XCTAssertNotNil(exercise, id)
-                XCTAssertNotNil(ExerciseVideos.videoID(for: id), "\(id) demo")
+                XCTAssertTrue(FormDemo.hasFrames(id) || FormDemo.noFrames.contains(id), "\(id) demo")
                 XCTAssertGreaterThanOrEqual(exercise?.alternatives.count ?? 0, 2, "\(id) swaps")
             }
         }

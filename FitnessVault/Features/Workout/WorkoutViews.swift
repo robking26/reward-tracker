@@ -34,7 +34,7 @@ enum SessionChoice: String, CaseIterable, Identifiable {
         case .push: "Push"
         case .pull: "Pull"
         case .legs: "Legs"
-        case .extra: "Arms & core"
+        case .extra: "Functional"
         case .rehab: "Rehab"
         }
     }
@@ -43,7 +43,7 @@ enum SessionChoice: String, CaseIterable, Identifiable {
         case .push: "Chest day"
         case .pull: "Back day"
         case .legs: "Squat day"
-        case .extra: "Optional extra"
+        case .extra: "Abs + swim"
         case .rehab: "Knee only"
         }
     }
@@ -52,7 +52,7 @@ enum SessionChoice: String, CaseIterable, Identifiable {
         case .push: "figure.strengthtraining.traditional"
         case .pull: "figure.rower"
         case .legs: "figure.step.training"
-        case .extra: "dumbbell.fill"
+        case .extra: "figure.pool.swim"
         case .rehab: "figure.cooldown"
         }
     }
@@ -360,7 +360,7 @@ private struct TimelineExerciseRow: View {
             }
             .padding(.bottom, isLast ? 0 : Spacing.m)
             Spacer(minLength: 0)
-            if ExerciseVideos.videoID(for: item.exerciseID) != nil {
+            if FormDemo.hasFrames(item.exerciseID) || ExerciseVideos.videoID(for: item.exerciseID) != nil {
                 Image(systemName: "play.circle.fill")
                     .font(.title3)
                     .foregroundStyle(rowTint.opacity(0.8))
@@ -563,7 +563,7 @@ struct ActiveWorkoutView: View {
                 Button {
                     sheet = .swap
                 } label: {
-                    Label("Watch demo", systemImage: "play.rectangle.fill")
+                    Label("Form demo", systemImage: "repeat")
                 }
                 .buttonStyle(SecondaryButtonStyle(tint: tint, fill: tint.opacity(0.14)))
                 Button {
@@ -636,7 +636,7 @@ struct ActiveWorkoutView: View {
                     Button {
                         info = exercise
                     } label: {
-                        Label("Watch the demo", systemImage: "play.rectangle.fill")
+                        Label("See the form", systemImage: "repeat")
                     }
                     .buttonStyle(SecondaryButtonStyle(tint: Palette.accent, fill: Palette.accent.opacity(0.14)))
                 }

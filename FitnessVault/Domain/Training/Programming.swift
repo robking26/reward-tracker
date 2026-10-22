@@ -128,12 +128,30 @@ enum ProgramGenerator {
                           "cablePushdown"]
         case (.pull, _): ["latPulldown", "seatedCableRow", "assistedPullUp", "bentOverDBRow", "machineCurl", "hammerCurl"]
         case (.legs, _): ["barbellSquat", "legPress", "legCurl", "legExtension", "gobletSquat", "seatedCalfRaise"]
-        case (.extra, _): ["cableLateralRaise", "facePull", "ezBarCurl", "overheadTricepsExtension", "cableCurl", "cableCrunch",
-                           "plank"]
+        case (.extra, _): ["farmersCarry", "romanianDeadlift", "pushUp", "dumbbellRow", "pallofPress", "hangingKneeRaise",
+                           "sidePlank", "swim"]
         case (.upper, 0): ["inclineDBBench", "barbellRow", "seatedDBShoulderPress", "ezBarCurl", "tricepsMachine", "lateralRaise"]
         case (.upper, _): ["flatDBBench", "latPulldown", "seatedDBShoulderPress", "hammerCurl", "skullCrusher", "trapMachine"]
         case (.lower, 0): ["barbellSquat", "singleLegPress", "cleanAndPress", "plank"]
         case (.lower, _): ["deadlift", "singleLegPress", "cleanAndPress", "cableCrunch"]
+        }
+    }
+
+    /// A session's own sets, reps and rest where they differ from the exercise's usual ones.
+    struct Prescription: Sendable {
+        var sets: Int
+        var reps: Int
+        var restSeconds: Int
+    }
+
+    /// The functional day is shorter: two sets of the full-body moves with short rests.
+    static func prescription(_ focus: TrainingFocus, exerciseID: String) -> Prescription? {
+        guard focus == .extra else { return nil }
+        switch exerciseID {
+        case "romanianDeadlift": return Prescription(sets: 2, reps: 10, restSeconds: 45)
+        case "pushUp": return Prescription(sets: 2, reps: 12, restSeconds: 45)
+        case "dumbbellRow": return Prescription(sets: 2, reps: 10, restSeconds: 45)
+        default: return nil
         }
     }
 
@@ -164,7 +182,13 @@ enum ProgramGenerator {
                 used.insert(swap.id)
                 exercise = swap
             }
-            main.append(planned(exercise, input: input))
+            var item = planned(exercise, input: input)
+            if let custom = prescription(input.focus, exerciseID: exercise.id) {
+                item.sets = custom.sets
+                item.targetReps = custom.reps
+                item.restSeconds = custom.restSeconds
+            }
+            main.append(item)
         }
 
         if input.knee == .flare && input.focus.loadsLegs {
@@ -221,6 +245,8 @@ enum ProgramGenerator {
         let seconds = list.reduce(0) { sum, item in
             // Rehab moves are short and done back to back: about 12 minutes on lower days, 5 on upper days (R2).
             if item.isRehab { return sum + 150 }
+            // Timed cardio (a swim, a row): the time itself, plus getting there and changing.
+            if item.exercise?.unit == .minutes { return sum + item.sets * item.targetReps * 60 + 300 }
             let work = 45
             let warm = item.warmUpKg != nil ? 90 : 0
             let rest = item.supersetWithNext ? item.restSeconds / 2 : item.restSeconds
