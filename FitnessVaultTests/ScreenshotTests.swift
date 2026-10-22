@@ -33,7 +33,7 @@ final class ScreenshotTests: XCTestCase {
         let knee = NavigationStack { KneeCheckView(timing: .nextDay) { _, _, _ in "" } }
         try await capture("gym-knee-check", height: 852, knee, model, training, kitchen)
 
-        let plan = training.makePlan(focus: .upper, variant: 0, availableMinutes: 60, rehabFirst: false)
+        let plan = training.makePlan(focus: .push, variant: 0, availableMinutes: 90, rehabFirst: false)
         training.start(plan)
         try await capture("gym-active", height: 1_300, WorkoutFlowView(), model, training, kitchen)
         training.logSet(weight: plan.exercises.first?.weightKg, reps: plan.exercises.first?.targetReps ?? 10)
@@ -110,8 +110,8 @@ final class ScreenshotTests: XCTestCase {
         let history = TrainingModel(container: container, restAlerts: RecordingRestAlerts(), now: { date })
         var index = 0
         while date < Date.now.addingTimeInterval(-86_400) {
-            let focus: TrainingFocus = index % 2 == 0 ? .upper : .lower
-            let plan = history.makePlan(focus: focus, variant: (index / 2) % 2, availableMinutes: 60, rehabFirst: true)
+            let focus = history.suggestedFocus(for: nil).0
+            let plan = history.makePlan(focus: focus, variant: 0, availableMinutes: 90, rehabFirst: true)
             history.start(plan)
             var guardCount = 0
             while history.current != nil && guardCount < 60 {

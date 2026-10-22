@@ -98,7 +98,13 @@ struct WorkoutPlan: Hashable, Sendable, Codable {
     /// A knee rehab session on its own. Optional so plans saved before it existed still load.
     var rehabOnly: Bool? = nil
 
-    var title: String { rehabOnly == true ? "Knee rehab" : "\(focus.title) \(variant == 0 ? "A" : "B")" }
+    var title: String {
+        if rehabOnly == true { return "Knee rehab" }
+        switch focus {
+        case .upper, .lower: return "\(focus.title) \(variant == 0 ? "A" : "B")"
+        default: return focus.title
+        }
+    }
 }
 
 struct ProgramInput: Sendable {
@@ -115,8 +121,15 @@ struct ProgramInput: Sendable {
 enum ProgramGenerator {
     static let warmUpMinutes = 8
 
+    /// The sessions, in order. Push, pull and legs are fixed; the earlier upper and lower A/B days stay for old plans.
     static func templates(_ focus: TrainingFocus, variant: Int) -> [String] {
         switch (focus, variant % 2) {
+        case (.push, _): ["barbellBench", "inclineDBBench", "seatedDBShoulderPress", "cableFly", "lateralRaise", "assistedDip",
+                          "cablePushdown"]
+        case (.pull, _): ["latPulldown", "seatedCableRow", "assistedPullUp", "bentOverDBRow", "machineCurl", "hammerCurl"]
+        case (.legs, _): ["barbellSquat", "legPress", "legCurl", "legExtension", "gobletSquat", "seatedCalfRaise"]
+        case (.extra, _): ["cableLateralRaise", "facePull", "ezBarCurl", "overheadTricepsExtension", "cableCurl", "cableCrunch",
+                           "plank"]
         case (.upper, 0): ["inclineDBBench", "barbellRow", "seatedDBShoulderPress", "ezBarCurl", "tricepsMachine", "lateralRaise"]
         case (.upper, _): ["flatDBBench", "latPulldown", "seatedDBShoulderPress", "hammerCurl", "skullCrusher", "trapMachine"]
         case (.lower, 0): ["barbellSquat", "singleLegPress", "cleanAndPress", "plank"]
@@ -126,31 +139,35 @@ enum ProgramGenerator {
 
     /// Rehab block: 10–15 minutes on lower days, brief on upper days (R2).
     static func rehabBlock(_ focus: TrainingFocus) -> [String] {
-        focus == .lower
+        focus.loadsLegs
             ? ["gluteBridge", "sideLyingAbduction", "bandedLateralWalk", "stepDown", "singleLegBalance"]
             : ["gluteBridge", "singleLegBalance"]
     }
 
     static func plan(_ input: ProgramInput) -> WorkoutPlan {
-        var notes: [String] = []
+        var notes: [String] = input.focus.sessionNote.map { [$0] } ?? []
         var main: [PlannedExercise] = []
+        let ids = templates(input.focus, variant: input.variant)
+        var used = Set(ids).union(rehabBlock(input.focus))
 
-        for id in templates(input.focus, variant: input.variant) {
+        for id in ids {
             guard var exercise = ExerciseLibrary.exercise(id) else { continue }
-            // An irritable or flared knee swaps the heavier knee work for gentler alternatives (R3).
+            // An irritable or flared knee swaps the heavier knee work for gentler alternatives (R3), never doubling up.
             let limit: KneeLoad = input.knee == .settled ? .high : (input.knee == .irritable ? .low : .none)
             if exercise.kneeLoad > limit {
-                guard let swap = exercise.alternatives.compactMap(ExerciseLibrary.exercise).first(where: { $0.kneeLoad <= limit }) else {
+                let options = exercise.alternatives.compactMap(ExerciseLibrary.exercise)
+                guard let swap = options.first(where: { $0.kneeLoad <= limit && !used.contains($0.id) }) else {
                     notes.append("\(exercise.name) left out while the knee settles.")
                     continue
                 }
                 notes.append("\(exercise.name) swapped for \(swap.name) while the knee settles.")
+                used.insert(swap.id)
                 exercise = swap
             }
             main.append(planned(exercise, input: input))
         }
 
-        if input.knee == .flare && input.focus == .lower {
+        if input.knee == .flare && input.focus.loadsLegs {
             main = []
             notes.append("Knee flared up: rehab only today, and only what doesn't hurt. Book your physio if it's not settling.")
         }
@@ -179,11 +196,11 @@ enum ProgramGenerator {
 
     /// The full lower-body rehab block on its own, about 12 minutes (R1–R2).
     static func rehabOnly(knee: KneeStatus, weights: [String: ProgressionDecision]) -> WorkoutPlan {
-        let input = ProgramInput(focus: .lower, variant: 0, availableMinutes: 20, rehabFirst: true, knee: knee, weights: weights)
-        let rehab = rehabBlock(.lower).compactMap(ExerciseLibrary.exercise).map { planned($0, input: input) }
+        let input = ProgramInput(focus: .legs, variant: 0, availableMinutes: 20, rehabFirst: true, knee: knee, weights: weights)
+        let rehab = rehabBlock(.legs).compactMap(ExerciseLibrary.exercise).map { planned($0, input: input) }
         var notes = ["Slow and controlled. Stop anything that's sharp or makes the knee worse."]
         if knee == .flare { notes.append("Knee flared up: only what doesn't hurt. Book your physio if it's not settling.") }
-        return WorkoutPlan(focus: .lower, variant: 0, exercises: rehab, rehabFirst: true, estimatedMinutes: minutes(rehab),
+        return WorkoutPlan(focus: .legs, variant: 0, exercises: rehab, rehabFirst: true, estimatedMinutes: minutes(rehab),
                            notes: notes, rehabOnly: true)
     }
 
@@ -322,11 +339,15 @@ enum SessionAdaptation {
         var result = plan
         let limit: KneeLoad = severity == .flare ? .none : .low
         var remaining: [PlannedExercise] = []
+        // Never swap two exercises into the same one.
+        var used = Set(plan.exercises.map(\.exerciseID))
         for item in plan.exercises.dropFirst(currentIndex + 1) {
             guard let exercise = item.exercise else { continue }
             if exercise.kneeLoad <= limit {
                 remaining.append(item)
-            } else if let swap = exercise.alternatives.compactMap(ExerciseLibrary.exercise).first(where: { $0.kneeLoad <= limit }) {
+            } else if let swap = exercise.alternatives.compactMap(ExerciseLibrary.exercise)
+                .first(where: { $0.kneeLoad <= limit && !used.contains($0.id) }) {
+                used.insert(swap.id)
                 var replaced = item
                 replaced.exerciseID = swap.id
                 replaced.weightKg = nil

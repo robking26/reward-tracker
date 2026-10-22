@@ -190,7 +190,7 @@ private struct NextSessionHero: View {
 
     var body: some View {
         let suggested = training.suggestedFocus(for: nil)
-        let plan = training.makePlan(focus: suggested.0, variant: suggested.1, availableMinutes: 60, rehabFirst: true)
+        let plan = training.makePlan(focus: suggested.0, variant: suggested.1, availableMinutes: 90, rehabFirst: true)
         let rehabCount = plan.exercises.filter(\.isRehab).count
         VStack(alignment: .leading, spacing: Spacing.m) {
             HStack {

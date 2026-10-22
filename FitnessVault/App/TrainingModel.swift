@@ -66,19 +66,20 @@ final class TrainingModel {
 
     var kneeStatus: KneeStatus { KneeRules.status(symptomLogs().map(\.entry), now: now()) }
 
-    /// Upper or lower from the commitment's title, otherwise the opposite of the last session; A/B alternate.
+    /// The next session in the Push → Pull → Legs rotation, after the last one you finished; arms and core is
+    /// optional and never suggested. A title can name the session ("push", "pull", "legs", "arms").
     func suggestedFocus(for title: String?) -> (TrainingFocus, Int) {
-        let finished = sessions().filter { !$0.isActive }
-        let focus: TrainingFocus
-        if let title, title.localizedCaseInsensitiveContains("lower") {
-            focus = .lower
-        } else if let title, title.localizedCaseInsensitiveContains("upper") {
-            focus = .upper
-        } else {
-            focus = finished.last?.focus == .upper ? .lower : .upper
+        if let title {
+            let named: [(String, TrainingFocus)] = [("push", .push), ("pull", .pull), ("leg", .legs), ("arm", .extra)]
+            for (word, focus) in named where title.localizedCaseInsensitiveContains(word) {
+                return (focus, 0)
+            }
         }
-        let variant = finished.filter { $0.focus == focus }.count % 2
-        return (focus, variant)
+        let finished = sessions().filter { !$0.isActive && $0.endedAt != nil }
+        let last = finished.last { TrainingFocus.rotation.contains($0.focus) && !$0.isRehabOnly }?.focus
+        let rotation = TrainingFocus.rotation
+        guard let last, let index = rotation.firstIndex(of: last) else { return (.push, 0) }
+        return (rotation[(index + 1) % rotation.count], 0)
     }
 
     func makePlan(focus: TrainingFocus, variant: Int, availableMinutes: Int, rehabFirst: Bool) -> WorkoutPlan {
@@ -288,12 +289,12 @@ final class TrainingModel {
 
     // MARK: Knee check-ins (R3)
 
-    /// The morning after a lower-body session or rehab, until it's been answered.
+    /// The morning after a leg session or rehab, until it's been answered.
     var needsNextDayKneeCheck: Bool {
         let today = DayKey(now(), calendar: calendar)
         let yesterday = today.adding(days: -1, calendar: calendar).description
-        // Lower-body sessions and rehab sessions both load the knee.
-        let trainedLegs = sessions().contains { $0.day == yesterday && $0.endedAt != nil && $0.focus == .lower }
+        // Leg sessions and rehab sessions both load the knee.
+        let trainedLegs = sessions().contains { $0.day == yesterday && $0.endedAt != nil && $0.focus.loadsLegs }
         guard trainedLegs else { return false }
         return !symptomLogs().contains { $0.timing == .nextDay && DayKey($0.date, calendar: calendar) == today }
     }

@@ -47,6 +47,17 @@ enum ExerciseVideos {
         "deadBug": "g_BYB0R-4Ws",
         "wallSit": "JaZNYM3zAP0",
         "clamshell": "m_ZPapmqeNM",
+        "barbellBench": "rT7DgCr-3pg",
+        "cableFly": "7UC_8lsE2w0",
+        "pecDeck": "-DZXcuPi4vk",
+        "assistedDip": "yP6bZ-yxwGg",
+        "assistedPullUp": "gnElpp3Fm50",
+        "bentOverDBRow": "--gDUDFKx6Q",
+        "machineCurl": "to3m8zws1n8",
+        "legPress": "ETOAyWM6i6A",
+        "legExtension": "xAUvXdHu1sI",
+        "seatedCalfRaise": "smyXy_dhXo8",
+        "standingCalfRaise": "4HQ8Am9IuME",
     ]
 
     static func videoID(for exerciseID: String) -> String? { byExercise[exerciseID] }

@@ -1,9 +1,38 @@
 import Foundation
 
+/// What a session trains. Push, pull and legs are the three-day programme; arms and core is the optional extra.
+/// Upper and lower are the earlier programme, kept so saved sessions still load.
 enum TrainingFocus: String, Codable, CaseIterable, Sendable {
+    case push, pull, legs, extra
     case upper, lower
 
-    var title: String { self == .upper ? "Upper body" : "Lower body" }
+    /// The weekly rotation.
+    static let rotation: [TrainingFocus] = [.push, .pull, .legs]
+
+    var title: String {
+        switch self {
+        case .push: "Push"
+        case .pull: "Pull"
+        case .legs: "Legs"
+        case .extra: "Arms and core"
+        case .upper: "Upper body"
+        case .lower: "Lower body"
+        }
+    }
+
+    /// Sessions that load the knee: they get the full rehab block and the next-morning knee check.
+    var loadsLegs: Bool { self == .legs || self == .lower }
+
+    /// The session's rules, from the programme.
+    var sessionNote: String? {
+        switch self {
+        case .push: "2–3 min rest. Last set of each to failure."
+        case .pull: "Full stretch at the bottom. No swinging, no half reps."
+        case .legs: "3 min rest on squats. 2–3 seconds down, every rep."
+        case .extra: "Optional, knee-friendly extra. Skip it whenever you need the rest."
+        case .upper, .lower: nil
+        }
+    }
 }
 
 enum ExerciseRole: String, Codable, Sendable {
@@ -75,25 +104,27 @@ enum ExerciseLibrary {
 
     static let all: [Exercise] = [
         // Upper body (brief's table)
-        lift("inclineDBBench", "Incline dumbbell bench", .main, "Dumbbells", warm: 12, start: 16, perSide: true, increment: 2,
-             rest: 90, alternatives: ["flatDBBench", "chestPressMachine", "inclineMachinePress", "pushUp"]),
+        lift("inclineDBBench", "Incline dumbbell press", .main, "Dumbbells", warm: 12, start: 16, perSide: true, increment: 2,
+             reps: 8, minReps: 6, rest: 150, alternatives: ["flatDBBench", "chestPressMachine", "inclineMachinePress", "pushUp"]),
         lift("flatDBBench", "Flat dumbbell bench", .main, "Dumbbells", warm: 12, start: 16, perSide: true, increment: 2,
              rest: 90, alternatives: ["inclineDBBench", "chestPressMachine", "pushUp"]),
         lift("seatedDBShoulderPress", "Seated dumbbell shoulder press", .main, "Dumbbells", warm: 8, start: 10, perSide: true,
-             increment: 2, rest: 90, alternatives: ["machineShoulderPress", "cableLateralRaise"]),
+             increment: 2, rest: 150, alternatives: ["machineShoulderPress", "cableLateralRaise"]),
         lift("barbellRow", "Barbell row", .main, "Barbell", warm: 20, start: 30, increment: 2.5, reps: 8, minReps: 8, rest: 120,
              alternatives: ["seatedCableRow", "latPulldown", "dumbbellRow"], cue: "Flat back, pull to your belly button."),
-        lift("latPulldown", "Lat pulldown", .main, "Machine", warm: 30, start: 40, increment: 2.5, rest: 90,
-             alternatives: ["seatedCableRow", "dumbbellRow"]),
+        lift("latPulldown", "Lat pulldown (wide grip)", .main, "Machine", warm: 30, start: 40, increment: 2.5, sets: 4, reps: 8,
+             minReps: 6, rest: 120, alternatives: ["seatedCableRow", "dumbbellRow", "assistedPullUp"],
+             cue: "Full stretch at the top, pull to your upper chest. No swinging."),
         lift("hammerCurl", "Dumbbell hammer curl", .accessory, "Dumbbells", warm: nil, start: 10, perSide: true, increment: 2,
-             rest: 60, alternatives: ["ezBarCurl", "cableCurl"]),
+             rest: 60, alternatives: ["ezBarCurl", "cableCurl", "machineCurl"]),
         lift("ezBarCurl", "Small-bar barbell curl", .accessory, "Small barbell", warm: nil, start: 20, increment: 2.5, sets: 4,
              rest: 60, alternatives: ["hammerCurl", "cableCurl"]),
         lift("tricepsMachine", "Triceps machine", .accessory, "Machine", warm: nil, start: 15, increment: 2.5, rest: 60,
-             alternatives: ["skullCrusher", "cablePushdown", "overheadTricepsExtension"]),
+             alternatives: ["skullCrusher", "cablePushdown", "overheadTricepsExtension", "assistedDip"]),
         lift("skullCrusher", "Skull crusher", .accessory, "EZ bar", warm: 10, start: 14, increment: 2.5, rest: 60,
              alternatives: ["tricepsMachine", "cablePushdown", "overheadTricepsExtension"]),
-        lift("lateralRaise", "Lateral raise", .accessory, "Dumbbells", warm: nil, start: nil, perSide: true, increment: 1, rest: 60,
+        lift("lateralRaise", "Lateral raise", .accessory, "Dumbbells", warm: nil, start: nil, perSide: true, increment: 1,
+             reps: 12, minReps: 10, rest: 120,
              alternatives: ["machineShoulderPress", "cableLateralRaise"]),
         lift("trapMachine", "Upper-back / trap machine", .accessory, "Machine", warm: nil, start: nil, increment: 2.5, rest: 60,
              alternatives: ["seatedCableRow", "facePull"]),
@@ -101,16 +132,19 @@ enum ExerciseLibrary {
         // Upper-body alternatives
         lift("chestPressMachine", "Chest press machine", .main, "Machine", warm: nil, start: nil, increment: 2.5, rest: 90,
              alternatives: ["flatDBBench", "inclineMachinePress", "pushUp"]),
-        lift("seatedCableRow", "Seated cable row", .main, "Cable", warm: nil, start: nil, increment: 2.5, rest: 90,
-             alternatives: ["latPulldown", "dumbbellRow"]),
+        lift("seatedCableRow", "Seated cable row (wide grip)", .main, "Cable", warm: nil, start: nil, increment: 2.5, reps: 8,
+             minReps: 6, rest: 120, alternatives: ["latPulldown", "dumbbellRow", "bentOverDBRow"],
+             cue: "Full stretch forward, squeeze the shoulder blades back."),
         lift("machineShoulderPress", "Shoulder press machine", .main, "Machine", warm: nil, start: nil, increment: 2.5, rest: 90,
              alternatives: ["seatedDBShoulderPress", "cableLateralRaise"]),
-        lift("cablePushdown", "Cable triceps pushdown", .accessory, "Cable", warm: nil, start: nil, increment: 2.5, rest: 60,
+        lift("cablePushdown", "Triceps rope pushdown", .accessory, "Cable", warm: nil, start: nil, increment: 2.5, reps: 12,
+             minReps: 10, rest: 120,
              alternatives: ["tricepsMachine", "overheadTricepsExtension"]),
 
         // Lower body (brief's table): heavy compounds rest properly (W3)
-        lift("barbellSquat", "Barbell squat", .main, "Barbell", warm: 40, start: 60, increment: 2.5, rest: 150, knee: .high,
-             alternatives: ["boxSquat", "hipThrust", "gobletSquat"], cue: "Knees track over toes. Stop if it's sharp."),
+        lift("barbellSquat", "Back squat", .main, "Barbell", warm: 40, start: 60, increment: 2.5, sets: 4, reps: 8, minReps: 6,
+             rest: 180, knee: .high, alternatives: ["boxSquat", "hipThrust", "gobletSquat", "legPress"],
+             cue: "2–3 seconds down, every rep. Knees track over toes. Stop if it's sharp."),
         lift("deadlift", "Barbell deadlift", .main, "Barbell", warm: 40, start: 60, increment: 2.5, rest: 150, knee: .moderate,
              alternatives: ["romanianDeadlift", "hipThrust"], cue: "Brace, bar close, hips back."),
         lift("cleanAndPress", "Clean and press", .accessory, "Barbell", warm: 20, start: 30, increment: 2.5, rest: 120,
@@ -150,6 +184,37 @@ enum ExerciseLibrary {
         lift("singleLegBalance", "Supported single-leg balance", .rehab, "Bodyweight", warm: nil, start: nil, increment: 0,
              sets: 3, reps: 30, minReps: 20, rest: 30, unit: .seconds, alternatives: ["gluteBridge", "sideLyingAbduction"]),
 
+        // Push, pull and legs sessions
+        lift("barbellBench", "Bench press", .main, "Barbell", warm: 20, start: nil, increment: 2.5, sets: 4, reps: 8, minReps: 6,
+             rest: 150, alternatives: ["flatDBBench", "chestPressMachine", "pushUp"],
+             cue: "Shoulder blades pinned back, bar to mid-chest, 2 seconds down."),
+        lift("cableFly", "Cable fly", .accessory, "Cable", warm: nil, start: nil, increment: 2.5, reps: 12, minReps: 10, rest: 120,
+             alternatives: ["pecDeck", "flatDBBench"], cue: "Soft elbows, hug a big tree, squeeze at the middle."),
+        lift("pecDeck", "Pec deck (machine fly)", .accessory, "Machine", warm: nil, start: nil, increment: 2.5, reps: 12,
+             minReps: 10, rest: 90, alternatives: ["cableFly", "chestPressMachine"]),
+        lift("assistedDip", "Assisted dip machine", .accessory, "Machine", warm: nil, start: nil, increment: 0, reps: 10, minReps: 8,
+             rest: 120, alternatives: ["tricepsMachine", "cablePushdown"],
+             cue: "Use as little assistance as lets you do 10 clean reps; reduce it over time."),
+        lift("assistedPullUp", "Assisted pull-up", .main, "Machine", warm: nil, start: nil, increment: 0, reps: 10, minReps: 8,
+             rest: 120, alternatives: ["latPulldown", "seatedCableRow"],
+             cue: "Full stretch at the bottom. Use as little assistance as lets you do 10 clean reps."),
+        lift("bentOverDBRow", "Bent-over dumbbell row", .main, "Dumbbells", warm: nil, start: nil, perSide: true, increment: 2,
+             reps: 12, minReps: 10, rest: 90, alternatives: ["dumbbellRow", "seatedCableRow", "barbellRow"],
+             cue: "Flat back, pull to your hips, no swinging."),
+        lift("machineCurl", "Machine biceps curl", .accessory, "Machine", warm: nil, start: nil, increment: 2.5, reps: 12,
+             minReps: 10, rest: 60, alternatives: ["cableCurl", "ezBarCurl"], cue: "Full stretch at the bottom, no half reps."),
+        lift("legPress", "Leg press", .main, "Machine", warm: nil, start: nil, increment: 5, reps: 15, minReps: 12, rest: 120,
+             knee: .moderate, alternatives: ["singleLegPress", "gobletSquat", "hipThrust"],
+             cue: "Feet high on the platform, 2–3 seconds down, stop before any knee pain."),
+        lift("legExtension", "Seated leg extension", .accessory, "Machine", warm: nil, start: nil, increment: 2.5, reps: 12,
+             minReps: 10, rest: 90, knee: .moderate, alternatives: ["gobletSquat", "wallSit"],
+             cue: "Light and slow; skip it if the front of the knee complains."),
+        lift("seatedCalfRaise", "Seated calf raise", .accessory, "Machine", warm: nil, start: nil, increment: 5, reps: 15,
+             minReps: 12, rest: 60, alternatives: ["standingCalfRaise", "singleLegBalance"],
+             cue: "Full stretch at the bottom, pause at the top."),
+        lift("standingCalfRaise", "Standing calf raise", .accessory, "Bodyweight", warm: nil, start: nil, increment: 0, reps: 15,
+             minReps: 12, rest: 60, alternatives: ["seatedCalfRaise", "singleLegBalance"]),
+
         // Swaps added so every exercise has at least two options, whatever the reason (busy, sore, no kit).
         lift("inclineMachinePress", "Incline chest press machine", .main, "Machine", warm: nil, start: nil, increment: 2.5,
              rest: 90, alternatives: ["inclineDBBench", "chestPressMachine"]),
@@ -157,17 +222,19 @@ enum ExerciseLibrary {
              alternatives: ["chestPressMachine", "flatDBBench"], cue: "Body in one line. Hands on a bench makes it easier."),
         lift("dumbbellRow", "Single-arm dumbbell row", .main, "Dumbbells", warm: nil, start: nil, perSide: true, increment: 2,
              rest: 90, unit: .repsEachSide, alternatives: ["seatedCableRow", "barbellRow"], cue: "Knee and hand on the bench, pull to your hip."),
-        lift("facePull", "Cable face pull", .accessory, "Cable", warm: nil, start: nil, increment: 2.5, rest: 60,
+        lift("facePull", "Cable face pull", .accessory, "Cable", warm: nil, start: nil, increment: 2.5, reps: 15, minReps: 12, rest: 60,
              alternatives: ["trapMachine", "seatedCableRow"], cue: "Rope to your eyebrows, elbows high."),
-        lift("cableCurl", "Cable biceps curl", .accessory, "Cable", warm: nil, start: nil, increment: 2.5, rest: 60,
+        lift("cableCurl", "Cable biceps curl", .accessory, "Cable", warm: nil, start: nil, increment: 2.5, reps: 12, minReps: 10, rest: 60,
              alternatives: ["hammerCurl", "ezBarCurl"]),
         lift("overheadTricepsExtension", "Dumbbell overhead triceps extension", .accessory, "Dumbbell", warm: nil, start: nil,
-             increment: 2, rest: 60, alternatives: ["cablePushdown", "skullCrusher"]),
-        lift("cableLateralRaise", "Cable lateral raise", .accessory, "Cable", warm: nil, start: nil, increment: 1.25, rest: 60,
+             increment: 2, reps: 12, minReps: 10, rest: 60, alternatives: ["cablePushdown", "skullCrusher"]),
+        lift("cableLateralRaise", "Cable lateral raise", .accessory, "Cable", warm: nil, start: nil, increment: 1.25, reps: 15,
+             minReps: 12, rest: 60,
              unit: .repsEachSide, alternatives: ["lateralRaise", "machineShoulderPress"]),
-        lift("gobletSquat", "Dumbbell goblet squat", .main, "Dumbbell", warm: nil, start: nil, increment: 2, rest: 90,
-             knee: .moderate, alternatives: ["boxSquat", "hipThrust"], cue: "Only as deep as is pain-free."),
-        lift("legCurl", "Leg curl machine", .accessory, "Machine", warm: nil, start: nil, increment: 2.5, rest: 60, knee: .low,
+        lift("gobletSquat", "Goblet squat", .main, "Dumbbell", warm: nil, start: nil, increment: 2, reps: 15, minReps: 12,
+             rest: 90, knee: .moderate, alternatives: ["boxSquat", "hipThrust"], cue: "Only as deep as is pain-free."),
+        lift("legCurl", "Seated hamstring curl", .accessory, "Machine", warm: nil, start: nil, increment: 2.5, reps: 12, minReps: 10,
+             rest: 90, knee: .low,
              alternatives: ["romanianDeadlift", "gluteBridge"]),
         lift("cableKickback", "Cable glute kickback", .accessory, "Cable", warm: nil, start: nil, increment: 2.5, rest: 45,
              knee: .low, unit: .repsEachSide, alternatives: ["hipThrust", "gluteBridge"]),

@@ -47,7 +47,11 @@ jobs:
       # Exercise demo videos must be public and embeddable; prints each one's title for review.
       - name: Check exercise videos
         continue-on-error: true
-        run: python3 scripts/check_exercise_videos.py FitnessVault/Domain/Training/ExerciseVideos.swift
+        run: |
+          python3 scripts/check_exercise_videos.py FitnessVault/Domain/Training/ExerciseVideos.swift
+          if [ -f scripts/exercise-video-candidates.txt ]; then
+            python3 scripts/check_exercise_videos.py scripts/exercise-video-candidates.txt
+          fi
 
       # Unsigned simulator build: no Apple account or certificates needed in CI.
       - name: Build and run unit tests

@@ -32,8 +32,10 @@ final class WorkoutSession {
         warmUpDone = false
     }
 
-    var focus: TrainingFocus { TrainingFocus(rawValue: focusRaw) ?? .upper }
+    var focus: TrainingFocus { TrainingFocus(rawValue: focusRaw) ?? .push }
     var isActive: Bool { endedAt == nil }
+    /// A knee rehab session on its own: it doesn't move the push, pull, legs rotation on.
+    var isRehabOnly: Bool { plan?.rehabOnly == true }
 
     var plan: WorkoutPlan? {
         get { try? JSONDecoder().decode(WorkoutPlan.self, from: planData) }

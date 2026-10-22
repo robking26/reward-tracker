@@ -24,37 +24,63 @@ struct WorkoutFlowView: View {
 
 // MARK: - Setup
 
-/// Upper body, lower body, or knee rehab on its own.
+/// The three-day programme, the optional extra, or knee rehab on its own.
 enum SessionChoice: String, CaseIterable, Identifiable {
-    case upper, lower, rehab
+    case push, pull, legs, extra, rehab
 
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .upper: "Upper"
-        case .lower: "Lower"
+        case .push: "Push"
+        case .pull: "Pull"
+        case .legs: "Legs"
+        case .extra: "Arms & core"
         case .rehab: "Rehab"
         }
     }
     var subtitle: String {
         switch self {
-        case .upper: "Push, pull"
-        case .lower: "Legs"
+        case .push: "Chest, shoulders"
+        case .pull: "Back, biceps"
+        case .legs: "Squat day"
+        case .extra: "Optional extra"
         case .rehab: "Knee only"
         }
     }
     var symbol: String {
         switch self {
-        case .upper: "figure.strengthtraining.traditional"
-        case .lower: "figure.step.training"
+        case .push: "figure.strengthtraining.traditional"
+        case .pull: "figure.rower"
+        case .legs: "figure.step.training"
+        case .extra: "dumbbell.fill"
         case .rehab: "figure.cooldown"
         }
     }
     var tint: Color {
         switch self {
-        case .upper: Palette.accent
-        case .lower: Palette.frost
+        case .push: Palette.accent
+        case .pull: Palette.frost
+        case .legs: Palette.kitchen
+        case .extra: Palette.rose
         case .rehab: Palette.rehab
+        }
+    }
+    var focus: TrainingFocus? {
+        switch self {
+        case .push: .push
+        case .pull: .pull
+        case .legs: .legs
+        case .extra: .extra
+        case .rehab: nil
+        }
+    }
+
+    init(_ focus: TrainingFocus) {
+        switch focus {
+        case .pull: self = .pull
+        case .legs, .lower: self = .legs
+        case .extra: self = .extra
+        case .push, .upper: self = .push
         }
     }
 }
@@ -63,20 +89,18 @@ struct WorkoutSetupView: View {
     @Environment(TrainingModel.self) private var training
     var startWithRehab = false
     var onCancel: () -> Void
-    @State private var choice: SessionChoice = .upper
-    @State private var variant = 0
-    @State private var minutes = 60
+    @State private var choice: SessionChoice = .push
+    @State private var minutes = 90
     @State private var rehabFirst = true
     @State private var loaded = false
     @State private var info: Exercise?
 
-    private static let durations = [30, 45, 60, 75, 90]
+    private static let durations = [45, 60, 75, 90]
 
     private var plan: WorkoutPlan {
         switch choice {
         case .rehab: training.makeRehabPlan()
-        case .upper: training.makePlan(focus: .upper, variant: variant, availableMinutes: minutes, rehabFirst: rehabFirst)
-        case .lower: training.makePlan(focus: .lower, variant: variant, availableMinutes: minutes, rehabFirst: rehabFirst)
+        default: training.makePlan(focus: choice.focus ?? .push, variant: 0, availableMinutes: minutes, rehabFirst: rehabFirst)
         }
     }
 
@@ -84,10 +108,19 @@ struct WorkoutSetupView: View {
         let plan = self.plan
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.l) {
-                HStack(alignment: .top, spacing: Spacing.s) {
-                    ForEach(SessionChoice.allCases) { option in
-                        SessionOptionCard(option: option, selected: option == choice) {
-                            withAnimation(.snappy) { choice = option }
+                VStack(spacing: Spacing.s) {
+                    HStack(alignment: .top, spacing: Spacing.s) {
+                        ForEach([SessionChoice.push, .pull, .legs]) { option in
+                            SessionOptionCard(option: option, selected: option == choice) {
+                                withAnimation(.snappy) { choice = option }
+                            }
+                        }
+                    }
+                    HStack(alignment: .top, spacing: Spacing.s) {
+                        ForEach([SessionChoice.extra, .rehab]) { option in
+                            SessionOptionCard(option: option, selected: option == choice, compact: true) {
+                                withAnimation(.snappy) { choice = option }
+                            }
                         }
                     }
                 }
@@ -182,19 +215,13 @@ struct WorkoutSetupView: View {
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button("Cancel", action: onCancel) }
         }
-        .onChange(of: choice) { _, new in
-            guard new != .rehab else { return }
-            variant = training.suggestedFocus(for: new == .lower ? "lower" : "upper").1
-        }
         .onAppear {
             guard !loaded else { return }
             loaded = true
             if startWithRehab {
                 choice = .rehab
             } else {
-                let suggested = training.suggestedFocus(for: nil)
-                choice = suggested.0 == .lower ? .lower : .upper
-                variant = suggested.1
+                choice = SessionChoice(training.suggestedFocus(for: nil).0)
             }
         }
     }
@@ -220,30 +247,56 @@ struct BottomAction<Content: View>: View {
 private struct SessionOptionCard: View {
     let option: SessionChoice
     let selected: Bool
+    var compact = false
     let action: () -> Void
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
         Button(action: action) {
-            VStack(alignment: .leading, spacing: Spacing.m) {
-                IconTile(symbol: option.symbol, tint: option.tint, size: 40, filled: selected)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(option.title)
-                        .font(.headline)
-                        .foregroundStyle(Palette.textPrimary)
-                    Text(option.subtitle)
-                        .font(.caption)
-                        .foregroundStyle(Palette.textTertiary)
-                        .lineLimit(1)
+            if compact {
+                HStack(spacing: Spacing.s) {
+                    IconTile(symbol: option.symbol, tint: option.tint, size: 36, filled: selected)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(option.title)
+                            .font(.headline)
+                            .foregroundStyle(Palette.textPrimary)
+                            .lineLimit(1)
+                        Text(option.subtitle)
+                            .font(.caption)
+                            .foregroundStyle(Palette.textTertiary)
+                            .lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
                 }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(selected ? option.tint.opacity(0.14) : Palette.surface, in: shape)
+                .overlay { shape.strokeBorder(selected ? option.tint : Color.clear, lineWidth: 2) }
+            } else {
+                card(shape)
             }
-            .padding(14)
-            .frame(maxWidth: .infinity, minHeight: 120, alignment: .topLeading)
-            .background(selected ? option.tint.opacity(0.14) : Palette.surface, in: shape)
-            .overlay { shape.strokeBorder(selected ? option.tint : Color.clear, lineWidth: 2) }
         }
         .buttonStyle(CardButtonStyle())
         .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private func card(_ shape: RoundedRectangle) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            IconTile(symbol: option.symbol, tint: option.tint, size: 40, filled: selected)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(option.title)
+                    .font(.headline)
+                    .foregroundStyle(Palette.textPrimary)
+                Text(option.subtitle)
+                    .font(.caption)
+                    .foregroundStyle(Palette.textTertiary)
+                    .lineLimit(1)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 120, alignment: .topLeading)
+        .background(selected ? option.tint.opacity(0.14) : Palette.surface, in: shape)
+        .overlay { shape.strokeBorder(selected ? option.tint : Color.clear, lineWidth: 2) }
     }
 }
 
