@@ -18,6 +18,32 @@ enum PreviewFixtures {
         return kitchen
     }
 
+    static func planner() -> PlannerModel {
+        let defaults = UserDefaults(suiteName: "preview.planner.\(UUID().uuidString)") ?? .standard
+        let planner = PlannerModel(calendarService: DemoCalendarService(), location: FixedLocationService(nil),
+                                   weather: FixedWeatherService(hours: sampleForecast()), travel: FixedTravelService(minutes: 12),
+                                   defaults: defaults)
+        planner.setRoles(DemoCalendarService.roles)
+        let places: [(PlaceID, String)] = [(.home, "Home"), (.office, "Spinningfields office"), (.gym, "PureGym Bolton"),
+                                           (.pool, "Horwich Leisure Centre"), (.aldi, "Aldi Bolton")]
+        for (id, name) in places {
+            planner.update { $0.places[id] = SavedPlace(name: name, coordinate: .bolton) }
+        }
+        return planner
+    }
+
+    /// A week of mild weather with afternoon showers every third day.
+    static func sampleForecast() -> [HourlyWeather] {
+        let start = Calendar.current.startOfDay(for: .now)
+        return (0..<(7 * 24)).map { hour in
+            let clock = hour % 24
+            let showery = (hour / 24) % 3 == 1 && (14...17).contains(clock)
+            return HourlyWeather(date: start.addingTimeInterval(TimeInterval(hour * 3_600)), temperature: 8 + Double(clock % 12) / 2,
+                                 precipitationProbability: showery ? 70 : 10, precipitation: showery ? 0.8 : 0,
+                                 isDaylight: (7...17).contains(clock))
+        }
+    }
+
     static func model() -> AppModel {
         let defaults = UserDefaults(suiteName: "preview.\(UUID().uuidString)") ?? .standard
         let settings = SettingsStore(defaults: defaults)

@@ -455,6 +455,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Vaultality";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Vaultality reads your calendars, your work Outlook calendar and Becky's shared calendar to build a picture of your day, and adds the suggestions you accept to your own calendar.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Vaultality uses your location while the app is open to work out drive times to the gym, pool and Aldi, and the local forecast.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Vaultality reads steps, workouts, exercise minutes, active energy, swimming distance, flights climbed and body measurements to calculate what you have earned and show your progress.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Vaultality saves gym sessions you track on your Apple Watch to Apple Health.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -489,6 +491,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Vaultality";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Vaultality reads your calendars, your work Outlook calendar and Becky's shared calendar to build a picture of your day, and adds the suggestions you accept to your own calendar.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Vaultality uses your location while the app is open to work out drive times to the gym, pool and Aldi, and the local forecast.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Vaultality reads steps, workouts, exercise minutes, active energy, swimming distance, flights climbed and body measurements to calculate what you have earned and show your progress.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Vaultality saves gym sessions you track on your Apple Watch to Apple Health.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

@@ -8,6 +8,7 @@ struct FitnessVaultApp: App {
     @State private var model: AppModel
     @State private var training: TrainingModel
     @State private var kitchen: KitchenModel
+    @State private var planner: PlannerModel
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -19,6 +20,13 @@ struct FitnessVaultApp: App {
         let training = TrainingModel(container: container)
         _training = State(initialValue: training)
         _kitchen = State(initialValue: KitchenModel(container: container))
+        // Demo mode shows a sample week instead of your calendars.
+        if model.settings.demoMode {
+            _planner = State(initialValue: PlannerModel(calendarService: DemoCalendarService(), location: FixedLocationService(nil),
+                                                        defaults: UserDefaults(suiteName: "demo.planner") ?? .standard))
+        } else {
+            _planner = State(initialValue: PlannerModel())
+        }
         // The watch can skip rest or end the workout; the iPhone stays the logger.
         WatchBridge.shared.onCommand = { command in
             switch command {
@@ -34,6 +42,7 @@ struct FitnessVaultApp: App {
                 .environment(model)
                 .environment(training)
                 .environment(kitchen)
+                .environment(planner)
                 .modelContainer(container)
                 .preferredColorScheme(.dark)
                 .tint(Palette.accent)

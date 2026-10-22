@@ -1,0 +1,290 @@
+import Foundation
+import Observation
+
+/// The Day tab: your calendar, work and Becky's together, plus suggestions for the gym, a swim, the Aldi shop, the
+/// batch cook, runs and walks. Reads calendars; only ever adds events you accept to your own calendar.
+@MainActor
+@Observable
+final class PlannerModel {
+    @ObservationIgnored let calendarService: CalendarProviding
+    @ObservationIgnored let location: LocationProviding
+    @ObservationIgnored private let weatherService: WeatherProviding
+    @ObservationIgnored private let travelService: TravelProviding
+    @ObservationIgnored private let defaults: UserDefaults
+    let calendar: Calendar
+    let now: () -> Date
+
+    private(set) var settings: PlannerSettings
+    /// Becky's events by series: true for shared, false for "not for me".
+    private(set) var decisions: [String: Bool]
+    private(set) var dismissed: Set<String>
+    private(set) var shopsDone: Set<DayKey>
+    private(set) var cooksDone: Set<DayKey>
+
+    private(set) var access: CalendarAccess
+    private(set) var calendars: [CalendarInfo] = []
+    private(set) var events: [CalendarEventInfo] = []
+    private(set) var weather: [HourlyWeather] = []
+    private(set) var travel = TravelTable()
+    private(set) var currentLocation: Coordinate?
+    private(set) var pictures: [DayPicture] = []
+    private(set) var isRefreshing = false
+    var message: String?
+
+    // From the Gym and Kitchen, refreshed by the Day tab.
+    @ObservationIgnored private var gymDays: Set<DayKey> = []
+    @ObservationIgnored private var swimDays: Set<DayKey> = []
+    @ObservationIgnored private var kneeSettled = true
+    @ObservationIgnored private var batchCook: [DayKey: CookPlan] = [:]
+    @ObservationIgnored private var weatherFetchedAt: Date?
+    @ObservationIgnored private var travelFetchedAt: Date?
+    @ObservationIgnored private var travelOrigin: Coordinate?
+
+    static let settingsKey = "planner.settings"
+    static let decisionsKey = "planner.beckyShared"
+    static let dismissedKey = "planner.dismissed"
+    static let shopsKey = "planner.shopsDone"
+    static let cooksKey = "planner.cooksDone"
+    static let horizonDays = 7
+
+    init(calendarService: CalendarProviding? = nil, location: LocationProviding? = nil, weather: WeatherProviding? = nil,
+         travel: TravelProviding? = nil, defaults: UserDefaults = .standard, calendar: Calendar = .current,
+         now: @escaping () -> Date = { .now }) {
+        let service = calendarService ?? EventKitCalendarService()
+        self.calendarService = service
+        self.location = location ?? CoreLocationService()
+        weatherService = weather ?? OpenMeteoWeatherService()
+        travelService = travel ?? MapKitTravelService()
+        self.defaults = defaults
+        self.calendar = calendar
+        self.now = now
+        settings = defaults.data(forKey: Self.settingsKey).flatMap { try? JSONDecoder().decode(PlannerSettings.self, from: $0) }
+            ?? PlannerSettings()
+        decisions = (defaults.dictionary(forKey: Self.decisionsKey) as? [String: Bool]) ?? [:]
+        dismissed = Set(defaults.stringArray(forKey: Self.dismissedKey) ?? [])
+        shopsDone = Set((defaults.stringArray(forKey: Self.shopsKey) ?? []).compactMap(DayKey.init(string:)))
+        cooksDone = Set((defaults.stringArray(forKey: Self.cooksKey) ?? []).compactMap(DayKey.init(string:)))
+        access = service.access
+        loadCalendars()
+        rebuild()
+    }
+
+    // MARK: State
+
+    var today: DayKey { DayKey(now(), calendar: calendar) }
+    var days: [DayKey] { (0..<Self.horizonDays).map { today.adding(days: $0, calendar: calendar) } }
+
+    func picture(for day: DayKey) -> DayPicture? { pictures.first { $0.day == day } }
+
+    var needsConfirming: [CalendarEventInfo] {
+        DayCalendar.needsConfirming(events, roles: settings.roles, decisions: decisions, now: now())
+    }
+
+    var isSetUp: Bool { access == .granted && settings.roles.values.contains(.mine) }
+
+    /// Your own calendars, where accepted suggestions go.
+    var ownCalendarIDs: [String] { calendars.filter { settings.roles[$0.id] == .mine && $0.allowsAdding }.map(\.id) }
+
+    var missingPlaces: [PlaceID] { [PlaceID.home, .gym, .pool, .aldi].filter { settings.places[$0] == nil } }
+
+    // MARK: Refreshing
+
+    /// Pulls in what the Gym and Kitchen know: sessions this week, swims, the knee and next week's batch cook.
+    func update(training: TrainingModel, kitchen: KitchenModel, swims: [SwimSample]) {
+        gymDays = Set(training.sessions().filter { !$0.isRehabOnly && $0.endedAt != nil }.compactMap { DayKey(string: $0.day) })
+        swimDays = Set(swims.map { DayKey($0.date, calendar: calendar) })
+        kneeSettled = training.kneeStatus == .settled
+        var cook: [DayKey: CookPlan] = [:]
+        let monday = DayPlanner.monday(of: today, calendar)
+        for weeks in 0...2 {
+            let start = monday.adding(days: weeks * 7, calendar: calendar)
+            let meal = kitchen.meal(.lunch, on: start)
+            cook[start] = CookPlan(title: meal.title, minutes: meal.prepMinutes + meal.cookMinutes + 15)
+        }
+        batchCook = cook
+        rebuild()
+    }
+
+    func requestCalendarAccess() async {
+        access = await calendarService.requestAccess()
+        loadCalendars()
+        await refresh()
+    }
+
+    func requestLocation() {
+        location.requestPermission()
+    }
+
+    func refresh() async {
+        guard !isRefreshing else { return }
+        isRefreshing = true
+        defer { isRefreshing = false }
+        access = calendarService.access
+        loadCalendars()
+        let start = today.startDate(calendar: calendar)
+        let end = today.adding(days: 14, calendar: calendar).startDate(calendar: calendar)
+        events = calendarService.events(from: start, to: end)
+        currentLocation = await location.currentLocation()
+        rebuild()
+        await refreshWeather()
+        await refreshTravel()
+        rebuild()
+    }
+
+    private func loadCalendars() {
+        calendars = calendarService.calendars()
+        guard !calendars.isEmpty else { return }
+        // First time: a best guess you can change in Day settings. Unlabelled calendars are left out.
+        if settings.roles.isEmpty {
+            var roles: [String: CalendarRole] = [:]
+            for info in calendars {
+                let text = "\(info.sourceTitle) \(info.title)".lowercased()
+                if text.contains("becky") {
+                    roles[info.id] = .becky
+                } else if ["exchange", "outlook", "office 365"].contains(where: { text.contains($0) }) {
+                    roles[info.id] = .work
+                } else if info.allowsAdding && text.contains("icloud") {
+                    roles[info.id] = .mine
+                }
+            }
+            if !roles.isEmpty { setRoles(roles) }
+        }
+    }
+
+    private func refreshWeather() async {
+        if let fetched = weatherFetchedAt, now().timeIntervalSince(fetched) < 3_600, !weather.isEmpty { return }
+        let point = currentLocation ?? settings.places.home?.coordinate ?? .bolton
+        if let forecast = try? await weatherService.forecast(for: point) {
+            weather = forecast
+            weatherFetchedAt = now()
+        }
+    }
+
+    /// Apple Maps drive times between home, the office, where you are, and the gym, pool and Aldi. Kept for 30 minutes.
+    private func refreshTravel() async {
+        let moved = currentLocation != travelOrigin
+        if let fetched = travelFetchedAt, now().timeIntervalSince(fetched) < 1_800, !moved { return }
+        var origins: [(PlaceID, Coordinate)] = []
+        if let here = currentLocation { origins.append((.current, here)) }
+        for id in [PlaceID.home, .office] { if let place = settings.places[id] { origins.append((id, place.coordinate)) } }
+        let targets = PlaceID.saveable.compactMap { id -> (PlaceID, Coordinate)? in
+            guard let place = settings.places[id] else { return nil }
+            return (id, place.coordinate)
+        }
+        var table = TravelTable()
+        for (from, a) in origins {
+            for (to, b) in targets where from != to && table.minutes(from: from, to: to) == nil {
+                if let minutes = try? await travelService.drivingMinutes(from: a, to: b, departure: now()) {
+                    table.set(minutes, from: from, to: to)
+                }
+            }
+        }
+        travel = table
+        travelFetchedAt = now()
+        travelOrigin = currentLocation
+    }
+
+    func rebuild() {
+        let input = PlannerInput(days: days, now: now(), calendar: calendar, events: events, settings: settings,
+                                 decisions: decisions, travel: travel, weather: weather,
+                                 hasCurrentLocation: currentLocation != nil, gymDays: gymDays, swimDays: swimDays,
+                                 shopsDone: shopsDone, cooksDone: cooksDone, batchCook: batchCook,
+                                 kneeSettled: kneeSettled, dismissed: dismissed)
+        pictures = DayPlanner.plan(input)
+    }
+
+    // MARK: Becky
+
+    func confirm(_ event: CalendarEventInfo, shared: Bool) {
+        decisions[event.seriesID] = shared
+        defaults.set(decisions, forKey: Self.decisionsKey)
+        rebuild()
+    }
+
+    func resetBeckyAnswers() {
+        decisions = [:]
+        defaults.removeObject(forKey: Self.decisionsKey)
+        rebuild()
+    }
+
+    // MARK: Suggestions
+
+    /// Adds the slot, including the drive, to your own calendar. The planner then treats it as booked.
+    func accept(_ suggestion: Suggestion) {
+        let venue = suggestion.kind.venue.flatMap { settings.places[$0] }
+        var title = suggestion.kind.title
+        if let venue, suggestion.kind != .batchCook { title += " · \(venue.name)" }
+        var notes = "\(ActivityKind.marker)\(suggestion.kind.rawValue)\n"
+        if suggestion.travelThere > 0 {
+            notes += "Leave \(PlannerFormat.time(suggestion.leaveAt, calendar)), \(suggestion.travelThere) min drive. "
+        }
+        notes += "\(suggestion.kind.title) \(PlannerFormat.range(suggestion.start, suggestion.end, calendar)). \(suggestion.detail)"
+        do {
+            try calendarService.add(title: title, start: suggestion.leaveAt, end: suggestion.backAt,
+                                    location: venue?.name, notes: notes, calendarIDs: ownCalendarIDs)
+            message = "Added to your calendar."
+        } catch {
+            message = error.localizedDescription
+        }
+        let start = today.startDate(calendar: calendar)
+        events = calendarService.events(from: start, to: today.adding(days: 14, calendar: calendar).startDate(calendar: calendar))
+        rebuild()
+    }
+
+    func dismiss(_ suggestion: Suggestion) {
+        dismissed.insert(suggestion.id)
+        // Only keep answers for the coming fortnight.
+        let cutoff = today.adding(days: -7, calendar: calendar)
+        dismissed = dismissed.filter { id in
+            id.split(separator: "|").last.flatMap { DayKey(string: String($0)) }.map { $0 >= cutoff } ?? false
+        }
+        defaults.set(Array(dismissed), forKey: Self.dismissedKey)
+        rebuild()
+    }
+
+    /// The Aldi shop or batch cook is done for the coming week.
+    func markDone(_ suggestion: Suggestion) {
+        let monday = DayPlanner.monday(of: suggestion.day, calendar).adding(days: 7, calendar: calendar)
+        switch suggestion.kind {
+        case .aldiShop:
+            shopsDone.insert(monday)
+            defaults.set(shopsDone.map(\.description), forKey: Self.shopsKey)
+        case .batchCook:
+            cooksDone.insert(monday)
+            defaults.set(cooksDone.map(\.description), forKey: Self.cooksKey)
+        default:
+            dismiss(suggestion)
+            return
+        }
+        rebuild()
+    }
+
+    // MARK: Settings
+
+    func update(_ change: (inout PlannerSettings) -> Void) {
+        var copy = settings
+        change(&copy)
+        settings = copy
+        if let data = try? JSONEncoder().encode(copy) { defaults.set(data, forKey: Self.settingsKey) }
+        rebuild()
+    }
+
+    func setRoles(_ roles: [String: CalendarRole]) {
+        update { $0.roles = roles }
+    }
+
+    func setRole(_ role: CalendarRole, for calendarID: String) {
+        update { $0.roles[calendarID] = role }
+    }
+
+    func setPlace(_ place: SavedPlace?, for id: PlaceID) {
+        update { $0.places[id] = place }
+        travelFetchedAt = nil
+        Task { await refresh() }
+    }
+
+    func searchPlaces(_ query: String) async -> [PlaceResult] {
+        let near = currentLocation ?? settings.places.home?.coordinate ?? .bolton
+        return (try? await travelService.search(query, near: near)) ?? []
+    }
+}

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The earnings dashboard, the Gym and the Kitchen. Banking and vault administration live in Settings.
+/// The earnings dashboard, your day, the Gym and the Kitchen. Banking and vault administration live in Settings.
 struct RootView: View {
     @Environment(AppModel.self) private var model
     @State private var showingSettings = false
@@ -9,6 +9,8 @@ struct RootView: View {
         TabView {
             ActivityView(showingSettings: $showingSettings)
                 .tabItem { Label("Vault", systemImage: "sterlingsign.circle") }
+            DayView(showingSettings: $showingSettings)
+                .tabItem { Label("Day", systemImage: "calendar") }
             GymView(showingSettings: $showingSettings)
                 .tabItem { Label("Gym", systemImage: "dumbbell") }
             NavigationStack {
@@ -43,6 +45,7 @@ struct SettingsToolbarButton: View {
         .environment(PreviewFixtures.model())
         .environment(PreviewFixtures.training())
         .environment(PreviewFixtures.kitchen())
+        .environment(PreviewFixtures.planner())
         .preferredColorScheme(.dark)
 }
 #endif
