@@ -55,29 +55,23 @@ final class ProgramGeneratorTests: XCTestCase {
 
     private func main(_ plan: WorkoutPlan) -> [PlannedExercise] { plan.exercises.filter { !$0.isRehab } }
 
-    func testPushPullLegsMatchTheProgramme() {
+    func testPushPullLegsUseYourOwnExercises() {
         let push = main(ProgramGenerator.plan(input(.push)))
-        XCTAssertEqual(push.map(\.exerciseID), ["barbellBench", "inclineDBBench", "seatedDBShoulderPress", "cableFly",
-                                                "lateralRaise", "assistedDip", "cablePushdown"])
-        XCTAssertEqual(push.map { "\($0.sets)x\($0.targetReps)" }, ["4x8", "3x8", "3x10", "3x12", "3x12", "3x10", "3x12"])
-        XCTAssertTrue(push.allSatisfy { $0.restSeconds >= 120 }, "2–3 min rest on push day")
+        XCTAssertEqual(push.map(\.exerciseID), ["inclineDBBench", "flatDBBench", "seatedDBShoulderPress", "lateralRaise",
+                                                "tricepsMachine", "skullCrusher"])
+        XCTAssertEqual(push.map { "\($0.sets)x\($0.targetReps)" }, ["3x10", "3x10", "3x10", "3x10", "3x10", "3x10"])
 
         let pull = main(ProgramGenerator.plan(input(.pull)))
-        XCTAssertEqual(pull.map(\.exerciseID), ["latPulldown", "seatedCableRow", "assistedPullUp", "bentOverDBRow", "machineCurl",
-                                                "hammerCurl"])
-        XCTAssertEqual(pull.map { "\($0.sets)x\($0.targetReps)" }, ["4x8", "3x8", "3x10", "3x12", "3x12", "3x10"])
+        XCTAssertEqual(pull.map(\.exerciseID), ["barbellRow", "latPulldown", "trapMachine", "ezBarCurl", "hammerCurl"])
+        XCTAssertEqual(pull.map { "\($0.sets)x\($0.targetReps)" }, ["3x8", "3x10", "3x10", "4x10", "3x10"])
 
         let legs = main(ProgramGenerator.plan(input(.legs)))
-        XCTAssertEqual(legs.map(\.exerciseID), ["barbellSquat", "legPress", "legCurl", "legExtension", "gobletSquat",
-                                                "seatedCalfRaise"])
-        XCTAssertEqual(legs.map { "\($0.sets)x\($0.targetReps)" }, ["4x8", "3x15", "3x12", "3x12", "3x15", "3x15"])
-        XCTAssertEqual(legs.first?.restSeconds, 180, "3 min on squats")
+        XCTAssertEqual(legs.map(\.exerciseID), ["barbellSquat", "deadlift", "singleLegPress", "cleanAndPress", "plank",
+                                                "cableCrunch"])
+        XCTAssertEqual(legs.first?.restSeconds, 150)
     }
 
-    func testEachSessionCarriesItsRules() {
-        XCTAssertTrue(ProgramGenerator.plan(input(.push)).notes.contains("2–3 min rest. Last set of each to failure."))
-        XCTAssertTrue(ProgramGenerator.plan(input(.pull)).notes.contains("Full stretch at the bottom. No swinging, no half reps."))
-        XCTAssertTrue(ProgramGenerator.plan(input(.legs)).notes.contains("3 min rest on squats. 2–3 seconds down, every rep."))
+    func testSessionTitles() {
         XCTAssertEqual(ProgramGenerator.plan(input(.push)).title, "Push")
         XCTAssertEqual(ProgramGenerator.plan(input(.extra)).title, "Functional and swim")
     }
@@ -103,12 +97,12 @@ final class ProgramGeneratorTests: XCTestCase {
     }
 
     func testShortOnTimeDropsOptionalsNeverRehabOrMains() {
-        let plan = ProgramGenerator.plan(input(.push, minutes: 60))
-        for id in ["barbellBench", "inclineDBBench", "seatedDBShoulderPress"] {
+        let plan = ProgramGenerator.plan(input(.push, minutes: 45))
+        for id in ["inclineDBBench", "flatDBBench", "seatedDBShoulderPress"] {
             XCTAssertTrue(plan.exercises.contains { $0.exerciseID == id }, id)
         }
         XCTAssertEqual(plan.exercises.filter(\.isRehab).count, 2)
-        XCTAssertLessThan(main(plan).count, 7)
+        XCTAssertLessThan(main(plan).count, 6)
         XCTAssertTrue(plan.notes.contains { $0.contains("dropped") })
     }
 
@@ -137,7 +131,7 @@ final class ProgramGeneratorTests: XCTestCase {
         let core = main(plan).filter { $0.exercise?.role == .core }
         XCTAssertGreaterThanOrEqual(core.count, 3, "Ab-focused")
         XCTAssertEqual(plan.exercises.first { $0.exerciseID == "pushUp" }?.sets, 2, "Shorter: two sets of the full-body moves")
-        XCTAssertLessThan(plan.estimatedMinutes, ProgramGenerator.plan(input(.pull)).estimatedMinutes + 1)
+        XCTAssertLessThan(plan.estimatedMinutes, ProgramGenerator.plan(input(.legs)).estimatedMinutes)
     }
 
     func testEveryProgrammeExerciseHasADemoAndSwaps() {
@@ -170,42 +164,42 @@ final class ProgressionTests: XCTestCase {
     }
 
     func testThreeConsecutiveSessionsOnTargetMoveUp() {
-        let history = [record(1, 16, [8, 8, 8]), record(4, 16, [8, 8, 8]), record(8, 16, [9, 8, 8])]
+        let history = [record(1, 16, [10, 10, 10]), record(4, 16, [10, 10, 10]), record(8, 16, [11, 10, 10])]
         XCTAssertEqual(Progression.decide(bench, history: history, knee: .settled), .increase(to: 18))
     }
 
     func testTimeAloneNeverMovesUp() {
-        let history = [record(1, 16, [8, 8, 8]), record(4, 16, [8, 8, 7]), record(60, 16, [8, 8, 8])]
+        let history = [record(1, 16, [10, 10, 10]), record(4, 16, [10, 10, 9]), record(60, 16, [10, 10, 10])]
         XCTAssertEqual(Progression.decide(bench, history: history, knee: .settled).weight, 16)
     }
 
     func testStreakResetsAtANewWeight() {
-        let history = [record(1, 14, [8, 8, 8]), record(4, 16, [8, 8, 8]), record(8, 16, [8, 8, 8])]
+        let history = [record(1, 14, [10, 10, 10]), record(4, 16, [10, 10, 10]), record(8, 16, [10, 10, 10])]
         XCTAssertEqual(Progression.decide(bench, history: history, knee: .settled).weight, 16)
     }
 
     func testPainReducesAndTechniqueHolds() {
-        XCTAssertEqual(Progression.decide(bench, history: [record(1, 16, [8, 8, 8], pain: true)], knee: .settled),
+        XCTAssertEqual(Progression.decide(bench, history: [record(1, 16, [10, 10, 10], pain: true)], knee: .settled),
                        .reduce(to: 14, reason: "It hurt last time, so one step lighter."))
-        let form = [record(1, 16, [8, 8, 8]), record(4, 16, [8, 8, 8]), record(8, 16, [8, 8, 8], form: true)]
+        let form = [record(1, 16, [10, 10, 10]), record(4, 16, [10, 10, 10]), record(8, 16, [10, 10, 10], form: true)]
         XCTAssertEqual(Progression.decide(bench, history: form, knee: .settled).weight, 16)
     }
 
     func testIrritableKneeHoldsLowerBodyLoading() {
-        let history = (0..<3).map { record($0 * 3, 60, [8, 8, 8, 8], id: "barbellSquat") }
+        let history = (0..<3).map { record($0 * 3, 60, [10, 10, 10], id: "barbellSquat") }
         XCTAssertEqual(Progression.decide(squat, history: history, knee: .irritable),
                        .hold(at: 60, reason: "Holding while the knee settles."))
         XCTAssertEqual(Progression.decide(squat, history: history, knee: .settled), .increase(to: 62.5))
     }
 
     func testTwoMissesReduce() {
-        let history = [record(1, 18, [7, 5, 5]), record(4, 18, [6, 5, 5])]
+        let history = [record(1, 18, [8, 7, 6]), record(4, 18, [9, 7, 7])]
         XCTAssertEqual(Progression.decide(bench, history: history, knee: .settled).weight, 16)
     }
 
     func testIncompleteWorkoutCountsWhatWasDone() {
         // Scenario I: two sets done, then the session ended. No catch-up; it's simply not on target.
-        let history = [record(1, 16, [8, 8])]
+        let history = [record(1, 16, [10, 10])]
         let decision = Progression.decide(bench, history: history, knee: .settled)
         XCTAssertEqual(decision.weight, 16)
         XCTAssertFalse(Progression.hitTarget(history[0], bench))

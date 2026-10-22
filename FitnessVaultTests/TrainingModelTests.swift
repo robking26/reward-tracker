@@ -67,20 +67,21 @@ final class TrainingModelTests: XCTestCase {
         // Scenario I.
         let h = make(at: at(17, 30))
         let plan = h.training.makePlan(focus: .push, variant: 0, availableMinutes: 90, rehabFirst: false)
-        XCTAssertEqual(plan.exercises.first?.exerciseID, "barbellBench")
+        XCTAssertEqual(plan.exercises.first?.exerciseID, "inclineDBBench")
+        XCTAssertEqual(plan.exercises.first?.weightKg, 16)
         h.training.start(plan)
-        h.training.logWarmUp(weight: 20, reps: 8)
-        h.training.logSet(weight: 40, reps: 8)
-        h.training.logSet(weight: 40, reps: 8)
+        h.training.logWarmUp(weight: 12, reps: 10)
+        h.training.logSet(weight: 16, reps: 10)
+        h.training.logSet(weight: 16, reps: 10)
         h.training.end()
 
         let records = h.training.records()
         XCTAssertEqual(records.count, 1)
         XCTAssertEqual(records.first?.sets.count, 2, "Warm-ups aren't working sets")
         let next = h.training.makePlan(focus: .push, variant: 0, availableMinutes: 90, rehabFirst: false)
-        let bench = next.exercises.first { $0.exerciseID == "barbellBench" }
-        XCTAssertEqual(bench?.sets, 4, "No extra catch-up sets")
-        XCTAssertEqual(bench?.weightKg, 40)
+        let bench = next.exercises.first { $0.exerciseID == "inclineDBBench" }
+        XCTAssertEqual(bench?.sets, 3, "No extra catch-up sets")
+        XCTAssertEqual(bench?.weightKg, 16)
         XCTAssertFalse(bench?.isValidation ?? true)
     }
 
@@ -90,7 +91,7 @@ final class TrainingModelTests: XCTestCase {
         let plan = h.training.makePlan(focus: .legs, variant: 0, availableMinutes: 90, rehabFirst: false)
         XCTAssertEqual(plan.exercises.first?.exerciseID, "barbellSquat")
         h.training.start(plan)
-        h.training.logSet(weight: 60, reps: 8)
+        h.training.logSet(weight: 60, reps: 10)
         let advice = h.training.reportKneePain(pain: 4, swelling: false, sharp: false)
         XCTAssertFalse(advice.isEmpty)
         XCTAssertTrue(h.training.awaitingReady, "Moves on from the squat")
@@ -111,13 +112,14 @@ final class TrainingModelTests: XCTestCase {
         // Scenario H.
         let h = make(at: at(17, 30))
         h.training.start(h.training.makePlan(focus: .push, variant: 0, availableMinutes: 90, rehabFirst: false))
-        XCTAssertEqual(h.training.current?.exerciseID, "barbellBench")
+        XCTAssertEqual(h.training.current?.exerciseID, "inclineDBBench")
         let options = h.training.alternativesForCurrent()
-        XCTAssertEqual(options.first?.id, "flatDBBench")
+        XCTAssertFalse(options.contains { $0.id == "flatDBBench" }, "Already in today's plan")
+        XCTAssertEqual(options.first?.id, "chestPressMachine")
         h.training.swapCurrent(to: options[0])
-        XCTAssertEqual(h.training.current?.exerciseID, "flatDBBench")
+        XCTAssertEqual(h.training.current?.exerciseID, "chestPressMachine")
         h.training.doCurrentLater()
-        XCTAssertEqual(h.training.current?.exerciseID, "inclineDBBench", "Do it later moves it back one")
+        XCTAssertEqual(h.training.current?.exerciseID, "flatDBBench", "Do it later moves it back one")
     }
 
     func testNextMorningKneeCheckAfterLegs() {

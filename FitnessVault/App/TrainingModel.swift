@@ -163,7 +163,10 @@ final class TrainingModel {
         guard let current, let exercise = current.exercise else { return [] }
         let knee = kneeStatus
         let limit: KneeLoad = knee == .settled ? .high : .low
-        return exercise.alternatives.compactMap(ExerciseLibrary.exercise).filter { $0.kneeLoad <= max(limit, .low) }
+        // Never offer something already in today's plan, so a swap can't do the same exercise twice.
+        let planned = Set(plan?.exercises.map(\.exerciseID) ?? [])
+        return exercise.alternatives.compactMap(ExerciseLibrary.exercise)
+            .filter { $0.kneeLoad <= max(limit, .low) && !planned.contains($0.id) }
     }
 
     func swapCurrent(to exercise: Exercise) {

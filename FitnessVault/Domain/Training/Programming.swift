@@ -121,13 +121,14 @@ struct ProgramInput: Sendable {
 enum ProgramGenerator {
     static let warmUpMinutes = 8
 
-    /// The sessions, in order. Push, pull and legs are fixed; the earlier upper and lower A/B days stay for old plans.
+    /// The sessions, in order: your exercise bank split into push, pull and legs. The earlier upper and lower A/B days
+    /// stay for old plans.
     static func templates(_ focus: TrainingFocus, variant: Int) -> [String] {
         switch (focus, variant % 2) {
-        case (.push, _): ["barbellBench", "inclineDBBench", "seatedDBShoulderPress", "cableFly", "lateralRaise", "assistedDip",
-                          "cablePushdown"]
-        case (.pull, _): ["latPulldown", "seatedCableRow", "assistedPullUp", "bentOverDBRow", "machineCurl", "hammerCurl"]
-        case (.legs, _): ["barbellSquat", "legPress", "legCurl", "legExtension", "gobletSquat", "seatedCalfRaise"]
+        case (.push, _): ["inclineDBBench", "flatDBBench", "seatedDBShoulderPress", "lateralRaise", "tricepsMachine",
+                          "skullCrusher"]
+        case (.pull, _): ["barbellRow", "latPulldown", "trapMachine", "ezBarCurl", "hammerCurl"]
+        case (.legs, _): ["barbellSquat", "deadlift", "singleLegPress", "cleanAndPress", "plank", "cableCrunch"]
         case (.extra, _): ["farmersCarry", "romanianDeadlift", "pushUp", "dumbbellRow", "pallofPress", "hangingKneeRaise",
                            "sidePlank", "swim"]
         case (.upper, 0): ["inclineDBBench", "barbellRow", "seatedDBShoulderPress", "ezBarCurl", "tricepsMachine", "lateralRaise"]
