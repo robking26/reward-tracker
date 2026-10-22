@@ -210,8 +210,8 @@ private struct BeckyInbox: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.s) {
             CardHeader(title: "Becky's new events", symbol: "person.2.fill", tint: Palette.rose,
-                       subtitle: "Shared ones go in your day. The rest stay just so you know.")
-            ForEach(events.prefix(6)) { event in
+                       subtitle: "Shared ones join your day")
+            ForEach(events.prefix(4)) { event in
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(event.title)
                         .font(.body.weight(.semibold))
@@ -222,10 +222,12 @@ private struct BeckyInbox: View {
                     BeckyButtons(event: event)
                 }
                 .padding(.vertical, Spacing.xxs)
-                if event.id != events.prefix(6).last?.id { RowDivider(inset: 0) }
+                if event.id != events.prefix(4).last?.id { RowDivider(inset: 0) }
             }
-            if events.count > 6 {
-                Footnote("\(events.count - 6) more after these.")
+            if events.count > 4 {
+                Footnote("\(events.count - 4) more after these. Anything you don't mark stays just so you know.")
+            } else {
+                Footnote("Anything you don't mark stays just so you know.")
             }
         }
         .surface()
@@ -248,15 +250,17 @@ private struct BeckyButtons: View {
                 withAnimation { planner.confirm(event, shared: true) }
             } label: {
                 Label("Shared", systemImage: "checkmark")
+                    .compactPill(ink: Palette.onAccent, fill: Palette.rose)
             }
-            .buttonStyle(SecondaryButtonStyle(tint: Palette.onAccent, fill: Palette.rose))
             Button {
                 withAnimation { planner.confirm(event, shared: false) }
             } label: {
-                Label("Just Becky", systemImage: "eye")
+                Label("Hers only", systemImage: "eye")
+                    .compactPill(ink: Palette.textPrimary, fill: Palette.elevated)
             }
-            .buttonStyle(SecondaryButtonStyle())
+            Spacer(minLength: 0)
         }
+        .buttonStyle(.plain)
     }
 }
 
@@ -336,7 +340,9 @@ private struct EventRow: View {
                     .foregroundStyle(Palette.textTertiary)
             }
             .monospacedDigit()
-            .frame(width: 58, alignment: .trailing)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .frame(width: 70, alignment: .trailing)
             RoundedRectangle(cornerRadius: 2)
                 .fill(tint)
                 .frame(width: 4)
@@ -542,5 +548,18 @@ enum DayStyle {
         case .run: Palette.rose
         case .walk: Palette.fresh
         }
+    }
+}
+
+private extension View {
+    /// A small capsule for quick answers inside a card.
+    func compactPill(ink: Color, fill: Color) -> some View {
+        font(.footnote.weight(.semibold))
+            .foregroundStyle(ink)
+            .lineLimit(1)
+            .padding(.horizontal, Spacing.s)
+            .frame(minHeight: 36)
+            .background(fill, in: Capsule())
+            .contentShape(Capsule())
     }
 }
