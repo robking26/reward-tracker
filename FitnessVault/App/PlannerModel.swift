@@ -29,6 +29,8 @@ final class PlannerModel {
     private(set) var currentLocation: Coordinate?
     private(set) var pictures: [DayPicture] = []
     private(set) var isRefreshing = false
+    /// Bumped on every rebuild, so the calendar and widget follow along.
+    private(set) var revision = 0
     var message: String?
 
     // From the Gym and Kitchen, refreshed by the Day tab.
@@ -212,6 +214,7 @@ final class PlannerModel {
                                  shopsDone: shopsDone, cooksDone: cooksDone, batchCook: batchCook,
                                  kneeSettled: kneeSettled, dismissed: dismissed)
         pictures = DayPlanner.plan(input)
+        revision += 1
     }
 
     // MARK: Becky

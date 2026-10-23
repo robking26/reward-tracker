@@ -84,7 +84,9 @@ struct FitnessVaultApp: App {
                     await planner.refresh()
                     routines.refreshSchedule()
                     routines.scheduleReminders()
+                    PlannerWidgetPublisher.publishDay(planner: planner, routines: routines)
                     await model.syncHealth()
+                    battery.refresh(model: model, training: training, gymPerWeek: planner.settings.gymPerWeek)
                     await model.settleIfDue()
                 }
             case .background:

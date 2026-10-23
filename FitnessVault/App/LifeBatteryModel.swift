@@ -68,5 +68,6 @@ final class LifeBatteryModel {
             day = day.adding(days: 1, calendar: calendar)
         }
         result = LifeBattery.compute(start: start, today: today, days: days, gymPerWeek: gymPerWeek, calendar: calendar)
+        PlannerWidgetPublisher.publishBattery(self)
     }
 }

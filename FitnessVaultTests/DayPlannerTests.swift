@@ -392,3 +392,24 @@ final class PlannerModelTests: XCTestCase {
         XCTAssertFalse(planner.needsConfirming.contains { $0.seriesID == pilates.seriesID })
     }
 }
+
+final class CalendarLayoutTests: XCTestCase {
+    private func slot(_ id: String, _ start: Double, _ end: Double) -> CalendarSlot {
+        CalendarSlot(id: id, start: Date(timeIntervalSinceReferenceDate: start * 3_600),
+                     end: Date(timeIntervalSinceReferenceDate: end * 3_600))
+    }
+
+    func testOverlapsSitSideBySide() {
+        let columns = CalendarLayout.columns([slot("a", 9, 10), slot("b", 9.5, 11), slot("c", 10, 10.5), slot("d", 12, 13)])
+        XCTAssertEqual(columns["a"], CalendarColumn(column: 0, count: 2))
+        XCTAssertEqual(columns["b"], CalendarColumn(column: 1, count: 2))
+        XCTAssertEqual(columns["c"], CalendarColumn(column: 0, count: 2), "Takes the column a has left free")
+        XCTAssertEqual(columns["d"], CalendarColumn(column: 0, count: 1), "On its own: full width")
+    }
+
+    func testBackToBackDoesntOverlap() {
+        let columns = CalendarLayout.columns([slot("a", 9, 10), slot("b", 10, 11)])
+        XCTAssertEqual(columns["a"]?.count, 1)
+        XCTAssertEqual(columns["b"]?.count, 1)
+    }
+}

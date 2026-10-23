@@ -11,46 +11,55 @@ struct DayView: View {
     @Binding var showingSettings: Bool
     @State private var selected: DayKey?
     @State private var showingDaySettings = false
+    @State private var block: DayBlock?
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: Spacing.m) {
-                    DayStrip(days: planner.days, selected: day, pictures: planner.pictures, calendar: planner.calendar) {
-                        selected = $0
-                    }
-
-                    if day == planner.today {
-                        RoutineCard()
-                        JournalCard()
-                    }
-
-                    if let picture = planner.picture(for: day) {
-                        DayHero(picture: picture, isToday: day == planner.today, calendar: planner.calendar)
-                    }
-
-                    if !planner.isSetUp {
-                        SetupCard { showingDaySettings = true }
-                    }
-
-                    if !planner.needsConfirming.isEmpty {
-                        BeckyInbox(events: planner.needsConfirming)
-                    }
-
-                    if planner.isSetUp && !planner.missingPlaces.isEmpty {
-                        NoticeBanner(symbol: "mappin.and.ellipse", title: "Add your places",
-                                     message: "Save \(missingText) so drive times and suggestions can include them.",
-                                     tint: Palette.frost, actionTitle: "Add places") { showingDaySettings = true }
-                    }
-
-                    if let picture = planner.picture(for: day) {
-                        Timeline(picture: picture)
-                    }
-
-                    Footnote("Drive times from Apple Maps (traffic-aware where Apple has it), plus parking. Directions open in Google Maps. Forecast from Open-Meteo.")
+            VStack(spacing: 0) {
+                DayStrip(days: planner.days, selected: day, pictures: planner.pictures, calendar: planner.calendar) {
+                    selected = $0
                 }
                 .padding(.horizontal, Spacing.page)
-                .padding(.bottom, Spacing.xl)
+                .padding(.bottom, Spacing.xs)
+
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: Spacing.m) {
+                            if let picture = planner.picture(for: day) {
+                                DayHeader(picture: picture, isToday: day == planner.today, calendar: planner.calendar)
+                            }
+
+                            if !planner.isSetUp {
+                                SetupCard { showingDaySettings = true }
+                            }
+
+                            if !planner.needsConfirming.isEmpty {
+                                BeckyInbox(events: planner.needsConfirming)
+                            }
+
+                            if planner.isSetUp && !planner.missingPlaces.isEmpty {
+                                NoticeBanner(symbol: "mappin.and.ellipse", title: "Add your places",
+                                             message: "Save \(missingText) so drive times and suggestions can include them.",
+                                             tint: Palette.frost, actionTitle: "Add places") { showingDaySettings = true }
+                            }
+
+                            if day == planner.today {
+                                RoutineCard()
+                                JournalCard()
+                            }
+
+                            if let picture = planner.picture(for: day) {
+                                HourCalendar(picture: picture, isToday: day == planner.today, selection: $block)
+                            }
+
+                            Footnote("Dashed blocks are suggestions; tap anything for details. Drive times from Apple Maps (traffic-aware where Apple has it), plus parking. Directions open in Google Maps. Forecast from Open-Meteo.")
+                        }
+                        .padding(.horizontal, Spacing.page)
+                        .padding(.bottom, Spacing.xl)
+                    }
+                    .onAppear { scrollToNow(proxy, animated: false) }
+                    .onChange(of: day) { scrollToNow(proxy, animated: true) }
+                }
             }
             .pageBackground()
             .navigationTitle("Day")
@@ -73,6 +82,12 @@ struct DayView: View {
             .sheet(isPresented: $showingDaySettings, onDismiss: { Task { await planner.refresh() } }) {
                 DaySettingsView()
             }
+            .sheet(item: $block) { block in
+                BlockDetail(block: block, day: day)
+                    .presentationBackground(Palette.background)
+            }
+            .onChange(of: planner.revision) { PlannerWidgetPublisher.publishDay(planner: planner, routines: routines) }
+            .onChange(of: routines.revision) { PlannerWidgetPublisher.publishDay(planner: planner, routines: routines) }
             .overlay(alignment: .bottom) {
                 if let message = planner.message {
                     Text(message)
@@ -100,11 +115,29 @@ struct DayView: View {
         return names.dropLast().joined(separator: ", ") + " and " + last
     }
 
+    /// Today opens at the hour before now; other days at their first event (or 8 am).
+    private func scrollToNow(_ proxy: ScrollViewProxy, animated: Bool) {
+        let calendar = planner.calendar
+        var hour = 8
+        if day == planner.today {
+            hour = calendar.component(.hour, from: planner.now()) - 1
+        } else if let first = planner.picture(for: day)?.timedEvents.first {
+            hour = calendar.component(.hour, from: first.event.start)
+        }
+        let target = "hour-\(max(0, min(22, hour)))"
+        if animated {
+            withAnimation(.snappy) { proxy.scrollTo(target, anchor: .top) }
+        } else {
+            DispatchQueue.main.async { proxy.scrollTo(target, anchor: .top) }
+        }
+    }
+
     private func reload() async {
         let swims = (try? await model.health.swims(since: Date.now.addingTimeInterval(-14 * 86_400))) ?? []
         planner.update(training: training, kitchen: kitchen, swims: swims)
         await planner.refresh()
         routines.refreshSchedule()
+        PlannerWidgetPublisher.publishDay(planner: planner, routines: routines)
     }
 }
 
@@ -164,37 +197,39 @@ private struct DayStrip: View {
     }
 }
 
-// MARK: - Hero
+// MARK: - Header
 
-private struct DayHero: View {
+private struct DayHeader: View {
     let picture: DayPicture
     let isToday: Bool
     let calendar: Calendar
 
     var body: some View {
         let tint = DayStyle.tint(picture.location)
-        VStack(alignment: .leading, spacing: Spacing.s) {
-            Text(isToday ? "Today" : picture.day.startDate(calendar: calendar).formatted(.dateTime.weekday(.wide).day().month(.wide)))
-                .font(.caption.weight(.bold))
-                .textCase(.uppercase)
-                .foregroundStyle(tint)
-            Text(picture.location.title)
-                .font(.display(32))
-                .foregroundStyle(Palette.textPrimary)
-            Text(subtitle)
-                .font(.subheadline)
-                .foregroundStyle(Palette.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            HStack(spacing: Spacing.s) {
+                IconTile(symbol: DayStyle.symbol(picture.location), tint: tint, size: 40, filled: true)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(isToday ? "Today" : picture.day.startDate(calendar: calendar).formatted(.dateTime.weekday(.wide).day().month(.wide)))
+                        .font(.caption.weight(.bold))
+                        .textCase(.uppercase)
+                        .foregroundStyle(tint)
+                    Text(picture.location.title)
+                        .font(.display(24))
+                        .foregroundStyle(Palette.textPrimary)
+                }
+            }
             ChipFlow().callAsFunction {
                 Chip(text: picture.weather ?? "No forecast yet", symbol: WeatherAdvisor.symbol(for: picture.weather))
                 Chip(text: "\(PlannerFormat.minutes(picture.freeMinutes)) free", symbol: "clock")
                 if !picture.suggestions.isEmpty {
-                    Chip(text: "\(picture.suggestions.count) to fit in", symbol: "sparkles", tint: tint,
-                         fill: tint.opacity(0.14))
+                    Chip(text: "\(picture.suggestions.count) to fit in", symbol: "sparkles", tint: tint, fill: tint.opacity(0.14))
                 }
             }
+            Text(subtitle)
+                .font(.caption)
+                .foregroundStyle(Palette.textTertiary)
         }
-        .heroCard(tint: tint, symbol: DayStyle.symbol(picture.location))
         .accessibilityElement(children: .combine)
     }
 
@@ -272,34 +307,44 @@ private struct BeckyButtons: View {
     }
 }
 
-// MARK: - Timeline
+// MARK: - Hour by hour
 
-private enum TimelineEntry: Identifiable {
-    case event(DayEvent)
-    case suggestion(Suggestion)
-
-    var id: String {
-        switch self {
-        case .event(let item): "e-\(item.id)"
-        case .suggestion(let item): "s-\(item.id)"
-        }
+/// One thing on the calendar: an event, a suggestion or a routine.
+struct DayBlock: Identifiable {
+    enum Target {
+        case event(DayEvent)
+        case suggestion(Suggestion)
+        case routine(RoutinePart)
     }
 
-    var start: Date {
-        switch self {
-        case .event(let item): item.event.start
-        case .suggestion(let item): item.leaveAt
-        }
-    }
+    enum Look { case solid, dashed, faded }
+
+    var id: String
+    var title: String
+    var subtitle: String
+    var start: Date
+    var end: Date
+    var tint: Color
+    var look: Look
+    var target: Target
 }
 
-private struct Timeline: View {
+private struct HourCalendar: View {
     @Environment(PlannerModel.self) private var planner
+    @Environment(RoutineModel.self) private var routines
     let picture: DayPicture
+    let isToday: Bool
+    @Binding var selection: DayBlock?
+
+    static let hourHeight: CGFloat = 64
+    static let gutter: CGFloat = 50
 
     var body: some View {
+        let blocks = DayBlocks.make(picture: picture, routines: routines, calendar: planner.calendar)
+        let columns = CalendarLayout.columns(blocks.map { CalendarSlot(id: $0.id, start: $0.start, end: $0.end) })
+        let calendar = planner.calendar
+        let dayStart = picture.day.startDate(calendar: calendar)
         VStack(alignment: .leading, spacing: Spacing.s) {
-            SectionTitle(title: "Plan", detail: picture.suggestions.isEmpty ? nil : "Suggestions are dashed")
             if !picture.allDayEvents.isEmpty {
                 ChipFlow().callAsFunction {
                     ForEach(picture.allDayEvents) { item in
@@ -308,26 +353,200 @@ private struct Timeline: View {
                     }
                 }
             }
-            if entries.isEmpty {
+            ZStack(alignment: .topLeading) {
+                VStack(spacing: 0) {
+                    ForEach(0..<24, id: \.self) { hour in
+                        HStack(alignment: .top, spacing: Spacing.xs) {
+                            Text(hourLabel(hour, calendar: calendar))
+                                .font(.caption2.weight(.semibold))
+                                .monospacedDigit()
+                                .foregroundStyle(Palette.textTertiary)
+                                .frame(width: Self.gutter - Spacing.xs, alignment: .trailing)
+                                .offset(y: -7)
+                            Rectangle()
+                                .fill(Palette.border.opacity(0.6))
+                                .frame(height: 0.5)
+                        }
+                        .frame(height: Self.hourHeight, alignment: .top)
+                        .id("hour-\(hour)")
+                    }
+                }
+                GeometryReader { proxy in
+                    let width = proxy.size.width - Self.gutter
+                    if let work = picture.work {
+                        Rectangle()
+                            .fill(DayStyle.tint(picture.location).opacity(0.05))
+                            .frame(width: width, height: height(from: work.start, to: work.end, dayStart: dayStart))
+                            .offset(x: Self.gutter, y: offset(work.start, dayStart: dayStart))
+                    }
+                    ForEach(blocks) { block in
+                        let place = columns[block.id] ?? CalendarColumn(column: 0, count: 1)
+                        let columnWidth = width / CGFloat(place.count)
+                        Button {
+                            selection = block
+                        } label: {
+                            BlockView(block: block, height: height(from: block.start, to: block.end, dayStart: dayStart),
+                                      calendar: calendar)
+                        }
+                        .buttonStyle(.plain)
+                        .frame(width: max(24, columnWidth - 3))
+                        .offset(x: Self.gutter + CGFloat(place.column) * columnWidth, y: offset(block.start, dayStart: dayStart))
+                    }
+                    if isToday {
+                        let y = offset(planner.now(), dayStart: dayStart)
+                        HStack(spacing: 0) {
+                            Circle().fill(Palette.error).frame(width: 9, height: 9)
+                            Rectangle().fill(Palette.error).frame(height: 1.5)
+                        }
+                        .offset(x: Self.gutter - 4, y: y - 4.5)
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
+                    }
+                }
+            }
+            .frame(height: Self.hourHeight * 24)
+            if blocks.isEmpty {
                 Text(planner.isSetUp ? "Nothing in the diary and nothing left to fit in." : "Set up your calendars to see your day.")
                     .font(.subheadline)
                     .foregroundStyle(Palette.textSecondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .surface()
-            }
-            ForEach(entries) { entry in
-                switch entry {
-                case .event(let item): EventRow(item: item)
-                case .suggestion(let item): SuggestionCard(suggestion: item)
-                }
             }
         }
     }
 
-    private var entries: [TimelineEntry] {
-        let events = picture.timedEvents.map(TimelineEntry.event)
-        let suggestions = picture.suggestions.map(TimelineEntry.suggestion)
-        return (events + suggestions).sorted { $0.start < $1.start }
+    private func offset(_ date: Date, dayStart: Date) -> CGFloat {
+        let hours = min(24, max(0, date.timeIntervalSince(dayStart) / 3_600))
+        return CGFloat(hours) * Self.hourHeight
+    }
+
+    private func height(from start: Date, to end: Date, dayStart: Date) -> CGFloat {
+        max(22, offset(end, dayStart: dayStart) - offset(start, dayStart: dayStart) - 2)
+    }
+
+    private func hourLabel(_ hour: Int, calendar: Calendar) -> String {
+        guard hour > 0 else { return "" }
+        let date = calendar.date(from: DateComponents(year: 2024, month: 1, day: 15, hour: hour)) ?? .now
+        return date.formatted(.dateTime.hour())
+    }
+}
+
+private struct BlockView: View {
+    let block: DayBlock
+    let height: CGFloat
+    let calendar: Calendar
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 8, style: .continuous)
+        VStack(alignment: .leading, spacing: 1) {
+            Text(block.title)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(Palette.textPrimary)
+                .lineLimit(height > 44 ? 2 : 1)
+            if height > 34 {
+                Text(block.subtitle)
+                    .font(.caption2)
+                    .foregroundStyle(Palette.textSecondary)
+                    .lineLimit(1)
+            }
+        }
+        .padding(.leading, 8)
+        .padding(.trailing, 4)
+        .padding(.vertical, 3)
+        .frame(maxWidth: .infinity, minHeight: height, maxHeight: height, alignment: .topLeading)
+        .background(block.tint.opacity(block.look == .dashed ? 0.08 : 0.22), in: shape)
+        .overlay(alignment: .leading) {
+            if block.look != .dashed {
+                Rectangle().fill(block.tint).frame(width: 3)
+            }
+        }
+        .overlay {
+            if block.look == .dashed {
+                shape.strokeBorder(block.tint.opacity(0.8), style: StrokeStyle(lineWidth: 1.2, dash: [5, 4]))
+            }
+        }
+        .clipShape(shape)
+        .opacity(block.look == .faded ? 0.5 : 1)
+        .contentShape(shape)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(block.title), \(PlannerFormat.range(block.start, block.end, calendar)), \(block.subtitle)")
+    }
+}
+
+/// Builds the calendar's blocks from the day's picture and routines.
+@MainActor
+enum DayBlocks {
+    static func make(picture: DayPicture, routines: RoutineModel, calendar: Calendar) -> [DayBlock] {
+        var blocks: [DayBlock] = picture.timedEvents.map { item in
+            let look: DayBlock.Look
+            switch item.source {
+            case .beckyVisible, .beckyUnconfirmed: look = .faded
+            case .workFree: look = .dashed
+            default: look = .solid
+            }
+            return DayBlock(id: "e-\(item.id)", title: item.event.title, subtitle: DayStyle.label(item.source),
+                            start: item.event.start, end: item.event.end, tint: DayStyle.tint(item.source), look: look,
+                            target: .event(item))
+        }
+        for suggestion in picture.suggestions {
+            var title = suggestion.kind.title
+            if let venue = suggestion.venueName, suggestion.kind != .batchCook { title += " · \(venue)" }
+            let subtitle = suggestion.travelThere > 0 ? "Leave \(PlannerFormat.time(suggestion.leaveAt, calendar))"
+                : PlannerFormat.minutes(suggestion.minutes)
+            blocks.append(DayBlock(id: "s-\(suggestion.id)", title: title, subtitle: subtitle, start: suggestion.leaveAt,
+                                   end: suggestion.backAt, tint: DayStyle.tint(suggestion.kind), look: .dashed,
+                                   target: .suggestion(suggestion)))
+        }
+        if routines.isSetUp {
+            for part in RoutinePart.allCases {
+                let window = routines.window(part, on: picture.day)
+                // Nights away have no set time, so they aren't drawn as a block.
+                if window.duration > 4 * 3_600 { continue }
+                let items = routines.items(part, on: picture.day)
+                let done = items.filter { routines.record(part, on: picture.day)?.ticked.contains($0.id) ?? false }.count
+                blocks.append(DayBlock(id: "r-\(part.rawValue)", title: part.title,
+                                       subtitle: "\(done) of \(items.count) · \(part.purpose.lowercased())",
+                                       start: window.start, end: window.end, tint: Palette.rehab, look: .solid,
+                                       target: .routine(part)))
+            }
+        }
+        return blocks
+    }
+}
+
+/// What a tapped block opens: the event, the suggestion with its actions, or the routine checklist.
+private struct BlockDetail: View {
+    @Environment(\.dismiss) private var dismiss
+    let block: DayBlock
+    let day: DayKey
+
+    var body: some View {
+        switch block.target {
+        case .routine(let part):
+            NavigationStack { RoutineChecklistView(part: part, day: day) }
+        case .event(let item):
+            NavigationStack {
+                ScrollView {
+                    EventRow(item: item)
+                        .padding(.horizontal, Spacing.page)
+                }
+                .pageBackground()
+                .navigationTitle(item.event.title)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+            }
+            .presentationDetents([.medium])
+        case .suggestion(let suggestion):
+            NavigationStack {
+                ScrollView {
+                    SuggestionCard(suggestion: suggestion)
+                        .padding(.horizontal, Spacing.page)
+                }
+                .pageBackground()
+                .navigationTitle(suggestion.kind.title)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+            }
+            .presentationDetents([.medium, .large])
+        }
     }
 }
 
