@@ -68,7 +68,8 @@ private struct RoutineSummary: View {
                     .font(.subheadline)
                     .foregroundStyle(Palette.textSecondary)
                 ScoreLine(part: part, day: day)
-                Text(RoutineStyle.message(status, window: routines.window(part, on: day), calendar: routines.calendar, part: part))
+                Text(RoutineStyle.message(status, window: routines.window(part, on: day), calendar: routines.calendar, part: part,
+                                         costs: routines.costs(part, on: day)))
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(tint)
                     .fixedSize(horizontal: false, vertical: true)
@@ -115,7 +116,8 @@ struct RoutineChecklistView: View {
                         .font(.display(26))
                         .foregroundStyle(Palette.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text(RoutineStyle.message(status, window: routines.window(part, on: day), calendar: routines.calendar, part: part))
+                    Text(RoutineStyle.message(status, window: routines.window(part, on: day), calendar: routines.calendar, part: part,
+                                         costs: routines.costs(part, on: day)))
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(RoutineStyle.tint(status))
                     ScoreLine(part: part, day: day)
@@ -707,7 +709,7 @@ enum RoutineStyle {
     }
 
     static func message(_ status: RoutineStatus, window: DateInterval, calendar: Calendar,
-                        part: RoutinePart = .morning) -> String {
+                        part: RoutinePart = .morning, costs: Bool = true) -> String {
         let start = PlannerFormat.time(window.start, calendar), end = PlannerFormat.time(window.end, calendar)
         if part.isWalk {
             switch status {
@@ -721,9 +723,9 @@ enum RoutineStyle {
         switch status {
         case .notSetUp: return "Not set up"
         case .upcoming: return "Starts at \(start), finish by \(end)"
-        case .open: return "Finish by \(end) or today keeps half"
+        case .open: return costs ? "Finish by \(end) or today keeps half" : "Finish by \(end)"
         case .done: return "Done. Earnings safe."
-        case .missed: return "Missed. Today keeps half its earnings."
+        case .missed: return costs ? "Missed. Today keeps half its earnings." : "Missed. It starts counting tomorrow."
         case .awayOpen: return window.end.timeIntervalSince(window.start) > 5 * 3_600
             ? "Away: any time tonight, no penalty" : "Away: finish by \(end), no penalty"
         case .awayDone: return "Done, away from home"

@@ -117,6 +117,7 @@ final class RoutineModel {
         var statuses: [RoutineStatus] = []
         var day = today
         for index in 0..<400 {
+            if let startedOn, day < startedOn { break }
             let status = self.status(part, on: day)
             statuses.append(status)
             let done = status == .done || status == .awayDone
@@ -135,9 +136,22 @@ final class RoutineModel {
         return defaults.integer(forKey: "routines.best.\(part.rawValue)")
     }
 
-    /// The last seven days, oldest first.
+    /// The day the questionnaire was done: nothing before it is scored.
+    var startedOn: DayKey? { setup.penaltyFrom?.adding(days: -1, calendar: calendar) }
+
+    /// Whether missing this routine on this day costs anything.
+    func costs(_ part: RoutinePart, on day: DayKey) -> Bool {
+        guard !part.isWalk, let from = setup.penaltyFrom else { return false }
+        return day >= from && place(part, on: day) == .home
+    }
+
+    /// The last seven days, oldest first. Days before the routines existed are blank.
     func week(_ part: RoutinePart) -> [RoutineStatus] {
-        (0..<7).reversed().map { status(part, on: today.adding(days: -$0, calendar: calendar)) }
+        (0..<7).reversed().map { offset in
+            let day = today.adding(days: -offset, calendar: calendar)
+            if let startedOn, day < startedOn { return .notSetUp }
+            return status(part, on: day)
+        }
     }
 
     /// When each item is due if done in order from the start.
