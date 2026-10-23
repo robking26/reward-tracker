@@ -398,6 +398,7 @@ private struct HourCalendar: View {
                             Circle().fill(Palette.error).frame(width: 9, height: 9)
                             Rectangle().fill(Palette.error).frame(height: 1.5)
                         }
+                        .frame(width: width + 4)
                         .offset(x: Self.gutter - 4, y: y - 4.5)
                         .allowsHitTesting(false)
                         .accessibilityHidden(true)
