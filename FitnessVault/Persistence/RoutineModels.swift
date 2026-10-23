@@ -21,6 +21,8 @@ final class RoutineLog {
     var placeSetByUser: Bool?
     /// Switched to away because you weren't home by 8:30 pm.
     var autoAway: Bool?
+    /// Home day or office day, for a weekday morning's extras.
+    var workRaw: String?
 
     init(day: DayKey, part: RoutinePart) {
         id = Self.id(day: day, part: part)
@@ -39,6 +41,7 @@ final class RoutineLog {
         if let windowStart, let windowEnd, windowEnd > windowStart { window = DateInterval(start: windowStart, end: windowEnd) }
         return RoutineRecord(day: dayKey, part: part, place: RoutinePlace(rawValue: placeRaw) ?? .home,
                              ticked: Set(tickedIDs), completedAt: completedAt,
-                             days: daysRaw.flatMap(RoutineDays.init(rawValue:)), window: window)
+                             days: daysRaw.flatMap(RoutineDays.init(rawValue:)), window: window,
+                             work: workRaw.flatMap(RoutineWorkDay.init(rawValue:)))
     }
 }

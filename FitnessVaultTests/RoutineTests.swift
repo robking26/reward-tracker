@@ -19,7 +19,8 @@ final class RoutineRulesTests: XCTestCase {
     private func finished(_ part: RoutinePart, on day: DayKey, at date: Date, place: RoutinePlace = .home,
                           setup: RoutineSetup) -> RoutineRecord {
         let key = RoutineRules.key(part, on: day, place: place, calendar: london)
-        return RoutineRecord(day: day, part: part, place: place, ticked: Set(setup.items(key).map(\.id)), completedAt: date)
+        let items = RoutineRules.items(key, setup: setup, work: nil)
+        return RoutineRecord(day: day, part: part, place: place, ticked: Set(items.map(\.id)), completedAt: date)
     }
 
     func testNightsFollowTomorrow() {
@@ -41,7 +42,7 @@ final class RoutineRulesTests: XCTestCase {
                                            setup: setup, calendar: london)
         XCTAssertEqual(saturday.start, at(day(5), 10), "A different weekend version")
         XCTAssertEqual(saturday.end, at(day(5), 11))
-        XCTAssertEqual(morning.end, at(monday, 6, 45))
+        XCTAssertEqual(morning.end, at(monday, 7, 55), "A home day's timings add up to 1 h 45, plus 10 minutes' slack")
         XCTAssertEqual(night.end, at(monday, 21, 30), "In bed for 9:30")
     }
 
@@ -52,23 +53,24 @@ final class RoutineRulesTests: XCTestCase {
         }
         XCTAssertEqual(status(nil, at(monday, 5)), .upcoming)
         XCTAssertEqual(status(nil, at(monday, 6, 30)), .open)
-        XCTAssertEqual(status(finished(.morning, on: monday, at: at(monday, 6, 40), setup: setup), at(monday, 8)), .done)
-        XCTAssertEqual(status(nil, at(monday, 6, 46)), .missed)
-        XCTAssertEqual(status(finished(.morning, on: monday, at: at(monday, 7), setup: setup), at(monday, 8)), .missed,
+        XCTAssertEqual(status(finished(.morning, on: monday, at: at(monday, 7, 30), setup: setup), at(monday, 9)), .done)
+        XCTAssertEqual(status(nil, at(monday, 7, 56)), .missed)
+        XCTAssertEqual(status(finished(.morning, on: monday, at: at(monday, 8), setup: setup), at(monday, 9)), .missed,
                        "Finishing late doesn't count")
-        var mostly = finished(.morning, on: monday, at: at(monday, 6, 40), setup: setup)
+        var mostly = finished(.morning, on: monday, at: at(monday, 7, 30), setup: setup)
+        XCTAssertEqual(mostly.ticked.count, 10, "A home day")
         mostly.ticked.remove(mostly.ticked.sorted()[0])
         mostly.ticked.remove(mostly.ticked.sorted()[0])
-        XCTAssertEqual(status(mostly, at(monday, 8)), .done, "9 of 11 is 80%")
+        XCTAssertEqual(status(mostly, at(monday, 9)), .done, "8 of 10 is 80%")
         mostly.ticked.remove(mostly.ticked.sorted()[0])
-        XCTAssertEqual(status(mostly, at(monday, 8)), .missed, "8 of 11 isn't")
+        XCTAssertEqual(status(mostly, at(monday, 9)), .missed, "7 of 10 isn't")
     }
 
     func testMissedHomeRoutineHalvesTheDayOnce() {
         let setup = setup()
         let late = at(monday, 23, 30)
         XCTAssertTrue(RoutineRules.isPenalised(monday, records: [:], setup: setup, now: late, calendar: london))
-        let morning = finished(.morning, on: monday, at: at(monday, 6, 40), setup: setup)
+        let morning = finished(.morning, on: monday, at: at(monday, 7, 30), setup: setup)
         XCTAssertTrue(RoutineRules.isPenalised(monday, records: [.morning: morning], setup: setup, now: late, calendar: london),
                       "The night routine still counts")
         let night = finished(.evening, on: monday, at: at(monday, 21, 20), setup: setup)
@@ -134,7 +136,7 @@ final class RoutineRulesTests: XCTestCase {
                        at(monday, 9))
         let weekday = RoutineKey(part: .morning, days: .weekday, place: .home)
         XCTAssertEqual(RoutineRules.window(weekday, on: monday, setup: setup, firstEvent: at(monday, 6, 30), calendar: london).end,
-                       at(monday, 6, 45), "Weekday home mornings stay at 6")
+                       at(monday, 7, 55), "Weekday home mornings stay at 6")
     }
 
     func testEightyPercentCounts() {
@@ -144,17 +146,54 @@ final class RoutineRulesTests: XCTestCase {
         XCTAssertEqual(RoutineRules.required(0, share: 0.8), 0)
     }
 
-    func testAnswersBecomeTheDefaults() {
-        let weekday = RoutineCatalogue.defaults(for: RoutineKey(part: .morning, days: .weekday, place: .home)).map(\.id)
-        XCTAssertEqual(weekday.count, 11)
-        XCTAssertTrue(weekday.contains("sunlight") && weekday.contains("journal"))
-        let weekend = RoutineCatalogue.defaults(for: RoutineKey(part: .morning, days: .weekend, place: .home)).map(\.id)
-        XCTAssertEqual(Set(weekend), Set(weekday + ["stretch", "breathe"]))
-        XCTAssertEqual(RoutineCatalogue.defaults(for: RoutineKey(part: .morning, days: .weekday, place: .away)).map(\.id),
-                       ["water", "tablets", "teeth", "dressed"])
-        XCTAssertEqual(RoutineCatalogue.defaults(for: RoutineKey(part: .evening, days: .weekend, place: .home)).count, 5)
+    func testRobsTimedMornings() {
+        let weekday = RoutineKey(part: .morning, days: .weekday, place: .home)
+        let setup = setup()
+        let home = RoutineRules.items(weekday, setup: setup, work: .homeDay).map(\.id)
+        XCTAssertEqual(home, ["run10", "rehab15", "showerteeth", "shave", "dressbreakfast", "breakfastwalk", "facehair",
+                              "washon", "preptea", "gymkit"])
+        let office = RoutineRules.items(weekday, setup: setup, work: .officeDay).map(\.id)
+        XCTAssertTrue(office.contains("station") && office.contains("journaltrain") && !office.contains("preptea"))
+        XCTAssertEqual(RoutineRules.window(weekday, on: monday, setup: setup, work: .officeDay, calendar: london).end,
+                       at(monday, 7, 45), "An office day: 1 h 35 plus slack")
+        XCTAssertEqual(RoutineRules.items(weekday, setup: setup, work: nil), RoutineRules.items(weekday, setup: setup, work: .homeDay),
+                       "No focus in Outlook: a home day")
+        let weekend = RoutineCatalogue.defaults(for: RoutineKey(part: .morning, days: .weekend, place: .home))
+        XCTAssertEqual(weekend.compactMap(\.minutes).reduce(0, +), 50)
+        let away = RoutineCatalogue.defaults(for: RoutineKey(part: .morning, days: .weekday, place: .away))
+        XCTAssertEqual(away.last?.id, "coffeeout")
         XCTAssertTrue(RoutineSetup.defaultTimes(RoutineKey(part: .evening, days: .weekday, place: .away)).isAdHoc)
-        XCTAssertEqual(RoutineSetup.defaultTimes(RoutineKey(part: .evening, days: .weekend, place: .home)).start, 22 * 60)
+    }
+
+    func testWalksAfterLunchAndTeaNeverCost() {
+        let setup = setup()
+        let lunch = RoutineRules.window(RoutineKey(part: .lunchWalk, days: .weekday, place: .home), on: monday, setup: setup,
+                                        calendar: london)
+        XCTAssertEqual(lunch.start, at(monday, 12, 30))
+        let outlook = DateInterval(start: at(monday, 13), end: at(monday, 13, 30))
+        XCTAssertEqual(RoutineRules.window(RoutineKey(part: .lunchWalk, days: .weekday, place: .home), on: monday, setup: setup,
+                                           lunchWalk: outlook, calendar: london), outlook, "An Outlook lunch walk is the walk")
+        XCTAssertEqual(setup.items(RoutineKey(part: .teaWalk, days: .weekday, place: .home)), [RoutineCatalogue.walk])
+        let morning = finished(.morning, on: monday, at: at(monday, 7, 30), setup: setup)
+        let night = finished(.evening, on: monday, at: at(monday, 21, 20), setup: setup)
+        XCTAssertFalse(RoutineRules.isPenalised(monday, records: [.morning: morning, .evening: night], setup: setup,
+                                                now: at(monday, 23, 30), calendar: london), "Missed walks don't halve the day")
+        XCTAssertEqual(RoutineRules.status(.teaWalk, on: monday, record: nil, setup: setup, now: at(monday, 23), calendar: london),
+                       .missed)
+    }
+
+    func testScoreKeeping() {
+        XCTAssertEqual(RoutineScore.streak([.open, .done, .done, .missed, .done]), 2, "Today still open doesn't break it")
+        XCTAssertEqual(RoutineScore.streak([.done, .awayDone, .missed]), 2)
+        XCTAssertEqual(RoutineScore.streak([.missed, .done]), 0)
+        let items = (0..<3).map { RoutineItem(id: "\($0)", title: "", symbol: "star", minutes: 10) }
+        let start = at(monday, 6)
+        XCTAssertEqual(RoutineScore.plannedTimes(items, from: start), [at(monday, 6), at(monday, 6, 10), at(monday, 6, 20)])
+        XCTAssertEqual(RoutineScore.pace(items, ticked: ["0"], start: start, now: at(monday, 6, 5)), 5)
+        XCTAssertEqual(RoutineScore.pace(items, ticked: ["0"], start: start, now: at(monday, 6, 20)), -10)
+        XCTAssertNil(RoutineScore.pace(items, ticked: ["0", "1", "2"], start: start, now: at(monday, 6, 20)))
+        XCTAssertEqual(RoutineScore.paceText(5), "5 min ahead")
+        XCTAssertEqual(RoutineScore.paceText(-1), "On pace")
     }
 
     func testEveryVersionHasSuggestionsAndDefaults() {
@@ -196,8 +235,8 @@ final class RoutineModelTests: XCTestCase {
         for item in routines.items(.morning, on: monday) { routines.toggle(item, part: .morning, on: monday) }
         XCTAssertEqual(routines.status(.morning, on: monday), .done)
 
-        clock = monday.date(atMinute: 7 * 60, calendar: fixtures.london)
-        XCTAssertEqual(routines.currentPart, .evening)
+        clock = monday.date(atMinute: 8 * 60, calendar: fixtures.london)
+        XCTAssertEqual(routines.currentPart, .lunchWalk, "Then the walk after lunch")
         let first = routines.items(.morning, on: monday)[0]
         routines.toggle(first, part: .morning, on: monday)
         XCTAssertEqual(routines.status(.morning, on: monday), .done, "Closed: can't be changed afterwards")
@@ -222,6 +261,22 @@ final class RoutineModelTests: XCTestCase {
         clock = tuesday.date(atMinute: 23 * 60 + 59, calendar: fixtures.london).addingTimeInterval(30)
         XCTAssertEqual(routines.status(.evening, on: tuesday), .awayMissed)
         XCTAssertTrue(routines.isPenalised(tuesday), "The home morning was still missed")
+    }
+
+    func testSavedMorningsPickUpTheNewTimingsOnce() throws {
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "tests.routines.\(UUID().uuidString)"))
+        var old = RoutineSetup()
+        let weekday = RoutineKey(part: .morning, days: .weekday, place: .home)
+        let night = RoutineKey(part: .evening, days: .weekday, place: .home)
+        old.items[weekday.id] = [RoutineItem(id: "water", title: "Water", symbol: "drop.fill")]
+        old.items[night.id] = [RoutineItem(id: "read", title: "Read", symbol: "book.fill")]
+        old.penaltyFrom = fixtures.monday
+        defaults.set(try JSONEncoder().encode(old), forKey: RoutineModel.setupKey)
+        let routines = RoutineModel(container: Persistence.makeContainer(inMemory: true), reminders: RecordingReminderScheduler(),
+                                    defaults: defaults, calendar: fixtures.london, now: { .now })
+        XCTAssertEqual(routines.setup.items(weekday).first?.id, "run10")
+        XCTAssertEqual(routines.setup.items(night).map(\.id), ["read"], "Nights kept as they were")
+        XCTAssertEqual(routines.setup.version, RoutineSetup.currentVersion)
     }
 
     func testNotHomeByHalfEightMakesTheNightAway() {

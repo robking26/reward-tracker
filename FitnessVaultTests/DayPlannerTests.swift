@@ -113,6 +113,7 @@ final class DayPlannerTests: XCTestCase {
         settings.gymPerWeek = gym
         settings.swimsPerWeek = swims
         settings.runsPerWeek = runs
+        settings.suggestWalks = true
         return settings
     }
 

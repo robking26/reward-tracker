@@ -285,3 +285,55 @@ struct BatteryWidgetView: View {
         value > 0 ? "+" + percentText(value) : (value < 0 ? "−" + percentText(-value) : "±0%")
     }
 }
+
+/// A compact battery for the 4×2 Today widget.
+struct BatteryMini: View {
+    let snapshot: BatteryWidgetSnapshot?
+
+    var body: some View {
+        let percent = snapshot?.percent ?? 0
+        let tint = BatteryWidgetView.tint(percent)
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 3) {
+                Text("BATTERY")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(WidgetPalette.textTertiary)
+                if snapshot?.chargedToday == true {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(tint)
+                }
+            }
+            Text(snapshot.map { BatteryWidgetView.percentText($0.percent) } ?? "–")
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(tint)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            HStack(spacing: 1.5) {
+                GeometryReader { proxy in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 4, style: .continuous)
+                            .strokeBorder(WidgetPalette.elevated, lineWidth: 1.2)
+                        RoundedRectangle(cornerRadius: 2.5, style: .continuous)
+                            .fill(tint)
+                            .frame(width: max(percent > 0 ? 3 : 0, (proxy.size.width - 4) * percent / 100))
+                            .padding(2)
+                    }
+                }
+                RoundedRectangle(cornerRadius: 1)
+                    .fill(WidgetPalette.elevated)
+                    .frame(width: 2.5, height: 6)
+            }
+            .frame(height: 13)
+            if let snapshot {
+                Text("\(BatteryWidgetView.signed(Double(snapshot.thisWeekQuarters) / 4)) this week")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(WidgetPalette.textSecondary)
+                    .lineLimit(1)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Transformation battery \(snapshot.map { BatteryWidgetView.percentText($0.percent) } ?? "not set up")")
+    }
+}

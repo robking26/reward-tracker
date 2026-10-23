@@ -91,7 +91,8 @@ struct WorkoutSetupView: View {
     var onCancel: () -> Void
     @State private var choice: SessionChoice = .push
     @State private var minutes = 90
-    @State private var rehabFirst = true
+    /// Knee rehab is in the morning routine now; plans no longer include it.
+    private let rehabFirst = false
     @State private var loaded = false
     @State private var info: Exercise?
 
@@ -137,18 +138,6 @@ struct WorkoutSetupView: View {
                                 }
                             }
                         }
-                        Toggle(isOn: $rehabFirst) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Knee rehab first")
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(Palette.textPrimary)
-                                Text("Straight after the warm-up, so it doesn't get skipped.")
-                                    .font(.caption)
-                                    .foregroundStyle(Palette.textTertiary)
-                            }
-                        }
-                        .tint(Palette.rehab)
-                        .surface()
                     }
                 }
 

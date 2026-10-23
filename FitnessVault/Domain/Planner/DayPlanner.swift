@@ -67,6 +67,8 @@ struct PlannerSettings: Codable, Hashable, Sendable {
     var fallbackTravelMinutes = 15
     /// Kept clear either side of your own events.
     var bufferMinutes = 10
+    /// Off: the daily walks after lunch and tea are routines now, so the planner doesn't add its own.
+    var suggestWalks = false
 
     init() {}
 
@@ -90,6 +92,7 @@ struct PlannerSettings: Codable, Hashable, Sendable {
         runMinutes = try c.decodeIfPresent(Int.self, forKey: .runMinutes) ?? base.runMinutes
         fallbackTravelMinutes = try c.decodeIfPresent(Int.self, forKey: .fallbackTravelMinutes) ?? base.fallbackTravelMinutes
         bufferMinutes = try c.decodeIfPresent(Int.self, forKey: .bufferMinutes) ?? base.bufferMinutes
+        suggestWalks = try c.decodeIfPresent(Bool.self, forKey: .suggestWalks) ?? base.suggestWalks
     }
 }
 
@@ -371,7 +374,7 @@ enum DayPlanner {
                 runsLeft -= 1
             }
         }
-        for day in days where !has(.walk, day) && !has(.run, day) {
+        for day in days where settings.suggestWalks && !has(.walk, day) && !has(.run, day) {
             _ = place(.walk, on: day, detail: "\(settings.walkMinutes) min, brisk", minutes: settings.walkMinutes)
         }
     }

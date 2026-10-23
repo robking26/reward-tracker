@@ -23,8 +23,9 @@ enum PlannerWidgetPublisher {
             for part in RoutinePart.allCases {
                 let window = routines.window(part, on: picture.day)
                 guard window.duration <= 4 * 3_600 else { continue }
+                let end = part.isWalk ? min(window.end, window.start.addingTimeInterval(20 * 60)) : window.end
                 items.append(DayWidgetItem(id: "routine-\(part.rawValue)", title: part.title, start: window.start,
-                                           end: window.end, kind: .routine, colour: 0xB8A5FF))
+                                           end: end, kind: .routine, colour: part.isWalk ? 0x7FE0C3 : 0xB8A5FF))
             }
         }
         let snapshot = DayWidgetSnapshot(day: WidgetSnapshot.dayString(for: planner.now(), calendar: calendar),
@@ -39,7 +40,11 @@ enum PlannerWidgetPublisher {
                                              daysLeft: battery.daysLeft,
                                              chargedToday: result.events.contains { $0.day == battery.today && $0.quarters > 0 },
                                              updatedAt: battery.now())
-        if PlannerWidgetStore.save(snapshot) { WidgetCenter.shared.reloadTimelines(ofKind: PlannerWidgetStore.batteryKind) }
+        if PlannerWidgetStore.save(snapshot) {
+            WidgetCenter.shared.reloadTimelines(ofKind: PlannerWidgetStore.batteryKind)
+            // The 4×2 Today widget shows the battery too.
+            WidgetCenter.shared.reloadTimelines(ofKind: WidgetSnapshotStore.widgetKind)
+        }
     }
 
     private static func kind(_ source: EventSource) -> DayWidgetItem.Kind {

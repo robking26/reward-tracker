@@ -199,6 +199,9 @@ struct TodayWidgetView: View {
             HStack(alignment: .top, spacing: 10) {
                 earnedBlock(size: 28)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                // The year's transformation battery sits alongside today's money.
+                BatteryMini(snapshot: PlannerWidgetStore.loadBattery())
+                    .frame(width: 92)
                 ActivityRingsView(rings: current?.rings, lineWidth: 6, spacing: 1.5)
                     .frame(width: 52, height: 52)
             }

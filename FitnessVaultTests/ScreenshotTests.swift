@@ -56,7 +56,7 @@ final class ScreenshotTests: XCTestCase {
         try await capture("day-settings", height: 1_800, DaySettingsView(), model, training, kitchen, planner)
         let routines = PreviewFixtures.routines()
         try await capture("routine-checklist", height: 1_300,
-                          NavigationStack { RoutineChecklistView(part: routines.currentPart, day: routines.today) },
+                          NavigationStack { RoutineChecklistView(part: .morning, day: routines.today) },
                           model, training, kitchen, planner, routines: routines)
         try await capture("journal", height: 1_700, NavigationStack { JournalView() }, model, training, kitchen, planner)
         try await capture("journal-compose", height: 1_100,

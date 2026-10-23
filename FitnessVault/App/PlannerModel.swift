@@ -105,6 +105,14 @@ final class PlannerModel {
             awayFromHome = here.distance(to: home.coordinate) > 300
         }
         info.outAtHalfEight = busyThen || awayFromHome
+        switch picture.location {
+        case .office: info.workDay = .officeDay
+        case .home: info.workDay = .homeDay
+        default: info.workDay = nil
+        }
+        if let walk = picture.timedEvents.first(where: { $0.source == .workFree && DayCalendar.isLunchWalk($0.event) }) {
+            info.lunchWalk = DateInterval(start: walk.event.start, end: max(walk.event.end, walk.event.start))
+        }
         return info
     }
 

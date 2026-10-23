@@ -84,16 +84,14 @@ final class ProgramGeneratorTests: XCTestCase {
         }
     }
 
-    func testLegDayStartsWithTheFullRehabBlock() {
-        let plan = ProgramGenerator.plan(input(.legs))
-        XCTAssertTrue(plan.exercises.first?.isRehab ?? false, "Rehab near the start, after the warm-up (R2)")
-        XCTAssertEqual(plan.exercises.filter(\.isRehab).count, 5)
-        XCTAssertEqual(ProgramGenerator.plan(input(.push)).exercises.filter(\.isRehab).count, 2, "Brief on upper days")
-    }
-
-    func testRehabCanGoLastIfTheUserChooses() {
-        let plan = ProgramGenerator.plan(input(.push, rehabFirst: false))
-        XCTAssertTrue(plan.exercises.last?.isRehab ?? false)
+    func testWorkoutsAreLiftingOnlyNow() {
+        // Knee rehab moved to the morning routine.
+        for focus in TrainingFocus.rotation + [.extra] {
+            XCTAssertFalse(ProgramGenerator.plan(input(focus)).exercises.contains(where: \.isRehab), focus.title)
+        }
+        XCTAssertEqual(ProgramGenerator.plan(input(.legs)).exercises.first?.exerciseID, "barbellSquat")
+        XCTAssertTrue(ProgramGenerator.rehabOnly(knee: .settled, weights: [:]).exercises.allSatisfy(\.isRehab),
+                      "Rehab on its own is still there")
     }
 
     func testShortOnTimeDropsOptionalsNeverRehabOrMains() {
@@ -101,7 +99,6 @@ final class ProgramGeneratorTests: XCTestCase {
         for id in ["inclineDBBench", "flatDBBench", "seatedDBShoulderPress"] {
             XCTAssertTrue(plan.exercises.contains { $0.exerciseID == id }, id)
         }
-        XCTAssertEqual(plan.exercises.filter(\.isRehab).count, 2)
         XCTAssertLessThan(main(plan).count, 6)
         XCTAssertTrue(plan.notes.contains { $0.contains("dropped") })
     }

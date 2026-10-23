@@ -192,16 +192,17 @@ enum ProgramGenerator {
             main.append(item)
         }
 
+        // A flared knee on a leg day: no leg work, just the gentle rehab block.
         if input.knee == .flare && input.focus.loadsLegs {
-            main = []
-            notes.append("Knee flared up: rehab only today, and only what doesn't hurt. Book your physio if it's not settling.")
+            var plan = rehabOnly(knee: input.knee, weights: input.weights)
+            plan.notes.insert("Knee flared up: no leg work today, only the rehab that doesn't hurt. Book your physio if it's not settling.", at: 0)
+            return plan
         }
 
-        let rehab = rehabBlock(input.focus).compactMap(ExerciseLibrary.exercise).map { planned($0, input: input) }
-
-        // Fit the time: drop optional work first, then superset accessories. Rehab and main lifts stay (W4).
+        // Knee rehab is part of the morning routine now, so workouts are lifting only.
+        // Fit the time: drop optional work first, then superset accessories. Main lifts stay (W4).
         var chosen = main
-        func total(_ list: [PlannedExercise]) -> Int { warmUpMinutes + minutes(list) + minutes(rehab) }
+        func total(_ list: [PlannedExercise]) -> Int { warmUpMinutes + minutes(list) }
         while total(chosen) > input.availableMinutes, let index = chosen.lastIndex(where: { $0.isOptional }) {
             notes.append("\(chosen[index].exercise?.name ?? "An extra") dropped to fit the time.")
             chosen.remove(at: index)
@@ -214,8 +215,7 @@ enum ProgramGenerator {
             if accessories.count >= 2 { notes.append("Accessories paired as supersets to save time.") }
         }
 
-        let ordered = input.rehabFirst ? rehab + chosen : chosen + rehab
-        return WorkoutPlan(focus: input.focus, variant: input.variant % 2, exercises: ordered, rehabFirst: input.rehabFirst,
+        return WorkoutPlan(focus: input.focus, variant: input.variant % 2, exercises: chosen, rehabFirst: input.rehabFirst,
                            estimatedMinutes: total(chosen), notes: notes)
     }
 

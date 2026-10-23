@@ -5,13 +5,56 @@ import Foundation
 // can be tested and always gives the same answer for the same records.
 
 enum RoutinePart: String, Codable, CaseIterable, Sendable, Identifiable {
-    case morning, evening
+    case morning, lunchWalk, teaWalk, evening
 
     var id: String { rawValue }
 
-    var title: String { self == .morning ? "Morning routine" : "Night routine" }
-    var purpose: String { self == .morning ? "For today's you" : "For tomorrow's you" }
-    var symbol: String { self == .morning ? "sunrise.fill" : "moon.stars.fill" }
+    /// Only the morning and night routines halve a day's earnings; the walks are for the streak.
+    static let penalised: [RoutinePart] = [.morning, .evening]
+    /// The parts the questionnaire builds.
+    static let routines: [RoutinePart] = [.morning, .evening]
+
+    var isWalk: Bool { self == .lunchWalk || self == .teaWalk }
+
+    var title: String {
+        switch self {
+        case .morning: "Morning routine"
+        case .lunchWalk: "Walk after lunch"
+        case .teaWalk: "Walk after tea"
+        case .evening: "Night routine"
+        }
+    }
+
+    var shortTitle: String {
+        switch self {
+        case .morning: "Morning"
+        case .lunchWalk: "Lunch"
+        case .teaWalk: "Tea"
+        case .evening: "Night"
+        }
+    }
+
+    var purpose: String {
+        switch self {
+        case .morning: "For today's you"
+        case .lunchWalk, .teaWalk: "20 minutes on your feet"
+        case .evening: "For tomorrow's you"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .morning: "sunrise.fill"
+        case .lunchWalk: "sun.max.fill"
+        case .teaWalk: "sunset.fill"
+        case .evening: "moon.stars.fill"
+        }
+    }
+}
+
+/// On weekday mornings at home: Outlook's 9 am Home focus or Office focus, which adds that day's extras.
+enum RoutineWorkDay: String, Codable, Sendable {
+    case homeDay, officeDay
 }
 
 enum RoutineDays: String, Codable, CaseIterable, Sendable {
@@ -42,12 +85,15 @@ struct RoutineKey: Hashable, Codable, Sendable, Identifiable {
         case (.morning, .weekend): when = "Weekend mornings"
         case (.evening, .weekday): when = "Nights before a weekday"
         case (.evening, .weekend): when = "Nights before the weekend"
+        case (.lunchWalk, _): when = "Walk after lunch"
+        case (.teaWalk, _): when = "Walk after tea"
         }
         return "\(when) · \(place.title.lowercased())"
     }
 
+    /// The eight questionnaire versions (the walks have one item each and aren't asked about).
     static let all: [RoutineKey] = RoutinePlace.allCases.flatMap { place in
-        RoutinePart.allCases.flatMap { part in RoutineDays.allCases.map { RoutineKey(part: part, days: $0, place: place) } }
+        RoutinePart.routines.flatMap { part in RoutineDays.allCases.map { RoutineKey(part: part, days: $0, place: place) } }
     }
 }
 
@@ -55,6 +101,10 @@ struct RoutineItem: Codable, Hashable, Sendable, Identifiable {
     var id: String
     var title: String
     var symbol: String
+    /// Roughly how long it takes, for the planned clock and pace.
+    var minutes: Int? = nil
+    /// Only on a home day or an office day (weekday mornings).
+    var only: RoutineWorkDay? = nil
 }
 
 /// When a routine opens and when it has to be finished, as minutes after midnight.
@@ -65,9 +115,12 @@ struct RoutineTimes: Codable, Hashable, Sendable {
     var beforeFirstEvent: Bool? = nil
     /// No set time: any time that evening, and no reminders.
     var adHoc: Bool? = nil
+    /// Finishes when the items' timings add up to (plus ten minutes' slack), so extras make it longer.
+    var fitsItems: Bool? = nil
 
     var movesForEvents: Bool { beforeFirstEvent ?? false }
     var isAdHoc: Bool { adHoc ?? false }
+    var isFitted: Bool { fitsItems ?? false }
 }
 
 struct RoutineSetup: Codable, Hashable, Sendable {
@@ -78,11 +131,18 @@ struct RoutineSetup: Codable, Hashable, Sendable {
     var penaltyFrom: DayKey?
     /// The share of items that makes a routine done. Nil (older setups) means 80%.
     var completionShare: Double? = nil
+    /// Which version of the built-in routines this was saved from, so new timings can be brought in once.
+    var version: Int? = nil
+
+    static let currentVersion = 2
 
     var isSetUp: Bool { penaltyFrom != nil }
     var share: Double { min(max(completionShare ?? 0.8, 0.1), 1) }
 
-    func items(_ key: RoutineKey) -> [RoutineItem] { items[key.id] ?? [] }
+    func items(_ key: RoutineKey) -> [RoutineItem] {
+        if key.part.isWalk { return items[key.id] ?? [RoutineCatalogue.walk] }
+        return items[key.id] ?? []
+    }
     func times(_ key: RoutineKey) -> RoutineTimes { times[key.id] ?? Self.defaultTimes(key) }
 
     /// From Rob's questionnaire: up at 6 on weekdays and done by 6:45; weekend and away mornings 10 to 11 or the
@@ -90,12 +150,14 @@ struct RoutineSetup: Codable, Hashable, Sendable {
     /// nights away whenever suits.
     static func defaultTimes(_ key: RoutineKey) -> RoutineTimes {
         switch (key.part, key.days, key.place) {
-        case (.morning, .weekday, .home): RoutineTimes(start: 6 * 60, finish: 6 * 60 + 45)
+        case (.morning, .weekday, .home): RoutineTimes(start: 6 * 60, finish: 7 * 60 + 45, fitsItems: true)
         case (.morning, .weekend, .home), (.morning, _, .away):
             RoutineTimes(start: 10 * 60, finish: 11 * 60, beforeFirstEvent: true)
         case (.evening, .weekday, .home): RoutineTimes(start: 21 * 60, finish: 21 * 60 + 30)
         case (.evening, .weekend, .home): RoutineTimes(start: 22 * 60, finish: 22 * 60 + 30)
         case (.evening, _, .away): RoutineTimes(start: 18 * 60, finish: 23 * 60 + 59, adHoc: true)
+        case (.lunchWalk, _, _): RoutineTimes(start: 12 * 60 + 30, finish: 13 * 60 + 30)
+        case (.teaWalk, _, _): RoutineTimes(start: 18 * 60 + 30, finish: 19 * 60 + 30)
         }
     }
 }
@@ -112,6 +174,8 @@ struct RoutineRecord: Hashable, Sendable {
     /// kept so the rule never changes its mind about a day afterwards.
     var days: RoutineDays? = nil
     var window: DateInterval? = nil
+    /// Home day or office day, for a weekday morning's extras.
+    var work: RoutineWorkDay? = nil
 }
 
 enum RoutineStatus: Equatable, Sendable {
@@ -132,6 +196,10 @@ struct RoutineDayInfo: Hashable, Sendable {
     var firstEvent: Date? = nil
     /// Not home by 8:30 pm, from the calendar or where the phone is: the night counts as away.
     var outAtHalfEight = false
+    /// Outlook's 9 am focus, on a weekday.
+    var workDay: RoutineWorkDay? = nil
+    /// A "Lunch walk" in Outlook: the walk after lunch goes there.
+    var lunchWalk: DateInterval? = nil
 }
 
 enum RoutineRules {
@@ -164,12 +232,33 @@ enum RoutineRules {
         return RoutineKey(part: part, days: days, place: place)
     }
 
+    /// A weekday morning at home without a known focus counts as a home day, as the Day tab assumes.
+    static func workDay(_ key: RoutineKey, saved: RoutineWorkDay?) -> RoutineWorkDay? {
+        guard key.part == .morning, key.days == .weekday, key.place == .home else { return nil }
+        return saved ?? .homeDay
+    }
+
+    /// The items for a version on the day: the home-day or office-day extras only on those days.
+    static func items(_ key: RoutineKey, setup: RoutineSetup, work: RoutineWorkDay?) -> [RoutineItem] {
+        let day = workDay(key, saved: work)
+        return setup.items(key).filter { item in item.only == nil || item.only == day }
+    }
+
     static func window(_ key: RoutineKey, on day: DayKey, setup: RoutineSetup, firstEvent: Date? = nil,
-                       calendar: Calendar) -> DateInterval {
+                       work: RoutineWorkDay? = nil, lunchWalk: DateInterval? = nil, calendar: Calendar) -> DateInterval {
         let times = setup.times(key)
+        // An Outlook "Lunch walk" is when the walk after lunch happens.
+        if key.part == .lunchWalk, let lunchWalk {
+            return DateInterval(start: lunchWalk.start, end: max(lunchWalk.end, lunchWalk.start.addingTimeInterval(20 * 60)))
+        }
         var start = day.date(atMinute: times.start, calendar: calendar)
+        var finishMinute = times.finish
+        if times.isFitted {
+            let total = items(key, setup: setup, work: work).reduce(0) { $0 + ($1.minutes ?? 5) }
+            finishMinute = times.start + total + 10
+        }
         // Always finishes the same day, so a missed night routine belongs to that day's earnings.
-        var finish = day.date(atMinute: min(max(times.finish, times.start + 5), 23 * 60 + 59), calendar: calendar)
+        var finish = day.date(atMinute: min(max(finishMinute, times.start + 5), 23 * 60 + 59), calendar: calendar)
         if times.movesForEvents, let firstEvent, firstEvent < finish, firstEvent > day.startDate(calendar: calendar) {
             let length = finish.timeIntervalSince(start)
             finish = firstEvent
@@ -188,8 +277,8 @@ enum RoutineRules {
                        calendar: Calendar) -> RoutineStatus {
         guard setup.isSetUp else { return .notSetUp }
         let version = key(for: record, part: part, on: day, calendar: calendar)
-        let items = setup.items(version)
-        let due = record?.window ?? window(version, on: day, setup: setup, calendar: calendar)
+        let items = items(version, setup: setup, work: record?.work)
+        let due = record?.window ?? window(version, on: day, setup: setup, work: record?.work, calendar: calendar)
         let finished = isComplete(record, items: items, share: setup.share)
             && (record?.completedAt.map { $0 <= due.end } ?? false)
         if version.place == .away {
@@ -213,7 +302,7 @@ enum RoutineRules {
     static func isPenalised(_ day: DayKey, records: [RoutinePart: RoutineRecord], setup: RoutineSetup, now: Date,
                             calendar: Calendar) -> Bool {
         guard let from = setup.penaltyFrom, day >= from else { return false }
-        return RoutinePart.allCases.contains { part in
+        return RoutinePart.penalised.contains { part in
             status(part, on: day, record: records[part], setup: setup, now: now, calendar: calendar) == .missed
         }
     }
@@ -233,90 +322,147 @@ enum RoutineRules {
     }
 }
 
+// MARK: - Keeping score
+
+/// The quiet game: streaks, pace against the planned clock, and the week at a glance.
+enum RoutineScore {
+    /// Days in a row done (at home or away), counting back. Today counts once it's done and is skipped while
+    /// it's still open; a miss ends the run.
+    static func streak(_ statuses: [RoutineStatus]) -> Int {
+        var count = 0
+        for (index, status) in statuses.enumerated() {
+            let stillGoing = status == .upcoming || status == .open || status == .awayOpen
+            if index == 0 && stillGoing { continue }
+            guard status == .done || status == .awayDone else { return count }
+            count += 1
+        }
+        return count
+    }
+
+    /// When each item is due if you go in order from the start.
+    static func plannedTimes(_ items: [RoutineItem], from start: Date) -> [Date] {
+        var clock = start
+        return items.map { item in
+            defer { clock = clock.addingTimeInterval(TimeInterval((item.minutes ?? 5) * 60)) }
+            return clock
+        }
+    }
+
+    /// Minutes ahead (positive) or behind (negative): when the next thing to do was planned, against now.
+    /// Nil once everything is ticked.
+    static func pace(_ items: [RoutineItem], ticked: Set<String>, start: Date, now: Date) -> Int? {
+        let times = plannedTimes(items, from: start)
+        guard let next = items.indices.first(where: { !ticked.contains(items[$0].id) }) else { return nil }
+        return Int((times[next].timeIntervalSince(now) / 60).rounded())
+    }
+
+    static func paceText(_ minutes: Int) -> String {
+        if abs(minutes) < 3 { return "On pace" }
+        return minutes > 0 ? "\(minutes) min ahead" : "\(-minutes) min behind"
+    }
+}
+
 // MARK: - Questionnaire suggestions
 
 enum RoutineCatalogue {
     /// Items that open the journal: writing the entry ticks them.
     static let journalPrompts: [String: String] = [
         "journal": "One intention for today",
+        "journalcoffee": "One intention for today",
+        "journaltrain": "One intention for today",
         "wins": "Three wins from today",
     ]
 
+    /// The single item of each daily walk.
+    static let walk = item("walk20", "20-minute walk", "figure.walk", 20)
+
+    /// Rob's mornings, with rough timings. Order is the order they're done in.
     static let morning: [RoutineItem] = [
-        item("water", "Big glass of water", "drop.fill"),
-        item("tablets", "Tablets and supplements", "pills.fill"),
-        item("weigh", "Weigh in", "scalemass.fill"),
-        item("rehab", "Knee rehab, 5 minutes", "figure.cooldown"),
-        item("stretch", "Stretch and mobility", "figure.flexibility"),
-        item("shower", "Shower", "shower.fill"),
-        item("skincare", "Skincare and SPF", "sparkles"),
-        item("teeth", "Brush teeth", "mouth.fill"),
-        item("bed", "Make the bed", "bed.double.fill"),
-        item("breakfast", "Protein breakfast", "fork.knife"),
-        item("sunlight", "20 minutes of sunlight", "sun.max.fill"),
-        item("nophone", "No phone for the first 30 minutes", "iphone.slash"),
-        item("plan", "Look at today in the Day tab", "calendar"),
-        item("journal", "Journal: one intention for today", "book.fill"),
-        item("breathe", "Five minutes breathing or meditation", "wind"),
-        item("dressed", "Dressed and ready", "tshirt.fill"),
+        item("run10", "10-minute run", "figure.run", 10),
+        item("rehab15", "Knee rehab", "figure.cooldown", 15),
+        item("showerteeth", "Shower and brush teeth", "shower.fill", 5),
+        item("shave", "Shave and minoxidil", "comb.fill", 5),
+        item("dressbreakfast", "Dressed, breakfast, wash up", "fork.knife", 10),
+        item("breakfastwalk", "Walk after breakfast", "figure.walk", 20),
+        item("facehair", "Face cream and hair", "sparkles", 5),
+        item("journalcoffee", "Journal and coffee", "cup.and.saucer.fill", 5),
+        item("journal", "Journal", "book.fill", 5),
+        item("coffeeout", "Go for a coffee", "takeoutbag.and.cup.and.straw.fill", 5),
+        item("gymkit", "Gym kit packed in the van", "bag.fill", 5),
+        item("washon", "Journal, coffee and a wash on", "washer.fill", 5, only: .homeDay),
+        item("preptea", "Prep tea", "frying.pan.fill", 25, only: .homeDay),
+        item("workbag", "Work bag packed", "briefcase.fill", 5, only: .officeDay),
+        item("station", "Get to the train station", "tram.fill", 10, only: .officeDay),
+        item("journaltrain", "Journal on the train", "book.fill", 5, only: .officeDay),
+        item("water", "Big glass of water", "drop.fill", 2),
+        item("tablets", "Tablets and supplements", "pills.fill", 2),
+        item("weigh", "Weigh in", "scalemass.fill", 2),
+        item("stretch", "Stretch and mobility", "figure.flexibility", 5),
+        item("breathe", "Five minutes breathing or meditation", "wind", 5),
+        item("sunlight", "20 minutes of sunlight", "sun.max.fill", 20),
+        item("plan", "Look at today in the Day tab", "calendar", 2),
     ]
 
     static let evening: [RoutineItem] = [
-        item("kitchen", "Kitchen tidy, dishwasher on", "dishwasher.fill"),
-        item("lunch", "Tomorrow's lunch in the fridge", "takeoutbag.and.cup.and.straw.fill"),
-        item("breakfastready", "Breakfast ready to go", "cup.and.saucer.fill"),
-        item("clothes", "Clothes laid out", "tshirt.fill"),
-        item("gymbag", "Gym bag packed", "bag.fill"),
-        item("tomorrow", "Check tomorrow in the Day tab", "calendar"),
-        item("reset", "Ten-minute house reset", "sofa.fill"),
-        item("charge", "Phone charging outside the bedroom", "battery.100.bolt"),
-        item("screens", "Screens off", "iphone.slash"),
-        item("read", "Read for 20 minutes", "text.book.closed.fill"),
-        item("eveningskin", "Skincare", "sparkles"),
-        item("floss", "Brush teeth and floss", "mouth.fill"),
-        item("eveningtablets", "Evening tablets", "pills.fill"),
-        item("alarm", "Alarm set", "alarm.fill"),
-        item("wins", "Journal: three wins", "heart.text.square.fill"),
-        item("lockup", "Lock up and lights off", "lock.fill"),
+        item("kitchen", "Kitchen tidy, dishwasher on", "dishwasher.fill", 10),
+        item("lunch", "Tomorrow's lunch in the fridge", "takeoutbag.and.cup.and.straw.fill", 5),
+        item("breakfastready", "Breakfast ready to go", "cup.and.saucer.fill", 3),
+        item("clothes", "Clothes laid out", "tshirt.fill", 3),
+        item("gymbag", "Gym bag packed", "bag.fill", 5),
+        item("tomorrow", "Check tomorrow in the Day tab", "calendar", 2),
+        item("reset", "Ten-minute house reset", "sofa.fill", 10),
+        item("charge", "Phone charging outside the bedroom", "battery.100.bolt", 1),
+        item("screens", "Screens off", "iphone.slash", 1),
+        item("read", "Read for 20 minutes", "text.book.closed.fill", 20),
+        item("eveningskin", "Skincare", "sparkles", 3),
+        item("floss", "Brush teeth and floss", "mouth.fill", 4),
+        item("eveningtablets", "Evening tablets", "pills.fill", 1),
+        item("alarm", "Alarm set", "alarm.fill", 1),
+        item("wins", "Journal: three wins", "heart.text.square.fill", 5),
+        item("lockup", "Lock up and lights off", "lock.fill", 2),
     ]
 
     /// Extras that only make sense when you're away from home.
     static let away: [RoutineItem] = [
-        item("packbag", "Bag packed for tomorrow", "suitcase.fill"),
-        item("route", "Tomorrow's journey checked", "car.fill"),
-        item("laptop", "Laptop and chargers charged", "laptopcomputer"),
-        item("iron", "Tomorrow's outfit ironed", "tshirt.fill"),
-        item("roomtidy", "Room tidy, keys and wallet in one place", "key.fill"),
-        item("walkaway", "Short walk outside", "figure.walk"),
+        item("packbag", "Bag packed for tomorrow", "suitcase.fill", 5),
+        item("route", "Tomorrow's journey checked", "car.fill", 2),
+        item("laptop", "Laptop and chargers charged", "laptopcomputer", 1),
+        item("iron", "Tomorrow's outfit ironed", "tshirt.fill", 5),
+        item("roomtidy", "Room tidy, keys and wallet in one place", "key.fill", 3),
+        item("walkaway", "Short walk outside", "figure.walk", 15),
     ]
 
     static func suggestions(for key: RoutineKey) -> [RoutineItem] {
+        if key.part.isWalk { return [walk] }
         let base = key.part == .morning ? morning : evening
         return key.place == .away ? base + away : base
     }
 
-    /// Rob's answers to the questionnaire, as the starting point for each version.
+    /// Rob's routines, as the starting point for each version.
     static func defaults(for key: RoutineKey) -> [RoutineItem] {
-        let weekdayMorning = ["water", "tablets", "weigh", "rehab", "shower", "skincare", "teeth", "sunlight", "dressed",
-                              "plan", "journal"]
         let ids: [String]
         switch (key.part, key.days, key.place) {
-        case (.morning, .weekday, .home): ids = weekdayMorning
-        case (.morning, .weekend, .home): ids = weekdayMorning + ["stretch", "breathe"]
-        case (.morning, _, .away): ids = ["water", "tablets", "teeth", "dressed"]
+        case (.morning, .weekday, .home):
+            ids = ["run10", "rehab15", "showerteeth", "shave", "dressbreakfast", "breakfastwalk", "facehair", "washon",
+                   "preptea", "gymkit", "workbag", "station", "journaltrain"]
+        case (.morning, .weekend, .home):
+            ids = ["showerteeth", "shave", "dressbreakfast", "breakfastwalk", "facehair", "journalcoffee"]
+        case (.morning, _, .away):
+            ids = ["showerteeth", "shave", "dressbreakfast", "breakfastwalk", "facehair", "journal", "coffeeout"]
         case (.evening, .weekday, .home):
             ids = ["kitchen", "lunch", "breakfastready", "clothes", "gymbag", "tomorrow", "reset", "charge", "eveningskin",
                    "floss", "wins"]
         case (.evening, .weekend, .home): ids = ["kitchen", "reset", "charge", "eveningskin", "floss"]
         case (.evening, _, .away): ids = ["packbag", "charge", "eveningskin", "floss"]
+        case (.lunchWalk, _, _), (.teaWalk, _, _): return [walk]
         }
+        // In the order given, which is the order they're done in.
         let all = suggestions(for: key)
-        let chosen = Set(ids)
-        // Keep the catalogue's order, so the checklist reads in a natural sequence.
-        return all.filter { chosen.contains($0.id) }
+        return ids.compactMap { id in all.first { $0.id == id } }
     }
 
-    private static func item(_ id: String, _ title: String, _ symbol: String) -> RoutineItem {
-        RoutineItem(id: id, title: title, symbol: symbol)
+    private static func item(_ id: String, _ title: String, _ symbol: String, _ minutes: Int,
+                             only: RoutineWorkDay? = nil) -> RoutineItem {
+        RoutineItem(id: id, title: title, symbol: symbol, minutes: minutes, only: only)
     }
 }

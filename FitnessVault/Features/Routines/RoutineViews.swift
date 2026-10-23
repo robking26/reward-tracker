@@ -64,10 +64,11 @@ private struct RoutineSummary: View {
                 Text(part.title)
                     .font(.headline)
                     .foregroundStyle(Palette.textPrimary)
-                Text("\(part.purpose) · \(done) of \(items.count), \(routines.required(part, on: day)) needed")
+                Text(part.isWalk ? part.purpose : "\(part.purpose) · \(done) of \(items.count), \(routines.required(part, on: day)) needed")
                     .font(.subheadline)
                     .foregroundStyle(Palette.textSecondary)
-                Text(RoutineStyle.message(status, window: routines.window(part, on: day), calendar: routines.calendar))
+                ScoreLine(part: part, day: day)
+                Text(RoutineStyle.message(status, window: routines.window(part, on: day), calendar: routines.calendar, part: part))
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(tint)
                     .fixedSize(horizontal: false, vertical: true)
@@ -101,7 +102,7 @@ struct RoutineChecklistView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.m) {
                 Picker("Routine", selection: $part) {
-                    ForEach(RoutinePart.allCases) { Text($0 == .morning ? "Morning" : "Night").tag($0) }
+                    ForEach(RoutinePart.allCases) { Text($0.shortTitle).tag($0) }
                 }
                 .pickerStyle(.segmented)
 
@@ -114,9 +115,16 @@ struct RoutineChecklistView: View {
                         .font(.display(26))
                         .foregroundStyle(Palette.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text(RoutineStyle.message(status, window: routines.window(part, on: day), calendar: routines.calendar))
+                    Text(RoutineStyle.message(status, window: routines.window(part, on: day), calendar: routines.calendar, part: part))
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(RoutineStyle.tint(status))
+                    ScoreLine(part: part, day: day)
+                        .padding(.top, 2)
+                    if let finished = finishedLine(items: items, record: record) {
+                        Label(finished, systemImage: "checkmark.seal.fill")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Palette.success)
+                    }
                     if part == .evening, let tomorrow = tomorrowLine {
                         Label(tomorrow, systemImage: "calendar")
                             .font(.footnote)
@@ -125,11 +133,13 @@ struct RoutineChecklistView: View {
                 }
                 .heroCard(tint: RoutineStyle.tint(status), symbol: part.symbol)
 
-                Picker("Where", selection: Binding(get: { place }, set: { routines.setPlace($0, part: part, on: day) })) {
-                    ForEach(RoutinePlace.allCases, id: \.self) { Label($0.title, systemImage: $0.symbol).tag($0) }
+                if !part.isWalk {
+                    Picker("Where", selection: Binding(get: { place }, set: { routines.setPlace($0, part: part, on: day) })) {
+                        ForEach(RoutinePlace.allCases, id: \.self) { Label($0.title, systemImage: $0.symbol).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .disabled(closed)
                 }
-                .pickerStyle(.segmented)
-                .disabled(closed)
                 if routines.isAutoAway(part, on: day) {
                     Label("Away tonight: you weren't home by 8:30 pm.", systemImage: "moon.zzz.fill")
                         .font(.footnote.weight(.semibold))
@@ -137,11 +147,13 @@ struct RoutineChecklistView: View {
                 }
 
                 VStack(spacing: 0) {
+                    let planned = routines.plannedTimes(part, on: day)
                     ForEach(items.indices, id: \.self) { index in
                         let item = items[index]
                         let ticked = record?.ticked.contains(item.id) ?? false
                         RoutineItemRow(item: item, ticked: ticked, tint: RoutineStyle.tint(status),
-                                       opensJournal: RoutineCatalogue.journalPrompts[item.id] != nil) {
+                                       opensJournal: RoutineCatalogue.journalPrompts[item.id] != nil,
+                                       planned: index < planned.count ? PlannerFormat.time(planned[index], routines.calendar) : nil) {
                             // Journal items are ticked by writing the entry.
                             if RoutineCatalogue.journalPrompts[item.id] != nil && !ticked {
                                 journalItem = item
@@ -155,7 +167,8 @@ struct RoutineChecklistView: View {
                 }
                 .surface()
 
-                Footnote(place == .home
+                Footnote(part.isWalk ? "Walks don't change your earnings. They keep the streak going, and they're good for you."
+                         : place == .home
                          ? "At home, tick \(routines.required(part, on: day)) of \(items.count) (80%) by \(PlannerFormat.time(routines.window(part, on: day).end, routines.calendar)) or today keeps half its earnings. Morning and night together only ever halve a day once."
                          : "Away routines are for you; they never cost anything.")
             }
@@ -178,6 +191,20 @@ struct RoutineChecklistView: View {
         }
     }
 
+    /// "Finished at 7:21, 9 minutes inside the plan · Clean sweep" once it's done.
+    private func finishedLine(items: [RoutineItem], record: RoutineRecord?) -> String? {
+        guard let record, let finished = record.completedAt else { return nil }
+        var text = "Finished at \(PlannerFormat.time(finished, routines.calendar))"
+        let planned = routines.plannedTimes(part, on: day)
+        if let lastStart = planned.last, let last = items.last {
+            let plannedEnd = lastStart.addingTimeInterval(TimeInterval((last.minutes ?? 5) * 60))
+            let spare = Int((plannedEnd.timeIntervalSince(finished) / 60).rounded())
+            if spare >= 3 { text += ", \(spare) min inside the plan" }
+        }
+        if items.allSatisfy({ record.ticked.contains($0.id) }) { text += " · Clean sweep" }
+        return text
+    }
+
     /// Tomorrow's shape from the Day tab, so tonight's prep fits it.
     private var tomorrowLine: String? {
         let tomorrow = day.adding(days: 1, calendar: routines.calendar)
@@ -198,17 +225,26 @@ private struct RoutineItemRow: View {
     let ticked: Bool
     let tint: Color
     var opensJournal = false
+    var planned: String? = nil
     let toggle: () -> Void
 
     var body: some View {
         Button(action: toggle) {
             HStack(spacing: Spacing.s) {
                 IconTile(symbol: item.symbol, tint: ticked ? tint : Palette.textTertiary, size: 36, filled: ticked)
-                Text(item.title)
-                    .font(.body)
-                    .foregroundStyle(ticked ? Palette.textTertiary : Palette.textPrimary)
-                    .strikethrough(ticked, color: Palette.textTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(item.title)
+                        .font(.body)
+                        .foregroundStyle(ticked ? Palette.textTertiary : Palette.textPrimary)
+                        .strikethrough(ticked, color: Palette.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if let detail = detail {
+                        Text(detail)
+                            .font(.caption)
+                            .monospacedDigit()
+                            .foregroundStyle(Palette.textTertiary)
+                    }
+                }
                 Spacer(minLength: 0)
                 if opensJournal && !ticked {
                     Image(systemName: "square.and.pencil")
@@ -226,6 +262,82 @@ private struct RoutineItemRow: View {
         .sensoryFeedback(.impact(weight: .light), trigger: ticked)
         .accessibilityLabel(item.title)
         .accessibilityValue(ticked ? "Done" : "Not done")
+    }
+
+    private var detail: String? {
+        let minutes = item.minutes.map { "\($0) min" }
+        switch (planned, minutes) {
+        case let (planned?, minutes?): return "\(planned) · \(minutes)"
+        case let (planned?, nil): return planned
+        case let (nil, minutes?): return minutes
+        default: return nil
+        }
+    }
+}
+
+// MARK: - Keeping score
+
+/// Streak, the week as seven dots, and pace while it's open. Quiet, not a game show.
+private struct ScoreLine: View {
+    @Environment(RoutineModel.self) private var routines
+    let part: RoutinePart
+    let day: DayKey
+
+    var body: some View {
+        let streak = routines.streak(part)
+        let best = routines.bestStreak(part)
+        HStack(spacing: Spacing.s) {
+            Label(streak == 1 ? "1 day" : "\(streak) days", systemImage: "flame.fill")
+                .foregroundStyle(streak > 0 ? Palette.kitchen : Palette.textTertiary)
+            if best > streak {
+                Text("Best \(best)")
+                    .foregroundStyle(Palette.textTertiary)
+            }
+            WeekDots(statuses: routines.week(part))
+            if let pace = routines.pace(part, on: day) {
+                Text(RoutineScore.paceText(pace))
+                    .foregroundStyle(pace < -2 ? Palette.warning : Palette.success)
+            }
+        }
+        .font(.caption.weight(.semibold))
+        .monospacedDigit()
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+    }
+}
+
+/// The last seven days, oldest first: filled when done, red when missed, outlined while it's still to come.
+struct WeekDots: View {
+    let statuses: [RoutineStatus]
+
+    var body: some View {
+        HStack(spacing: 3) {
+            ForEach(statuses.indices, id: \.self) { index in
+                let status = statuses[index]
+                Circle()
+                    .fill(fill(status))
+                    .overlay { Circle().strokeBorder(stroke(status), lineWidth: 1) }
+                    .frame(width: 7, height: 7)
+            }
+        }
+        .accessibilityElement()
+        .accessibilityLabel("\(statuses.filter { $0 == .done || $0 == .awayDone }.count) of the last 7 days done")
+    }
+
+    private func fill(_ status: RoutineStatus) -> Color {
+        switch status {
+        case .done: Palette.success
+        case .awayDone: Palette.frost
+        case .missed: Palette.error
+        default: .clear
+        }
+    }
+
+    private func stroke(_ status: RoutineStatus) -> Color {
+        switch status {
+        case .done, .awayDone, .missed: .clear
+        default: Palette.textTertiary.opacity(0.6)
+        }
     }
 }
 
@@ -594,8 +706,18 @@ enum RoutineStyle {
         }
     }
 
-    static func message(_ status: RoutineStatus, window: DateInterval, calendar: Calendar) -> String {
+    static func message(_ status: RoutineStatus, window: DateInterval, calendar: Calendar,
+                        part: RoutinePart = .morning) -> String {
         let start = PlannerFormat.time(window.start, calendar), end = PlannerFormat.time(window.end, calendar)
+        if part.isWalk {
+            switch status {
+            case .upcoming: return "From \(start)"
+            case .open, .awayOpen: return "Any time until \(end)"
+            case .done, .awayDone: return "Done"
+            case .missed, .awayMissed: return "Missed today"
+            case .notSetUp: return "Not set up"
+            }
+        }
         switch status {
         case .notSetUp: return "Not set up"
         case .upcoming: return "Starts at \(start), finish by \(end)"

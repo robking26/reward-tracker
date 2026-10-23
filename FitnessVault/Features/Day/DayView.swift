@@ -503,10 +503,13 @@ enum DayBlocks {
                 if window.duration > 4 * 3_600 { continue }
                 let items = routines.items(part, on: picture.day)
                 let done = items.filter { routines.record(part, on: picture.day)?.ticked.contains($0.id) ?? false }.count
-                blocks.append(DayBlock(id: "r-\(part.rawValue)", title: part.title,
-                                       subtitle: "\(done) of \(items.count) · \(part.purpose.lowercased())",
-                                       start: window.start, end: window.end, tint: Palette.rehab, look: .solid,
-                                       target: .routine(part)))
+                // A walk is drawn as its 20 minutes at the start of its window.
+                let end = part.isWalk ? min(window.end, window.start.addingTimeInterval(20 * 60)) : window.end
+                let subtitle = part.isWalk ? (done > 0 ? "Done" : "20 minutes")
+                    : "\(done) of \(items.count) · \(part.purpose.lowercased())"
+                blocks.append(DayBlock(id: "r-\(part.rawValue)", title: part.title, subtitle: subtitle,
+                                       start: window.start, end: end, tint: part.isWalk ? Palette.fresh : Palette.rehab,
+                                       look: .solid, target: .routine(part)))
             }
         }
         return blocks
