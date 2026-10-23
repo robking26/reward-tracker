@@ -19,6 +19,10 @@ struct DayView: View {
                         selected = $0
                     }
 
+                    if day == planner.today {
+                        RoutineCard()
+                    }
+
                     if let picture = planner.picture(for: day) {
                         DayHero(picture: picture, isToday: day == planner.today, calendar: planner.calendar)
                     }

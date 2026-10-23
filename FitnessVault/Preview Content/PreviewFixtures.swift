@@ -18,6 +18,22 @@ enum PreviewFixtures {
         return kitchen
     }
 
+    /// Routines set up from the questionnaire's defaults, with this morning half done.
+    static func routines() -> RoutineModel {
+        let defaults = UserDefaults(suiteName: "preview.routines.\(UUID().uuidString)") ?? .standard
+        let routines = RoutineModel(container: Persistence.makeContainer(inMemory: true), reminders: RecordingReminderScheduler(),
+                                    defaults: defaults)
+        var items: [String: [RoutineItem]] = [:]
+        for key in RoutineKey.all { items[key.id] = RoutineCatalogue.defaults(for: key) }
+        routines.save(items, times: [:])
+        let today = routines.today
+        let part = routines.currentPart
+        for item in routines.items(part, on: today).prefix(3) {
+            routines.toggle(item, part: part, on: today)
+        }
+        return routines
+    }
+
     static func planner() -> PlannerModel {
         let defaults = UserDefaults(suiteName: "preview.planner.\(UUID().uuidString)") ?? .standard
         let planner = PlannerModel(calendarService: DemoCalendarService(), location: FixedLocationService(nil),

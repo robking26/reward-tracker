@@ -9,6 +9,7 @@ struct FitnessVaultApp: App {
     @State private var training: TrainingModel
     @State private var kitchen: KitchenModel
     @State private var planner: PlannerModel
+    @State private var routines: RoutineModel
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -20,6 +21,11 @@ struct FitnessVaultApp: App {
         let training = TrainingModel(container: container)
         _training = State(initialValue: training)
         _kitchen = State(initialValue: KitchenModel(container: container))
+        // A missed home routine halves that day's earnings; changes re-apply straight away.
+        let routines = RoutineModel(container: container)
+        model.routinePenalty = { routines.isPenalised($0) }
+        routines.onChange = { model.applyRoutineChanges() }
+        _routines = State(initialValue: routines)
         // Demo mode shows a sample week instead of your calendars.
         if model.settings.demoMode {
             _planner = State(initialValue: PlannerModel(calendarService: DemoCalendarService(), location: FixedLocationService(nil),
@@ -43,11 +49,13 @@ struct FitnessVaultApp: App {
                 .environment(training)
                 .environment(kitchen)
                 .environment(planner)
+                .environment(routines)
                 .modelContainer(container)
                 .preferredColorScheme(.dark)
                 .tint(Palette.accent)
                 .task {
                     kitchen.start()
+                    routines.scheduleReminders()
                     await model.start()
                     BackgroundRefresh.schedule(at: model.nextSettlement)
                 }
@@ -66,6 +74,7 @@ struct FitnessVaultApp: App {
             case .active:
                 Task {
                     kitchen.refresh()
+                    routines.scheduleReminders()
                     await model.syncHealth()
                     await model.settleIfDue()
                 }

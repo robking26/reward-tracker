@@ -26,6 +26,8 @@ final class AppModel {
     private let demoBank: BankingService
     let demoBroker: InvestingService
     let now: () -> Date
+    /// True for a day whose home routine was missed: that day keeps half its earnings. Set by the routines.
+    @ObservationIgnored var routinePenalty: (DayKey) -> Bool = { _ in false }
 
     // MARK: Derived state
 
@@ -231,7 +233,8 @@ final class AppModel {
             let days = month.days(calendar: calendar).filter { $0 <= end }
             var calculated: [DayKey: [RewardCategory: Pence]] = [:]
             for day in days {
-                calculated[day] = RewardEngine.rewards(for: metrics(for: day), rates: settings.rates)
+                let rewards = RewardEngine.rewards(for: metrics(for: day), rates: settings.rates)
+                calculated[day] = routinePenalty(day) ? RoutineRules.halved(rewards) : rewards
             }
             let locked = Set(days.filter { day in finalisedThrough.map { day <= $0 } ?? false })
             let existing = ledgerEntries(month: month).compactMap(\.line)
@@ -249,6 +252,20 @@ final class AppModel {
                 Notifier.vaultCompleted(vaultRecord.allocation)
             }
         }
+    }
+
+    /// Re-applies the routine rule to unlocked days from what's already stored, without reading Apple Health.
+    func applyRoutineChanges() {
+        let state = syncState()
+        recalculateRewards(from: syncWindowStart(finalisedThrough: state.finalisedThroughDay), through: today,
+                           finalisedThrough: state.finalisedThroughDay)
+        save()
+        reload()
+    }
+
+    /// What a day would have earned without the routine rule.
+    func earnedBeforeRoutines(on day: DayKey) -> Pence {
+        RewardEngine.total(RewardEngine.rewards(for: metrics(for: day), rates: settings.rates))
     }
 
     func metrics(for day: DayKey) -> DailyMetrics {

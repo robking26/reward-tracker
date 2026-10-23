@@ -3,8 +3,10 @@ import SwiftUI
 /// Which calendar is which, your places, working hours, and how much to fit in each week.
 struct DaySettingsView: View {
     @Environment(PlannerModel.self) private var planner
+    @Environment(RoutineModel.self) private var routines
     @Environment(\.dismiss) private var dismiss
     @State private var confirmingReset = false
+    @State private var showingQuestionnaire = false
 
     var body: some View {
         NavigationStack {
@@ -63,6 +65,16 @@ struct DaySettingsView: View {
                     Text("Drive times come from Apple Maps, plus 10% and parking. Your location is only read while the app is open.")
                 }
 
+                Section {
+                    Button(routines.isSetUp ? "Change my routines" : "Set up morning and night routines") {
+                        showingQuestionnaire = true
+                    }
+                } header: {
+                    Text("Routines")
+                } footer: {
+                    Text("Weekday and weekend, at home and away. A home routine not finished in time halves that day's earnings.")
+                }
+
                 Section("Work hours") {
                     DatePicker("Start", selection: minuteBinding(\.workStartMinute), displayedComponents: .hourAndMinute)
                     DatePicker("Finish", selection: minuteBinding(\.workEndMinute), displayedComponents: .hourAndMinute)
@@ -107,6 +119,7 @@ struct DaySettingsView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
             }
+            .sheet(isPresented: $showingQuestionnaire) { RoutineQuestionnaireView() }
             .confirmationDialog("Forget which of Becky's events are shared?", isPresented: $confirmingReset,
                                 titleVisibility: .visible) {
                 Button("Ask again", role: .destructive) { planner.resetBeckyAnswers() }

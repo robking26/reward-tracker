@@ -54,6 +54,14 @@ final class ScreenshotTests: XCTestCase {
         try await capture("day-tab", height: 852, DayView(showingSettings: .constant(false)), model, training, kitchen, planner)
         try await capture("day-tab-full", height: 2_600, DayView(showingSettings: .constant(false)), model, training, kitchen, planner)
         try await capture("day-settings", height: 1_800, DaySettingsView(), model, training, kitchen, planner)
+        let routines = PreviewFixtures.routines()
+        try await capture("routine-checklist", height: 1_300,
+                          NavigationStack { RoutineChecklistView(part: routines.currentPart, day: routines.today) },
+                          model, training, kitchen, planner, routines: routines)
+        try await capture("routine-questionnaire", height: 1_900, RoutineQuestionnaireView(startStep: 3), model, training, kitchen,
+                          planner, routines: RoutineModel(container: Persistence.makeContainer(inMemory: true),
+                                                          reminders: RecordingReminderScheduler(),
+                                                          defaults: UserDefaults(suiteName: "shots.\(UUID().uuidString)")!))
     }
 
     func testKitchenScreens() async throws {
@@ -87,7 +95,7 @@ final class ScreenshotTests: XCTestCase {
 
     private func capture<V: View>(_ name: String, height: CGFloat, _ view: V,
                                   _ model: AppModel, _ training: TrainingModel, _ kitchen: KitchenModel,
-                                  _ planner: PlannerModel? = nil) async throws {
+                                  _ planner: PlannerModel? = nil, routines: RoutineModel? = nil) async throws {
         let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
         let window = scene.map { UIWindow(windowScene: $0) } ?? UIWindow()
         window.frame = CGRect(x: 0, y: 0, width: 393, height: height)
@@ -97,6 +105,7 @@ final class ScreenshotTests: XCTestCase {
             .environment(training)
             .environment(kitchen)
             .environment(planner ?? PreviewFixtures.planner())
+            .environment(routines ?? PreviewFixtures.routines())
             .preferredColorScheme(.dark)
         window.rootViewController = UIHostingController(rootView: root)
         window.makeKeyAndVisible()
