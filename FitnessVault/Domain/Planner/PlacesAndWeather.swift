@@ -11,6 +11,16 @@ struct Coordinate: Codable, Hashable, Sendable {
         Coordinate(latitude: (latitude * 100).rounded() / 100, longitude: (longitude * 100).rounded() / 100)
     }
 
+    /// Great-circle distance in metres.
+    func distance(to other: Coordinate) -> Double {
+        let radius = 6_371_000.0
+        let lat1 = latitude * .pi / 180, lat2 = other.latitude * .pi / 180
+        let dLat = (other.latitude - latitude) * .pi / 180
+        let dLon = (other.longitude - longitude) * .pi / 180
+        let a = sin(dLat / 2) * sin(dLat / 2) + cos(lat1) * cos(lat2) * sin(dLon / 2) * sin(dLon / 2)
+        return radius * 2 * atan2(sqrt(a), sqrt(1 - a))
+    }
+
     /// Bolton town centre: the forecast area until you share a location or save home.
     static let bolton = Coordinate(latitude: 53.58, longitude: -2.43)
 }

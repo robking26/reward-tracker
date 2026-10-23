@@ -7,6 +7,7 @@ struct DayView: View {
     @Environment(TrainingModel.self) private var training
     @Environment(KitchenModel.self) private var kitchen
     @Environment(PlannerModel.self) private var planner
+    @Environment(RoutineModel.self) private var routines
     @Binding var showingSettings: Bool
     @State private var selected: DayKey?
     @State private var showingDaySettings = false
@@ -21,6 +22,7 @@ struct DayView: View {
 
                     if day == planner.today {
                         RoutineCard()
+                        JournalCard()
                     }
 
                     if let picture = planner.picture(for: day) {
@@ -102,6 +104,7 @@ struct DayView: View {
         let swims = (try? await model.health.swims(since: Date.now.addingTimeInterval(-14 * 86_400))) ?? []
         planner.update(training: training, kitchen: kitchen, swims: swims)
         await planner.refresh()
+        routines.refreshSchedule()
     }
 }
 

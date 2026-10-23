@@ -34,6 +34,22 @@ enum PreviewFixtures {
         return routines
     }
 
+    /// A month of journal entries with a gently rising mood.
+    static func journal() -> JournalModel {
+        let container = Persistence.makeContainer(inMemory: true)
+        let start = Date.now.addingTimeInterval(-27 * 86_400)
+        for offset in stride(from: 0, to: 28, by: 1) where offset % 4 != 3 {
+            let mood = Mood(rawValue: min(5, max(1, 2 + offset / 8 + (offset % 3 == 0 ? 1 : 0)))) ?? .okay
+            let feelings = [JournalFeelings.all[offset % 6], JournalFeelings.all[6 + offset % 6]]
+            container.mainContext.insert(JournalEntry(date: start.addingTimeInterval(TimeInterval(offset * 86_400 + 21 * 3_600)),
+                                                      mood: mood, feelings: feelings,
+                                                      text: "1. Gym before work\n2. Lunch prepped\n3. Walk with Becky",
+                                                      prompt: "Three wins from today", routineItemID: "wins"))
+        }
+        try? container.mainContext.save()
+        return JournalModel(container: container)
+    }
+
     static func planner() -> PlannerModel {
         let defaults = UserDefaults(suiteName: "preview.planner.\(UUID().uuidString)") ?? .standard
         let planner = PlannerModel(calendarService: DemoCalendarService(), location: FixedLocationService(nil),

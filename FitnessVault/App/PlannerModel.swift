@@ -85,6 +85,27 @@ final class PlannerModel {
     /// Your own calendars, where accepted suggestions go.
     var ownCalendarIDs: [String] { calendars.filter { settings.roles[$0.id] == .mine && $0.allowsAdding }.map(\.id) }
 
+    /// What a day means for the routines: annual leave, the first event that blocks time, and whether you're out at
+    /// 8:30 pm (an event of yours or a shared one of Becky's at that time, or the phone away from home tonight).
+    func routineInfo(for day: DayKey) -> RoutineDayInfo {
+        var info = RoutineDayInfo()
+        guard let picture = picture(for: day) else { return info }
+        info.isLeave = picture.location == .leave
+        let dayStart = day.startDate(calendar: calendar)
+        info.firstEvent = picture.timedEvents.first { $0.blocksTime && $0.event.start > dayStart }?.event.start
+        let halfEight = day.date(atMinute: RoutineRules.homeByMinute, calendar: calendar)
+        let busyThen = picture.timedEvents.contains { item in
+            (item.source == .mine || item.source == .beckyShared) && item.blocksTime
+                && item.event.start <= halfEight && item.event.end > halfEight
+        }
+        var awayFromHome = false
+        if day == today, now() >= halfEight, let here = currentLocation, let home = settings.places.home {
+            awayFromHome = here.distance(to: home.coordinate) > 300
+        }
+        info.outAtHalfEight = busyThen || awayFromHome
+        return info
+    }
+
     var missingPlaces: [PlaceID] { [PlaceID.home, .gym, .pool, .aldi].filter { settings.places[$0] == nil } }
 
     // MARK: Refreshing

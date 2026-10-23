@@ -13,6 +13,14 @@ final class RoutineLog {
     var tickedIDs: [String]
     var completedAt: Date?
     var updatedAt: Date
+    /// The version and times worked out while it was open; optional so earlier logs still load.
+    var daysRaw: String?
+    var windowStart: Date?
+    var windowEnd: Date?
+    /// You chose home or away yourself, so the 8:30 pm check leaves it alone.
+    var placeSetByUser: Bool?
+    /// Switched to away because you weren't home by 8:30 pm.
+    var autoAway: Bool?
 
     init(day: DayKey, part: RoutinePart) {
         id = Self.id(day: day, part: part)
@@ -27,7 +35,10 @@ final class RoutineLog {
 
     var record: RoutineRecord? {
         guard let dayKey = DayKey(string: day), let part = RoutinePart(rawValue: partRaw) else { return nil }
+        var window: DateInterval?
+        if let windowStart, let windowEnd, windowEnd > windowStart { window = DateInterval(start: windowStart, end: windowEnd) }
         return RoutineRecord(day: dayKey, part: part, place: RoutinePlace(rawValue: placeRaw) ?? .home,
-                             ticked: Set(tickedIDs), completedAt: completedAt)
+                             ticked: Set(tickedIDs), completedAt: completedAt,
+                             days: daysRaw.flatMap(RoutineDays.init(rawValue:)), window: window)
     }
 }

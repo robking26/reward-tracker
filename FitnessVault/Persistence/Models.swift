@@ -270,7 +270,7 @@ enum Persistence {
         // Gym and rehab
         WorkoutSession.self, SetLog.self, SymptomLog.self,
         // Morning and night routines
-        RoutineLog.self,
+        RoutineLog.self, JournalEntry.self,
         // Kitchen: the food log, plus retired kitchen tables kept so existing stores open (KitchenModels.swift)
         FoodLogEntry.self, SavedProduct.self,
         Recipe.self, MealPlanEntry.self, InventoryItem.self, ReceiptRecord.self, ShoppingItem.self,

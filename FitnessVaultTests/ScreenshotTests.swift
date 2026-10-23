@@ -58,6 +58,10 @@ final class ScreenshotTests: XCTestCase {
         try await capture("routine-checklist", height: 1_300,
                           NavigationStack { RoutineChecklistView(part: routines.currentPart, day: routines.today) },
                           model, training, kitchen, planner, routines: routines)
+        try await capture("journal", height: 1_700, NavigationStack { JournalView() }, model, training, kitchen, planner)
+        try await capture("journal-compose", height: 1_100,
+                          NavigationStack { JournalComposer(prompt: "Three wins from today", routineItemID: "wins") { _ in } },
+                          model, training, kitchen, planner)
         try await capture("routine-questionnaire", height: 1_900, RoutineQuestionnaireView(startStep: 3), model, training, kitchen,
                           planner, routines: RoutineModel(container: Persistence.makeContainer(inMemory: true),
                                                           reminders: RecordingReminderScheduler(),
@@ -106,6 +110,7 @@ final class ScreenshotTests: XCTestCase {
             .environment(kitchen)
             .environment(planner ?? PreviewFixtures.planner())
             .environment(routines ?? PreviewFixtures.routines())
+            .environment(PreviewFixtures.journal())
             .preferredColorScheme(.dark)
         window.rootViewController = UIHostingController(rootView: root)
         window.makeKeyAndVisible()

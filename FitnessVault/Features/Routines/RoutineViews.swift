@@ -53,7 +53,8 @@ private struct RoutineSummary: View {
         let tint = RoutineStyle.tint(status)
         HStack(spacing: Spacing.m) {
             ZStack {
-                RingGauge(progress: items.isEmpty ? 0 : Double(done) / Double(items.count), tint: tint, lineWidth: 7)
+                RingGauge(progress: min(1, Double(done) / Double(max(routines.required(part, on: day), 1))), tint: tint,
+                          lineWidth: 7)
                 Image(systemName: part.symbol)
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(tint)
@@ -63,7 +64,7 @@ private struct RoutineSummary: View {
                 Text(part.title)
                     .font(.headline)
                     .foregroundStyle(Palette.textPrimary)
-                Text("\(part.purpose) · \(done) of \(items.count)")
+                Text("\(part.purpose) · \(done) of \(items.count), \(routines.required(part, on: day)) needed")
                     .font(.subheadline)
                     .foregroundStyle(Palette.textSecondary)
                 Text(RoutineStyle.message(status, window: routines.window(part, on: day), calendar: routines.calendar))
@@ -89,6 +90,7 @@ struct RoutineChecklistView: View {
     @Environment(\.dismiss) private var dismiss
     @State var part: RoutinePart
     let day: DayKey
+    @State private var journalItem: RoutineItem?
 
     var body: some View {
         let items = routines.items(part, on: day)
@@ -128,13 +130,24 @@ struct RoutineChecklistView: View {
                 }
                 .pickerStyle(.segmented)
                 .disabled(closed)
+                if routines.isAutoAway(part, on: day) {
+                    Label("Away tonight: you weren't home by 8:30 pm.", systemImage: "moon.zzz.fill")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Palette.frost)
+                }
 
                 VStack(spacing: 0) {
                     ForEach(items.indices, id: \.self) { index in
                         let item = items[index]
-                        RoutineItemRow(item: item, ticked: record?.ticked.contains(item.id) ?? false,
-                                       tint: RoutineStyle.tint(status)) {
-                            routines.toggle(item, part: part, on: day)
+                        let ticked = record?.ticked.contains(item.id) ?? false
+                        RoutineItemRow(item: item, ticked: ticked, tint: RoutineStyle.tint(status),
+                                       opensJournal: RoutineCatalogue.journalPrompts[item.id] != nil) {
+                            // Journal items are ticked by writing the entry.
+                            if RoutineCatalogue.journalPrompts[item.id] != nil && !ticked {
+                                journalItem = item
+                            } else {
+                                routines.toggle(item, part: part, on: day)
+                            }
                         }
                         .disabled(closed)
                         if index < items.count - 1 { RowDivider(inset: 48) }
@@ -143,7 +156,7 @@ struct RoutineChecklistView: View {
                 .surface()
 
                 Footnote(place == .home
-                         ? "At home, finish everything by \(PlannerFormat.time(routines.window(part, on: day).end, routines.calendar)) or today keeps half its earnings. Morning and night together only ever halve a day once."
+                         ? "At home, tick \(routines.required(part, on: day)) of \(items.count) (80%) by \(PlannerFormat.time(routines.window(part, on: day).end, routines.calendar)) or today keeps half its earnings. Morning and night together only ever halve a day once."
                          : "Away routines are for you; they never cost anything.")
             }
             .padding(.horizontal, Spacing.page)
@@ -154,6 +167,14 @@ struct RoutineChecklistView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
+        }
+        .sheet(item: $journalItem) { item in
+            NavigationStack {
+                JournalComposer(prompt: RoutineCatalogue.journalPrompts[item.id], routineItemID: item.id) { _ in
+                    routines.tick(item, part: part, on: day)
+                }
+            }
+            .presentationBackground(Palette.background)
         }
     }
 
@@ -176,6 +197,7 @@ private struct RoutineItemRow: View {
     let item: RoutineItem
     let ticked: Bool
     let tint: Color
+    var opensJournal = false
     let toggle: () -> Void
 
     var body: some View {
@@ -188,6 +210,11 @@ private struct RoutineItemRow: View {
                     .strikethrough(ticked, color: Palette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
+                if opensJournal && !ticked {
+                    Image(systemName: "square.and.pencil")
+                        .font(.footnote.weight(.bold))
+                        .foregroundStyle(Palette.textTertiary)
+                }
                 Image(systemName: ticked ? "checkmark.circle.fill" : "circle")
                     .font(.title3)
                     .foregroundStyle(ticked ? tint : Palette.textTertiary)
@@ -301,7 +328,11 @@ struct RoutineQuestionnaireView: View {
                     tint: Palette.rehab)
             TileRow(title: "Home routines count", subtitle: "Unfinished by the time you choose, that day keeps half its earnings",
                     symbol: "sterlingsign.circle", tint: Palette.warning)
-            Footnote("Eight short questions. Pick from the suggestions or add your own.")
+            Footnote("Eight short questions, already filled in with your answers. A routine counts as done at 80% ticked.")
+            if routines.isSetUp {
+                Button("Start again from your answers") { resetToAnswers() }
+                    .buttonStyle(SecondaryButtonStyle())
+            }
         }
     }
 
@@ -321,11 +352,26 @@ struct RoutineQuestionnaireView: View {
             }
 
             VStack(spacing: 0) {
-                DatePicker("Starts", selection: timeBinding(key, \.start), displayedComponents: .hourAndMinute)
-                    .frame(minHeight: 48)
-                RowDivider(inset: 0)
-                DatePicker("Finished by", selection: timeBinding(key, \.finish), displayedComponents: .hourAndMinute)
-                    .frame(minHeight: 48)
+                let current = times[key.id] ?? RoutineSetup.defaultTimes(key)
+                if key.part == .evening && key.place == .away {
+                    Toggle("Any time, no set time", isOn: flagBinding(key, \.adHoc))
+                        .tint(Palette.rehab)
+                        .frame(minHeight: 48)
+                }
+                if !current.isAdHoc {
+                    if key.part == .evening && key.place == .away { RowDivider(inset: 0) }
+                    DatePicker("Starts", selection: timeBinding(key, \.start), displayedComponents: .hourAndMinute)
+                        .frame(minHeight: 48)
+                    RowDivider(inset: 0)
+                    DatePicker("Finished by", selection: timeBinding(key, \.finish), displayedComponents: .hourAndMinute)
+                        .frame(minHeight: 48)
+                    if key.part == .morning {
+                        RowDivider(inset: 0)
+                        Toggle("Earlier if the calendar starts first", isOn: flagBinding(key, \.beforeFirstEvent))
+                            .tint(Palette.rehab)
+                            .frame(minHeight: 48)
+                    }
+                }
             }
             .surface()
 
@@ -352,7 +398,9 @@ struct RoutineQuestionnaireView: View {
                 ForEach(Self.pages.indices, id: \.self) { index in
                     let key = Self.pages[index].key
                     let time = times[key.id] ?? RoutineSetup.defaultTimes(key)
-                    TileRow(title: key.title, subtitle: "\(resolved(key).count) things · \(clock(time.start))–\(clock(time.finish))",
+                    let when = time.isAdHoc ? "any time"
+                        : "\(clock(time.start))–\(clock(time.finish))\(time.movesForEvents ? " or earlier" : "")"
+                    TileRow(title: key.title, subtitle: "\(resolved(key).count) things · \(when)",
                             symbol: key.part.symbol, tint: key.place == .home ? Palette.rehab : Palette.frost)
                     if index < Self.pages.count - 1 { RowDivider() }
                 }
@@ -432,6 +480,24 @@ struct RoutineQuestionnaireView: View {
         var items: [String: [RoutineItem]] = [:]
         for page in Self.pages { items[page.key.id] = resolved(page.key) }
         routines.save(items, times: times)
+    }
+
+    private func resetToAnswers() {
+        for page in Self.pages {
+            selections[page.key.id] = RoutineCatalogue.defaults(for: page.key)
+            times[page.key.id] = RoutineSetup.defaultTimes(page.key)
+            if page.copies != nil { sameAs[page.key.id] = page.key.place == .away && page.key.days == .weekend }
+        }
+        sameAs[RoutineKey(part: .morning, days: .weekend, place: .home).id] = false
+    }
+
+    private func flagBinding(_ key: RoutineKey, _ path: WritableKeyPath<RoutineTimes, Bool?>) -> Binding<Bool> {
+        Binding(get: { (times[key.id] ?? RoutineSetup.defaultTimes(key))[keyPath: path] ?? false },
+                set: { value in
+                    var current = times[key.id] ?? RoutineSetup.defaultTimes(key)
+                    current[keyPath: path] = value
+                    times[key.id] = current
+                })
     }
 
     private func timeBinding(_ key: RoutineKey, _ path: WritableKeyPath<RoutineTimes, Int>) -> Binding<Date> {
@@ -536,7 +602,8 @@ enum RoutineStyle {
         case .open: return "Finish by \(end) or today keeps half"
         case .done: return "Done. Earnings safe."
         case .missed: return "Missed. Today keeps half its earnings."
-        case .awayOpen: return "Away: finish by \(end), no penalty"
+        case .awayOpen: return window.end.timeIntervalSince(window.start) > 5 * 3_600
+            ? "Away: any time tonight, no penalty" : "Away: finish by \(end), no penalty"
         case .awayDone: return "Done, away from home"
         case .awayMissed: return "Away: not finished, no penalty"
         }

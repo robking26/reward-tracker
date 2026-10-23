@@ -10,6 +10,7 @@ struct FitnessVaultApp: App {
     @State private var kitchen: KitchenModel
     @State private var planner: PlannerModel
     @State private var routines: RoutineModel
+    @State private var journal: JournalModel
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -26,13 +27,15 @@ struct FitnessVaultApp: App {
         model.routinePenalty = { routines.isPenalised($0) }
         routines.onChange = { model.applyRoutineChanges() }
         _routines = State(initialValue: routines)
+        _journal = State(initialValue: JournalModel(container: container))
         // Demo mode shows a sample week instead of your calendars.
-        if model.settings.demoMode {
-            _planner = State(initialValue: PlannerModel(calendarService: DemoCalendarService(), location: FixedLocationService(nil),
-                                                        defaults: UserDefaults(suiteName: "demo.planner") ?? .standard))
-        } else {
-            _planner = State(initialValue: PlannerModel())
-        }
+        let planner = model.settings.demoMode
+            ? PlannerModel(calendarService: DemoCalendarService(), location: FixedLocationService(nil),
+                           defaults: UserDefaults(suiteName: "demo.planner") ?? .standard)
+            : PlannerModel()
+        _planner = State(initialValue: planner)
+        // Leave days, the first event and nights out come from the Day tab's calendars and location.
+        routines.dayInfo = { planner.routineInfo(for: $0) }
         // The watch can skip rest or end the workout; the iPhone stays the logger.
         WatchBridge.shared.onCommand = { command in
             switch command {
@@ -50,6 +53,7 @@ struct FitnessVaultApp: App {
                 .environment(kitchen)
                 .environment(planner)
                 .environment(routines)
+                .environment(journal)
                 .modelContainer(container)
                 .preferredColorScheme(.dark)
                 .tint(Palette.accent)
@@ -74,6 +78,9 @@ struct FitnessVaultApp: App {
             case .active:
                 Task {
                     kitchen.refresh()
+                    journal.reload()
+                    await planner.refresh()
+                    routines.refreshSchedule()
                     routines.scheduleReminders()
                     await model.syncHealth()
                     await model.settleIfDue()
