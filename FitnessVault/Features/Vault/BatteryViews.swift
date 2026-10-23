@@ -141,7 +141,7 @@ struct BatteryDetailView: View {
                                  tint: Palette.accent)
                         StatTile(value: battery.projection.map(BatteryStyle.percent) ?? "–", label: "At this pace",
                                  symbol: "chart.line.uptrend.xyaxis", tint: Palette.frost)
-                        StatTile(value: String(format: "%.1f%%", battery.neededPerWeek), label: "Per week to 100%",
+                        StatTile(value: String(format: "%.1f%%", battery.neededPerWeek), label: "Weekly aim",
                                  symbol: "target", tint: Palette.kitchen)
                     }
                 }
