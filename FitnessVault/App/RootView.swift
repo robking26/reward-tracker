@@ -48,6 +48,7 @@ struct SettingsToolbarButton: View {
         .environment(PreviewFixtures.planner())
         .environment(PreviewFixtures.routines())
         .environment(PreviewFixtures.journal())
+        .environment(PreviewFixtures.battery())
         .preferredColorScheme(.dark)
 }
 #endif

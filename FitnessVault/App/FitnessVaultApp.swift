@@ -11,6 +11,7 @@ struct FitnessVaultApp: App {
     @State private var planner: PlannerModel
     @State private var routines: RoutineModel
     @State private var journal: JournalModel
+    @State private var battery = LifeBatteryModel()
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -54,6 +55,7 @@ struct FitnessVaultApp: App {
                 .environment(planner)
                 .environment(routines)
                 .environment(journal)
+                .environment(battery)
                 .modelContainer(container)
                 .preferredColorScheme(.dark)
                 .tint(Palette.accent)

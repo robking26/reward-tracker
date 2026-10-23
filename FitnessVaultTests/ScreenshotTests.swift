@@ -68,6 +68,19 @@ final class ScreenshotTests: XCTestCase {
                                                           defaults: UserDefaults(suiteName: "shots.\(UUID().uuidString)")!))
     }
 
+    func testVaultBattery() async throws {
+        try XCTSkipUnless(enabled, "Screenshots are only rendered in CI")
+        let model = PreviewFixtures.model()
+        await model.syncHealth()
+        let training = PreviewFixtures.training()
+        let kitchen = PreviewFixtures.kitchen()
+        let battery = PreviewFixtures.battery()
+        try await capture("vault-tab", height: 1_400, ActivityView(showingSettings: .constant(false)), model, training, kitchen,
+                          battery: battery)
+        try await capture("battery-detail", height: 2_200, NavigationStack { BatteryDetailView() }, model, training, kitchen,
+                          battery: battery)
+    }
+
     func testKitchenScreens() async throws {
         try XCTSkipUnless(enabled, "Screenshots are only rendered in CI")
         let model = PreviewFixtures.model()
@@ -99,7 +112,8 @@ final class ScreenshotTests: XCTestCase {
 
     private func capture<V: View>(_ name: String, height: CGFloat, _ view: V,
                                   _ model: AppModel, _ training: TrainingModel, _ kitchen: KitchenModel,
-                                  _ planner: PlannerModel? = nil, routines: RoutineModel? = nil) async throws {
+                                  _ planner: PlannerModel? = nil, routines: RoutineModel? = nil,
+                                  battery: LifeBatteryModel? = nil) async throws {
         let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
         let window = scene.map { UIWindow(windowScene: $0) } ?? UIWindow()
         window.frame = CGRect(x: 0, y: 0, width: 393, height: height)
@@ -111,6 +125,7 @@ final class ScreenshotTests: XCTestCase {
             .environment(planner ?? PreviewFixtures.planner())
             .environment(routines ?? PreviewFixtures.routines())
             .environment(PreviewFixtures.journal())
+            .environment(battery ?? PreviewFixtures.battery())
             .preferredColorScheme(.dark)
         window.rootViewController = UIHostingController(rootView: root)
         window.makeKeyAndVisible()

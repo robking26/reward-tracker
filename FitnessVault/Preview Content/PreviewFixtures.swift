@@ -50,6 +50,13 @@ enum PreviewFixtures {
         return JournalModel(container: container)
     }
 
+    /// A battery started 60 days ago, filled from the demo Health data.
+    static func battery() -> LifeBatteryModel {
+        let defaults = UserDefaults(suiteName: "preview.battery.\(UUID().uuidString)") ?? .standard
+        defaults.set(DayKey(Date.now.addingTimeInterval(-60 * 86_400)).description, forKey: LifeBatteryModel.startKey)
+        return LifeBatteryModel(defaults: defaults)
+    }
+
     static func planner() -> PlannerModel {
         let defaults = UserDefaults(suiteName: "preview.planner.\(UUID().uuidString)") ?? .standard
         let planner = PlannerModel(calendarService: DemoCalendarService(), location: FixedLocationService(nil),

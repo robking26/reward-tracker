@@ -13,6 +13,7 @@ struct ActivityView: View {
                 VStack(alignment: .leading, spacing: Spacing.xl) {
                     StatusNotices()
                     RoutinePenaltyNotice()
+                    BatteryCard()
 
                     Picker("Period", selection: $period) {
                         ForEach(ActivityPeriod.allCases) { Text($0.rawValue).tag($0) }
