@@ -159,4 +159,45 @@ final class KitchenDomainTests: XCTestCase {
         XCTAssertEqual(day.byMeal[.evening]?.kcal, 700)
         XCTAssertNil(day.byMeal[.lunch])
     }
+
+    func testSharedListIsOneListInShopOrder() {
+        let veg = CycleShoppingLine(foodID: "peppers", name: "Peppers", department: .fruitVeg, needed: "3", packs: "1 × pack of 3",
+                                    pricePence: 99, checkFirst: false)
+        let chicken = CycleShoppingLine(foodID: "chicken", name: "Chicken breast", department: .meatFish, needed: "1 kg",
+                                        packs: "2 × 650 g", pricePence: 798, checkFirst: false)
+        let breakfastVeg = CycleShoppingLine(foodID: "peppers", name: "Peppers", department: .fruitVeg, needed: "2",
+                                             packs: "1 × pack of 3", pricePence: 99, checkFirst: false)
+        let rice = CycleShoppingLine(foodID: "rice", name: "Basmati rice", department: .cupboard, needed: "300 g", packs: "1 kg",
+                                     pricePence: 149, checkFirst: true)
+        let text = CycleShopping.shareText(heading: "Aldi list", meals: ["Lunches: Fajita bowls × 5"],
+                                           lines: [chicken, veg, rice, breakfastVeg])
+        XCTAssertEqual(text, """
+        Aldi list
+        Lunches: Fajita bowls × 5
+
+        Fruit and veg:
+        ☐ Peppers (1 × pack of 3 + 1 × pack of 3)
+
+        Meat and fish:
+        ☐ Chicken breast (2 × 650 g)
+
+        Check the cupboard first:
+        ☐ Basmati rice (300 g)
+
+        About \(Pence(996).formatted()) at Aldi
+        """)
+    }
+
+    @MainActor
+    func testSharingAfterTickingSendsWhatsLeft() {
+        let kitchen = PreviewFixtures.kitchen()
+        let monday = kitchen.shoppingMonday(next: false)
+        let full = kitchen.shareText(weekStarting: monday)
+        XCTAssertTrue(full.hasPrefix("Aldi list · week of"))
+        let first = kitchen.shoppingList(.lunch, weekStarting: monday)[0]
+        kitchen.toggle(first, slot: .lunch, monday: monday)
+        let left = kitchen.shareText(weekStarting: monday)
+        XCTAssertTrue(left.hasPrefix("Aldi list, still to get"))
+        XCTAssertLessThan(left.count, full.count)
+    }
 }

@@ -103,6 +103,21 @@ final class KitchenModel {
         defaults.set(Array(ticked).sorted(), forKey: Self.tickedKey)
     }
 
+    /// Both lists for the week as text to send. Once you've started ticking, only what's still to get.
+    func shareText(weekStarting monday: DayKey) -> String {
+        let slots: [CycleSlot] = [.lunch, .breakfast]
+        let all = slots.flatMap { slot in shoppingList(slot, weekStarting: monday).map { (slot, $0) } }
+        let left = all.filter { !isTicked($0.1, slot: $0.0, monday: monday) }
+        let lines = (left.isEmpty ? all : left).map(\.1)
+        let date = monday.startDate(calendar: calendar).formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
+        let meals = slots.map { slot -> String in
+            let meal = MealCycle.meal(slot, week: week(of: monday))
+            return "\(slot == .lunch ? "Lunches" : "Breakfasts"): \(meal.title) × \(slot.portionsPerWeek)"
+        }
+        let heading = left.count < all.count && !left.isEmpty ? "Aldi list, still to get · week of \(date)" : "Aldi list · week of \(date)"
+        return CycleShopping.shareText(heading: heading, meals: meals, lines: lines)
+    }
+
     func clearTicks(slot: CycleSlot, monday: DayKey) {
         let prefix = "\(monday.description)|\(slot.rawValue)|"
         ticked = ticked.filter { !$0.hasPrefix(prefix) }

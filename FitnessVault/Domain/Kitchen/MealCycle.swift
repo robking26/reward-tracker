@@ -317,6 +317,50 @@ enum CycleShopping {
         }
     }
 
+    /// The list as plain text for Messages, WhatsApp or Notes: one list in Aldi walking order, with lunch and
+    /// breakfast amounts of the same thing on one line, and cupboard checks at the end.
+    static func shareText(heading: String, meals: [String], lines: [CycleShoppingLine]) -> String {
+        var merged: [CycleShoppingLine] = []
+        for line in lines {
+            if let index = merged.firstIndex(where: { $0.foodID == line.foodID }) {
+                let first = merged[index]
+                merged[index] = CycleShoppingLine(foodID: first.foodID, name: first.name, department: first.department,
+                                                  needed: "\(first.needed) + \(line.needed)",
+                                                  packs: "\(first.packs) + \(line.packs)",
+                                                  pricePence: first.pricePence + line.pricePence,
+                                                  checkFirst: first.checkFirst && line.checkFirst)
+            } else {
+                merged.append(line)
+            }
+        }
+        let order = AisleDepartment.allCases
+        merged.sort { left, right in
+            let l = order.firstIndex(of: left.department) ?? 0
+            let r = order.firstIndex(of: right.department) ?? 0
+            return l == r ? left.name < right.name : l < r
+        }
+
+        var text = [heading] + meals
+        for department in order {
+            let buy = merged.filter { $0.department == department && !$0.checkFirst }
+            guard !buy.isEmpty else { continue }
+            text.append("")
+            text.append("\(department.title):")
+            text += buy.map { "☐ \($0.name) (\($0.packs))" }
+        }
+        let cupboard = merged.filter(\.checkFirst)
+        if !cupboard.isEmpty {
+            text.append("")
+            text.append("Check the cupboard first:")
+            text += cupboard.map { "☐ \($0.name) (\($0.needed))" }
+        }
+        if !merged.isEmpty {
+            text.append("")
+            text.append("About \(estimate(merged).formatted()) at Aldi")
+        }
+        return text.joined(separator: "\n")
+    }
+
     /// Estimated cost of the lines you'll actually buy (long-life things you might have are left out).
     static func estimate(_ lines: [CycleShoppingLine]) -> Pence {
         Pence(lines.filter { !$0.checkFirst }.reduce(0) { $0 + $1.pricePence })

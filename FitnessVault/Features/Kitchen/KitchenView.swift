@@ -300,9 +300,22 @@ struct CycleShoppingSection: View {
             }
             .pickerStyle(.segmented)
 
-            Text("Week \(week) · from \(start)")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Palette.textSecondary)
+            HStack {
+                Text("Week \(week) · from \(start)")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Palette.textSecondary)
+                Spacer()
+                ShareLink(item: kitchen.shareText(weekStarting: monday), subject: Text("Aldi list"),
+                          preview: SharePreview("Aldi list · week \(week)")) {
+                    Label("Share list", systemImage: "square.and.arrow.up")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Palette.onAccent)
+                        .padding(.horizontal, Spacing.s)
+                        .frame(minHeight: 36)
+                        .background(Palette.kitchen, in: Capsule())
+                }
+                .accessibilityHint("Sends both lists as text, in Aldi walking order")
+            }
 
             CycleListCard(slot: .lunch, monday: monday)
             CycleListCard(slot: .breakfast, monday: monday)
