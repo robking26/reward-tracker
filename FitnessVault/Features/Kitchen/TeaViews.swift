@@ -283,7 +283,7 @@ private struct SwipeDeck: View {
                     .font(.headline)
                     .foregroundStyle(swiper == .rob ? Palette.kitchen : Palette.rose)
                 Spacer()
-                Text("\(deck.count) left")
+                Text("\(teas.picked(swiper)) of \(teas.target(for: swiper)) picked")
                     .font(.subheadline)
                     .monospacedDigit()
                     .foregroundStyle(Palette.textTertiary)
@@ -294,7 +294,7 @@ private struct SwipeDeck: View {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 48))
                             .foregroundStyle(Palette.success)
-                        Text("That's all of them")
+                        Text(teas.picked(swiper) >= teas.target(for: swiper) ? "All picked" : "That's all of them")
                             .font(.headline)
                             .foregroundStyle(Palette.textPrimary)
                     }

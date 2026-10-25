@@ -109,9 +109,10 @@ final class TeaModel {
         return start.adding(days: TeaPlanner.nightsInAWeek, calendar: calendar) > today ? week : nil
     }
 
-    /// Starts a new week from tonight: every night together until you say otherwise.
+    /// Starts a new week from tonight: every night together until you say otherwise, and a freshly shuffled deck.
     func startWeek() {
         var fresh = TeaWeek(start: today.description)
+        fresh.order = onTarget.map(\.id).shuffled()
         for night in TeaPlanner.nights(from: today, calendar: calendar) { fresh.diners[night.description] = .together }
         save(fresh)
     }
@@ -132,11 +133,31 @@ final class TeaModel {
         }
     }
 
-    /// What's left for this person to swipe.
+    /// How many meals this person picks: one for each night they're eating.
+    func target(for swiper: TeaSwiper) -> Int {
+        nights.filter { night in
+            let diner = diner(on: night)
+            return swiper == .rob ? diner.includesRob : diner.includesBecky
+        }.count
+    }
+
+    func picked(_ swiper: TeaSwiper) -> Int { week?.likes(swiper).count ?? 0 }
+
+    /// What's left for this person to swipe, in the week's shuffled order, until they've picked enough. Becky sees
+    /// Rob's picks first, so together nights can be ones you both chose.
     func deck(for swiper: TeaSwiper) -> [TeaRecipe] {
-        guard let week else { return [] }
+        guard let week, picked(swiper) < target(for: swiper) else { return [] }
         let seen = Set(week.seen(swiper))
-        return TeaPlanner.deck(recipes, week: week.start).filter { !seen.contains($0.id) }
+        let byID = Dictionary(onTarget.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        var ids = week.order ?? TeaPlanner.deck(recipes, week: week.start).map(\.id)
+        // Recipes added since the week started go at the end.
+        let known = Set(ids)
+        ids += onTarget.map(\.id).filter { !known.contains($0) }
+        if swiper == .becky {
+            let robs = week.robLikes
+            ids = robs + ids.filter { !robs.contains($0) }
+        }
+        return ids.filter { !seen.contains($0) }.compactMap { byID[$0] }
     }
 
     func swipe(_ recipe: TeaRecipe, liked: Bool, by swiper: TeaSwiper) {
@@ -152,18 +173,18 @@ final class TeaModel {
         save(current)
     }
 
-    /// Recipes you both liked.
+    /// Recipes you both picked, in Rob's order.
     var matches: [TeaRecipe] {
         guard let week else { return [] }
-        let both = Set(week.robLikes).intersection(week.beckyLikes)
-        return recipes.filter { both.contains($0.id) }
+        let becky = Set(week.beckyLikes)
+        return week.robLikes.filter { becky.contains($0) }.compactMap { recipe($0) }
     }
 
     /// Fills the nights from the swipes.
     func makePlan() {
         guard var current = week else { return }
         current.meals = TeaPlanner.assign(nights: nights, diners: current.diners, recipes: recipes,
-                                          robLikes: Set(current.robLikes), beckyLikes: Set(current.beckyLikes), calendar: calendar)
+                                          robLikes: current.robLikes, beckyLikes: current.beckyLikes, calendar: calendar)
         save(current)
     }
 
@@ -202,6 +223,7 @@ final class TeaModel {
         current.robSeen = []
         current.beckySeen = []
         current.meals = [:]
+        current.order = onTarget.map(\.id).shuffled()
         save(current)
     }
 

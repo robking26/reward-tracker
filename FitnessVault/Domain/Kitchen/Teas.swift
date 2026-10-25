@@ -270,6 +270,8 @@ struct TeaWeek: Codable, Hashable, Sendable {
     var beckySeen: [String] = []
     /// Night to recipe ID.
     var meals: [String: String] = [:]
+    /// This week's shuffled deck: recipe IDs in the order they're shown. Nil for weeks saved before shuffling.
+    var order: [String]? = nil
 
     func likes(_ swiper: TeaSwiper) -> [String] { swiper == .rob ? robLikes : beckyLikes }
     func seen(_ swiper: TeaSwiper) -> [String] { swiper == .rob ? robSeen : beckySeen }
@@ -294,12 +296,14 @@ enum TeaPlanner {
         recipes.filter(\.meetsTargets).sorted { stableHash($0.id + week) < stableHash($1.id + week) }
     }
 
-    /// Fills each night: together nights from what you both liked, solo nights from that person's likes (shared likes
-    /// first). Monday to Thursday only quick or slow cooker meals. No meal twice unless there aren't enough to go round.
-    static func assign(nights: [DayKey], diners: [String: TeaDiner], recipes: [TeaRecipe], robLikes: Set<String>,
-                       beckyLikes: Set<String>, calendar: Calendar) -> [String: String] {
-        let eligible = recipes.filter(\.meetsTargets)
-        let both = robLikes.intersection(beckyLikes)
+    /// Fills each night from the picks, in the order they were picked: together nights from what you both liked
+    /// (then either of your picks if there aren't enough), solo nights from that person's picks. Monday to Thursday
+    /// only quick or slow cooker meals. No meal twice unless there aren't enough to go round.
+    static func assign(nights: [DayKey], diners: [String: TeaDiner], recipes: [TeaRecipe], robLikes: [String],
+                       beckyLikes: [String], calendar: Calendar) -> [String: String] {
+        let eligible = Dictionary(recipes.filter(\.meetsTargets).map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let beckySet = Set(beckyLikes)
+        let both = robLikes.filter { beckySet.contains($0) }
         var used = Set<String>()
         var result: [String: String] = [:]
         // Quick nights first: they have fewer choices.
@@ -310,11 +314,11 @@ enum TeaPlanner {
         for night in ordered {
             let diner = diners[night.description] ?? .notCooking
             guard diner != .notCooking else { continue }
-            let pool: [Set<String>]
+            let pool: [[String]]
             switch diner {
-            case .together: pool = [both]
-            case .rob: pool = [both, robLikes]
-            case .becky: pool = [both, beckyLikes]
+            case .together: pool = [both, robLikes, beckyLikes]
+            case .rob: pool = [robLikes]
+            case .becky: pool = [beckyLikes]
             case .notCooking: pool = []
             }
             let quick = needsQuick(night, calendar: calendar)
@@ -322,7 +326,8 @@ enum TeaPlanner {
             var pick: TeaRecipe?
             for allowRepeat in [false, true] where pick == nil {
                 for likes in pool where pick == nil {
-                    pick = eligible.first { likes.contains($0.id) && fits($0) && (allowRepeat || !used.contains($0.id)) }
+                    pick = likes.lazy.compactMap { eligible[$0] }
+                        .first { fits($0) && (allowRepeat || !used.contains($0.id)) }
                 }
             }
             if let pick {

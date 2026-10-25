@@ -133,6 +133,33 @@ final class TeaPlannerTests: XCTestCase {
 
 @MainActor
 final class TeaModelTests: XCTestCase {
+    func testTheDeckIsShuffledAndStopsOnceTheNightsArePicked() throws {
+        let fixtures = PlannerFixtures()
+        let saturday = DayKey(year: 2026, month: 10, day: 31)
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "tests.teas.\(UUID().uuidString)"))
+        let bank = (1...20).map { TeaRecipe(id: "r\($0)", title: "Recipe \($0)", kcal: 650, protein: 55) }
+        let teas = TeaModel(reminders: RecordingReminderScheduler(), defaults: defaults, calendar: fixtures.london,
+                            now: { saturday.date(atMinute: 8 * 60, calendar: fixtures.london) }, bundled: bank)
+        teas.startWeek()
+        let order = try XCTUnwrap(teas.week?.order)
+        XCTAssertEqual(Set(order), Set(bank.map(\.id)), "Every recipe, shuffled")
+        for night in teas.nights.dropFirst(3) { teas.setDiner(.notCooking, on: night) }
+        XCTAssertEqual(teas.target(for: .rob), 3, "Three nights eating, three picks")
+        XCTAssertEqual(teas.deck(for: .rob).map(\.id), order)
+
+        let deck = teas.deck(for: .rob)
+        teas.swipe(deck[0], liked: false, by: .rob)
+        for recipe in deck[1...3] { teas.swipe(recipe, liked: true, by: .rob) }
+        XCTAssertEqual(teas.picked(.rob), 3)
+        XCTAssertTrue(teas.deck(for: .rob).isEmpty, "The first three yeses are the picks")
+        XCTAssertEqual(teas.deck(for: .becky).prefix(3).map(\.id), Array(order[1...3]), "Becky sees Rob's picks first")
+
+        for recipe in teas.deck(for: .becky).prefix(3) { teas.swipe(recipe, liked: true, by: .becky) }
+        teas.makePlan()
+        XCTAssertEqual(teas.nights.prefix(3).map { teas.week?.meals[$0.description] }, order[1...3].map { Optional($0) },
+                       "Nights filled in the order they were picked")
+    }
+
     func testSwipeBothThenPlan() throws {
         let fixtures = PlannerFixtures()
         let saturday = DayKey(year: 2026, month: 10, day: 31)
