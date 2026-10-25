@@ -48,6 +48,7 @@ final class TeaPlannerTests: XCTestCase {
                        [false, false, true, true, true, true, false], "Sat, Sun, Mon–Thu, Fri")
     }
 
+    @MainActor
     func testSlowCookerTeasSuitWeeknights() throws {
         let slow = TeaRecipe(id: "slow", title: "Slow Cooker Chicken Curry", kcal: 650, protein: 55, prepMinutes: 11,
                              cookMinutes: 260, tags: ["slow cooker"])
