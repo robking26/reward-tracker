@@ -19,7 +19,7 @@ struct TeasSection: View {
                                subtitle: "Pick together on Saturday morning")
                     Text(teas.onTarget.isEmpty
                          ? "Add recipes from your books first; then you each swipe and the matches fill the week."
-                         : "Say who's eating each night, then you each swipe through \(teas.onTarget.count) recipes. Matches fill the week; Monday to Thursday are freezable.")
+                         : "Say who's eating each night, then you each swipe through \(teas.onTarget.count) recipes. Matches fill the week; Monday to Thursday get quick ones (30 minutes or less).")
                         .font(.subheadline)
                         .foregroundStyle(Palette.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -88,8 +88,8 @@ private struct NightRow: View {
                     .foregroundStyle(recipe == nil ? Palette.textTertiary : Palette.textPrimary)
                 HStack(spacing: 6) {
                     Label(diner.title, systemImage: diner.symbol)
-                    if TeaPlanner.needsFreezing(night, calendar: teas.calendar) {
-                        Label("Freezer", systemImage: "snowflake")
+                    if TeaPlanner.needsQuick(night, calendar: teas.calendar) {
+                        Label("Quick", systemImage: "bolt.fill")
                     }
                     if let recipe {
                         Text("\(Int(recipe.portionKcal)) kcal · \(Int(recipe.portionProtein)) g protein")
@@ -154,10 +154,10 @@ struct TeaPlanFlow: View {
                                 Text(night.startDate(calendar: teas.calendar).formatted(.dateTime.weekday(.wide).day().month(.abbreviated)))
                                     .font(.body.weight(.semibold))
                                     .foregroundStyle(Palette.textPrimary)
-                                if TeaPlanner.needsFreezing(night, calendar: teas.calendar) {
-                                    Label("Freezable meals", systemImage: "snowflake")
+                                if TeaPlanner.needsQuick(night, calendar: teas.calendar) {
+                                    Label("Quick meals, 30 min or less", systemImage: "bolt.fill")
                                         .font(.caption)
-                                        .foregroundStyle(Palette.frost)
+                                        .foregroundStyle(Palette.kitchen)
                                 }
                             }
                             Spacer()
@@ -361,11 +361,12 @@ private struct TeaCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.s) {
             HStack {
-                if recipe.freezable {
-                    Chip(text: "Freezes", symbol: "snowflake", tint: Palette.frost, fill: Palette.frost.opacity(0.14))
-                }
-                Chip(text: PlannerFormat.minutes(recipe.totalMinutes), symbol: "timer")
-                if let scale = recipe.portionScale, abs(scale - 1) > 0.001 {
+                Chip(text: PlannerFormat.minutes(recipe.totalMinutes), symbol: recipe.isQuick ? "bolt.fill" : "timer",
+                     tint: recipe.isQuick ? Palette.kitchen : Palette.textSecondary)
+                if let boost = recipe.portion?.boost {
+                    Chip(text: "+\(Int(recipe.portion?.boostGrams ?? 0))g \(boost.name)", symbol: "plus.circle.fill",
+                         tint: Palette.kitchen, fill: Palette.kitchen.opacity(0.14))
+                } else if let scale = recipe.portion?.scale, abs(scale - 1) > 0.001 {
                     Chip(text: "×\(TeaFormat.scale(scale)) portion", symbol: "scalemass", tint: Palette.kitchen,
                          fill: Palette.kitchen.opacity(0.14))
                 }
@@ -461,10 +462,11 @@ struct TeaRecipeDetail: View {
                             .foregroundStyle(Palette.textSecondary)
                     }
                     ChipFlow().callAsFunction {
-                        Chip(text: "Prep \(recipe.prepMinutes) min", symbol: "clock")
-                        Chip(text: "Cook \(recipe.cookMinutes) min", symbol: "flame")
+                        Chip(text: "Prep \(current.prepMinutes) min", symbol: "clock")
+                        Chip(text: "Cook \(current.cookMinutes) min", symbol: "flame")
+                        if current.isQuick { Chip(text: "Quick: Monday to Thursday", symbol: "bolt.fill", tint: Palette.kitchen) }
                         Chip(text: "Serves \(recipe.servings)", symbol: "person.2")
-                        if recipe.freezable { Chip(text: "Freezes", symbol: "snowflake", tint: Palette.frost) }
+                        if current.freezable { Chip(text: "Freezes", symbol: "snowflake", tint: Palette.frost) }
                         if !recipe.meetsTargets {
                             Chip(text: "Outside your targets", symbol: "exclamationmark.triangle", tint: Palette.warning)
                         }
@@ -481,6 +483,24 @@ struct TeaRecipeDetail: View {
                         MacroPill(value: recipe.portionCarbs, unit: "g carbs")
                         MacroPill(value: recipe.portionFat, unit: "g fat")
                     }
+                    if let boost = recipe.portion?.boost {
+                        Label(boost.how, systemImage: "plus.circle.fill")
+                            .font(.subheadline)
+                            .foregroundStyle(Palette.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .surface()
+                VStack(alignment: .leading, spacing: Spacing.s) {
+                    Text("Times are estimated from the method; correct them if they're off.")
+                        .font(.caption)
+                        .foregroundStyle(Palette.textTertiary)
+                    Stepper("Prep \(current.prepMinutes) min", value: Binding(
+                        get: { current.prepMinutes },
+                        set: { teas.setMinutes(prep: $0, cook: current.cookMinutes, for: current) }), in: 0...120, step: 5)
+                    Stepper("Cook \(current.cookMinutes) min", value: Binding(
+                        get: { current.cookMinutes },
+                        set: { teas.setMinutes(prep: current.prepMinutes, cook: $0, for: current) }), in: 0...480, step: 5)
                     Toggle("Freezes", isOn: Binding(get: { current.freezable },
                                                     set: { teas.setFreezable($0, for: current) }))
                         .tint(Palette.frost)
@@ -523,15 +543,22 @@ struct TeaRecipeDetail: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    /// The live copy, so the freezes switch shows what was saved.
+    /// The live copy, so the times and freezes switch show what was saved.
     private var current: TeaRecipe { teas.recipe(recipe.id) ?? recipe }
 
     private var portionText: String {
-        guard let scale = recipe.portionScale else {
-            return "As the book: \(Int(recipe.kcal)) kcal, \(Int(recipe.protein)) g protein. It can't reach 50 g protein inside 700 kcal, so it isn't offered."
+        let printed = "\(Int(recipe.kcal)) kcal, \(Int(recipe.protein)) g protein as printed"
+        guard let portion = recipe.portion else {
+            return "As the book (\(printed)). It can't reach your targets, so it isn't offered."
         }
-        if abs(scale - 1) < 0.001 { return "As the book: on target." }
-        return "×\(TeaFormat.scale(scale)) the book's portion (\(Int(recipe.kcal)) kcal, \(Int(recipe.protein)) g as printed) hits your targets. Gram and ml amounts below are scaled; for \(recipe.servings) people, scale the whole recipe."
+        let resized = abs(portion.scale - 1) > 0.001
+        let share = "×\(TeaFormat.scale(portion.scale)) the book's portion"
+        if let boost = portion.boost {
+            return (resized ? share + " plus " : "The book's portion plus ") + "\(Int(portion.boostGrams))g \(boost.name) "
+                + "(\(printed)) hits your targets. Amounts below are for your portion."
+        }
+        if !resized { return "As the book: on target." }
+        return "\(share) (\(printed)) hits your targets. Gram and ml amounts below are scaled; for \(recipe.servings) people, scale the whole recipe."
     }
 }
 
@@ -558,7 +585,7 @@ private struct RecipeBankCard: View {
                         .font(.headline)
                         .foregroundStyle(Palette.textPrimary)
                     Text(teas.recipes.isEmpty ? "From your recipe books, via Claude"
-                         : "\(teas.recipes.count) recipes · \(teas.onTarget.count) on target · \(teas.onTarget.filter(\.freezable).count) freeze")
+                         : "\(teas.recipes.count) recipes · \(teas.onTarget.count) on target · \(teas.onTarget.filter(\.isQuick).count) quick")
                         .font(.caption)
                         .foregroundStyle(Palette.textSecondary)
                 }
@@ -600,7 +627,7 @@ struct RecipeBankView: View {
             } header: {
                 Text("Add recipes")
             } footer: {
-                Text(message ?? "Send Claude photos or PDFs from your recipe books with the prompt, then paste or import what it gives back. Each recipe's portion is sized to land on 600–700 kcal with 50 g+ protein; ones that can't get there aren't offered to swipe.")
+                Text(message ?? "Send Claude photos or PDFs from your recipe books with the prompt, then paste or import what it gives back. Each recipe's portion is resized, and topped up with lean protein where it's light, to land on 600–700 kcal with 50 g+ protein.")
             }
 
             Section("Recipes") {
@@ -638,11 +665,12 @@ struct RecipeBankView: View {
     }
 
     private func bankLine(_ recipe: TeaRecipe) -> String {
-        let freezes = recipe.freezable ? " · freezes" : ""
-        guard let scale = recipe.portionScale else {
-            return "\(Int(recipe.kcal)) kcal · \(Int(recipe.protein)) g protein: can't reach your targets\(freezes)"
+        let quick = recipe.isQuick ? " · quick" : ""
+        guard let portion = recipe.portion else {
+            return "\(Int(recipe.kcal)) kcal · \(Int(recipe.protein)) g protein: can't reach your targets\(quick)"
         }
-        return "×\(TeaFormat.scale(scale)): \(Int(recipe.portionKcal)) kcal · \(Int(recipe.portionProtein)) g protein\(freezes)"
+        let topUp = portion.boost.map { " + \(Int(portion.boostGrams))g \($0.name)" } ?? ""
+        return "×\(TeaFormat.scale(portion.scale))\(topUp): \(Int(recipe.portionKcal)) kcal · \(Int(recipe.portionProtein)) g protein\(quick)"
     }
 
     private func importFrom(_ data: Data?) {

@@ -64,11 +64,23 @@ final class TeaModel {
     func setFreezable(_ freezable: Bool, for recipe: TeaRecipe) {
         var changed = recipe
         changed.freezable = freezable
+        update(changed)
+    }
+
+    /// Corrects a recipe's times (the books don't give them, so they start as an estimate from the method).
+    func setMinutes(prep: Int, cook: Int, for recipe: TeaRecipe) {
+        var changed = recipe
+        changed.prepMinutes = max(0, prep)
+        changed.cookMinutes = max(0, cook)
+        update(changed)
+    }
+
+    private func update(_ changed: TeaRecipe) {
         var imported = savedImports()
-        imported.removeAll { $0.id == recipe.id }
+        imported.removeAll { $0.id == changed.id }
         imported.append(changed)
         saveImports(imported)
-        if let index = recipes.firstIndex(where: { $0.id == recipe.id }) { recipes[index] = changed }
+        if let index = recipes.firstIndex(where: { $0.id == changed.id }) { recipes[index] = changed }
     }
 
     func delete(_ recipe: TeaRecipe) {
@@ -161,11 +173,11 @@ final class TeaModel {
         save(current)
     }
 
-    /// Choices for a night: freezable ones Monday to Thursday, the night's diners' likes first.
+    /// Choices for a night: quick ones Monday to Thursday, the night's diners' likes first.
     func options(for night: DayKey) -> [TeaRecipe] {
-        let freezing = TeaPlanner.needsFreezing(night, calendar: calendar)
+        let quick = TeaPlanner.needsQuick(night, calendar: calendar)
         let liked = Set((week?.robLikes ?? []) + (week?.beckyLikes ?? []))
-        return onTarget.filter { !freezing || $0.freezable }
+        return onTarget.filter { !quick || $0.isQuick }
             .sorted { liked.contains($0.id) == liked.contains($1.id) ? $0.title < $1.title : liked.contains($0.id) }
     }
 

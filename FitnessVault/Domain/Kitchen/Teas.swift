@@ -2,7 +2,7 @@ import Foundation
 
 // Evening meals ("teas") from your own recipe books: the bank comes from recipes you give Claude, which turns photos
 // and PDFs into the JSON below. Each week you say who's eating which night, swipe through the bank (Rob, then
-// Becky), and the matches fill the nights. Monday to Thursday meals have to freeze.
+// Becky), and the matches fill the nights. Monday to Thursday meals have to be quick.
 
 struct TeaRecipe: Codable, Hashable, Sendable, Identifiable {
     var id: String
@@ -24,29 +24,28 @@ struct TeaRecipe: Codable, Hashable, Sendable, Identifiable {
 
     var totalMinutes: Int { prepMinutes + cookMinutes }
 
-    /// How much of the book's portion to eat so it lands on 600–700 kcal with at least 50 g protein: the smallest
-    /// step of 0.05 that gets there. Nil when it can't (not enough protein for the calories).
-    var portionScale: Double? {
-        guard kcal > 0, protein > 0 else { return nil }
-        let needed = max(TeaTargets.kcal.lowerBound / kcal, TeaTargets.minProtein / protein)
-        let scale = (needed * 20 - 0.000_1).rounded(.up) / 20
-        return kcal * scale <= TeaTargets.kcal.upperBound ? scale : nil
-    }
+    /// Your portion: the book's recipe resized, and topped up with lean protein when the book's version doesn't
+    /// carry enough, so it lands on 600–700 kcal with at least 50 g protein. Nil only if nothing gets there.
+    var portion: TeaPortion? { TeaPortion.fit(self) }
 
-    /// 600–700 kcal and at least 50 g protein a portion, at the right portion size.
-    var meetsTargets: Bool { portionScale != nil }
+    var meetsTargets: Bool { portion != nil }
+
+    /// Monday to Thursday need these: 30 minutes or less, prep and cook.
+    var isQuick: Bool { totalMinutes <= TeaTargets.quickMinutes }
 
     /// Your portion's numbers.
-    var portionKcal: Double { kcal * (portionScale ?? 1) }
-    var portionProtein: Double { protein * (portionScale ?? 1) }
-    var portionCarbs: Double { carbs * (portionScale ?? 1) }
-    var portionFat: Double { fat * (portionScale ?? 1) }
+    var portionKcal: Double { portion?.kcal(self) ?? kcal }
+    var portionProtein: Double { portion?.protein(self) ?? protein }
+    var portionCarbs: Double { portion?.carbs(self) ?? carbs }
+    var portionFat: Double { portion?.fat(self) ?? fat }
 
-    /// The ingredients with weights and volumes scaled to your portion ("240g chicken" becomes "312g chicken").
-    /// Counts like "1 onion" are left as they are.
+    /// The ingredients for your portion: gram and ml amounts scaled ("240g chicken" becomes "310g chicken"), counts
+    /// like "1 onion" left as they are, and any protein top-up on the end.
     var portionIngredients: [String] {
-        guard let scale = portionScale, abs(scale - 1) > 0.001 else { return ingredients }
-        return ingredients.map { Self.scaled($0, by: scale) }
+        guard let portion else { return ingredients }
+        var lines = abs(portion.scale - 1) > 0.001 ? ingredients.map { Self.scaled($0, by: portion.scale) } : ingredients
+        if let boost = portion.boost { lines.append("+ \(Int(portion.boostGrams))g \(boost.name) (extra, for protein)") }
+        return lines
     }
 
     static func scaled(_ line: String, by scale: Double) -> String {
@@ -134,6 +133,85 @@ struct TeaRecipe: Codable, Hashable, Sendable, Identifiable {
 enum TeaTargets {
     static let kcal: ClosedRange<Double> = 600...700
     static let minProtein: Double = 50
+    /// Monday to Thursday teas: prep and cook inside this.
+    static let quickMinutes = 30
+}
+
+/// Lean protein added to a recipe that's light on it. Per 100 g raw, Aldi's own.
+struct TeaBoost: Hashable, Sendable {
+    let name: String
+    let kcal: Double
+    let protein: Double
+    let carbs: Double
+    let fat: Double
+    let how: String
+
+    static let chicken = TeaBoost(name: "chicken breast", kcal: 106, protein: 24, carbs: 0, fat: 1.1,
+                                  how: "Dice the extra chicken and cook it with the rest (or in a hot pan on its own for 6–8 minutes, until cooked through), then stir it in or serve it alongside.")
+    static let prawns = TeaBoost(name: "king prawns", kcal: 66, protein: 15.4, carbs: 0, fat: 0.6,
+                                 how: "Add the extra prawns for the last 3–4 minutes of cooking, until pink all the way through.")
+    static let cod = TeaBoost(name: "cod loin", kcal: 76, protein: 17.5, carbs: 0, fat: 0.6,
+                              how: "Season the cod and bake it alongside at 200°C for 12–15 minutes (or air fry for 10), then flake it in or serve it on the side.")
+    static let beef = TeaBoost(name: "5% lean beef mince", kcal: 124, protein: 21.5, carbs: 0, fat: 4.5,
+                               how: "Brown the extra mince with the rest of the beef (or in its own pan for 6–8 minutes) and stir it through.")
+    static let turkey = TeaBoost(name: "turkey breast mince", kcal: 108, protein: 23, carbs: 0, fat: 1.9,
+                                 how: "Brown the extra turkey with the rest of the mince (or in its own pan for 6–8 minutes) and stir it through.")
+    static let pork = TeaBoost(name: "pork loin medallions", kcal: 123, protein: 22.8, carbs: 0, fat: 3.6,
+                               how: "Dice the pork loin and fry it in a hot pan for 6–8 minutes, until cooked through, then stir it in.")
+
+    /// The top-up that suits the dish: more of what's already in it, chicken otherwise.
+    static func best(for recipe: TeaRecipe) -> TeaBoost {
+        let text = ([recipe.title] + recipe.ingredients).joined(separator: " ").lowercased()
+        func has(_ words: String...) -> Bool { words.contains { text.contains($0) } }
+        if has("chicken") { return .chicken }
+        if has("prawn") { return .prawns }
+        if has("salmon", "cod", "fish", "haddock", "basa") { return .cod }
+        if has("turkey") { return .turkey }
+        if has("beef", "mince", "steak", "burger", "meatball") { return .beef }
+        if has("pork", "sausage", "gammon") { return .pork }
+        return .chicken
+    }
+}
+
+/// How to eat a recipe on target: a share of the book's portion, plus any top-up.
+struct TeaPortion: Hashable, Sendable {
+    var scale: Double
+    var boost: TeaBoost?
+    var boostGrams: Double = 0
+
+    func kcal(_ recipe: TeaRecipe) -> Double { recipe.kcal * scale + extra(\.kcal) }
+    func protein(_ recipe: TeaRecipe) -> Double { recipe.protein * scale + extra(\.protein) }
+    func carbs(_ recipe: TeaRecipe) -> Double { recipe.carbs * scale + extra(\.carbs) }
+    func fat(_ recipe: TeaRecipe) -> Double { recipe.fat * scale + extra(\.fat) }
+
+    private func extra(_ value: KeyPath<TeaBoost, Double>) -> Double {
+        boost.map { $0[keyPath: value] * boostGrams / 100 } ?? 0
+    }
+
+    /// The book's recipe resized if that's enough; otherwise the least top-up (in 10 g steps) that gets there.
+    static func fit(_ recipe: TeaRecipe) -> TeaPortion? {
+        guard recipe.kcal > 0 else { return nil }
+        if let scale = scale(recipe, extraKcal: 0, extraProtein: 0) { return TeaPortion(scale: scale) }
+        let boost = TeaBoost.best(for: recipe)
+        for grams in stride(from: 10.0, through: 300, by: 10) {
+            if let scale = scale(recipe, extraKcal: boost.kcal * grams / 100, extraProtein: boost.protein * grams / 100) {
+                return TeaPortion(scale: scale, boost: boost, boostGrams: grams)
+            }
+        }
+        return nil
+    }
+
+    /// The smallest share of the book's portion, in steps of 0.05 and at least half, that reaches 600 kcal and 50 g
+    /// protein without going over 700 kcal.
+    private static func scale(_ recipe: TeaRecipe, extraKcal: Double, extraProtein: Double) -> Double? {
+        let forKcal = (TeaTargets.kcal.lowerBound - extraKcal) / recipe.kcal
+        let forProtein = recipe.protein > 0 ? (TeaTargets.minProtein - extraProtein) / recipe.protein
+            : (extraProtein >= TeaTargets.minProtein ? 0 : .infinity)
+        let needed = max(forKcal, forProtein, 0.5)
+        guard needed.isFinite else { return nil }
+        let scale = (needed * 20 - 0.000_1).rounded(.up) / 20
+        return recipe.kcal * scale + extraKcal <= TeaTargets.kcal.upperBound ? scale : nil
+    }
 }
 
 /// Who's eating a home-cooked tea that night.
@@ -193,29 +271,29 @@ enum TeaPlanner {
         (0..<nightsInAWeek).map { start.adding(days: $0, calendar: calendar) }
     }
 
-    /// Monday to Thursday teas are cooked ahead and frozen.
-    static func needsFreezing(_ day: DayKey, calendar: Calendar) -> Bool {
+    /// Monday to Thursday teas have to be quick: 30 minutes or less.
+    static func needsQuick(_ day: DayKey, calendar: Calendar) -> Bool {
         let weekday = calendar.component(.weekday, from: day.startDate(calendar: calendar))
         return (2...5).contains(weekday)
     }
 
     /// The recipes to swipe on: on target only, in a steady shuffle for the week so both of you see the same order.
     static func deck(_ recipes: [TeaRecipe], week: String) -> [TeaRecipe] {
-        // On target means at the right portion size: most book recipes are a little under 600 kcal as printed.
+        // On target means at your portion: resized and topped up where the book's version is light.
         recipes.filter(\.meetsTargets).sorted { stableHash($0.id + week) < stableHash($1.id + week) }
     }
 
     /// Fills each night: together nights from what you both liked, solo nights from that person's likes (shared likes
-    /// first). Monday to Thursday only freezable meals. No meal twice unless there aren't enough to go round.
+    /// first). Monday to Thursday only quick meals. No meal twice unless there aren't enough to go round.
     static func assign(nights: [DayKey], diners: [String: TeaDiner], recipes: [TeaRecipe], robLikes: Set<String>,
                        beckyLikes: Set<String>, calendar: Calendar) -> [String: String] {
         let eligible = recipes.filter(\.meetsTargets)
         let both = robLikes.intersection(beckyLikes)
         var used = Set<String>()
         var result: [String: String] = [:]
-        // Freezer nights first: they have fewer choices.
+        // Quick nights first: they have fewer choices.
         let ordered = nights.sorted { lhs, rhs in
-            let left = needsFreezing(lhs, calendar: calendar), right = needsFreezing(rhs, calendar: calendar)
+            let left = needsQuick(lhs, calendar: calendar), right = needsQuick(rhs, calendar: calendar)
             return left == right ? lhs < rhs : left
         }
         for night in ordered {
@@ -228,8 +306,8 @@ enum TeaPlanner {
             case .becky: pool = [both, beckyLikes]
             case .notCooking: pool = []
             }
-            let freezing = needsFreezing(night, calendar: calendar)
-            let fits = { (recipe: TeaRecipe) in !freezing || recipe.freezable }
+            let quick = needsQuick(night, calendar: calendar)
+            let fits = { (recipe: TeaRecipe) in !quick || recipe.isQuick }
             var pick: TeaRecipe?
             for allowRepeat in [false, true] where pick == nil {
                 for likes in pool where pick == nil {
