@@ -137,7 +137,8 @@ final class TeaModelTests: XCTestCase {
         let fixtures = PlannerFixtures()
         let saturday = DayKey(year: 2026, month: 10, day: 31)
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "tests.teas.\(UUID().uuidString)"))
-        let bank = (1...20).map { TeaRecipe(id: "r\($0)", title: "Recipe \($0)", kcal: 650, protein: 55) }
+        let bank = (1...20).map { TeaRecipe(id: "r\($0)", title: "Recipe \($0)", kcal: 650, protein: 55,
+                                                prepMinutes: 10, cookMinutes: 15) }
         let teas = TeaModel(reminders: RecordingReminderScheduler(), defaults: defaults, calendar: fixtures.london,
                             now: { saturday.date(atMinute: 8 * 60, calendar: fixtures.london) }, bundled: bank)
         teas.startWeek()
@@ -156,8 +157,11 @@ final class TeaModelTests: XCTestCase {
 
         for recipe in teas.deck(for: .becky).prefix(3) { teas.swipe(recipe, liked: true, by: .becky) }
         teas.makePlan()
-        XCTAssertEqual(teas.nights.prefix(3).map { teas.week?.meals[$0.description] }, order[1...3].map { Optional($0) },
-                       "Nights filled in the order they were picked")
+        // Saturday, Sunday and Monday; Monday is a quick night so it's filled first.
+        let nights = teas.nights
+        XCTAssertEqual(teas.week?.meals[nights[2].description], order[1], "First pick")
+        XCTAssertEqual(teas.week?.meals[nights[0].description], order[2])
+        XCTAssertEqual(teas.week?.meals[nights[1].description], order[3])
     }
 
     func testSwipeBothThenPlan() throws {
