@@ -12,7 +12,7 @@ struct FitnessVaultApp: App {
     @State private var routines: RoutineModel
     @State private var journal: JournalModel
     @State private var battery = LifeBatteryModel()
-    @State private var teas = TeaModel()
+    @State private var teas: TeaModel
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -38,6 +38,10 @@ struct FitnessVaultApp: App {
         _planner = State(initialValue: planner)
         // Leave days, the first event and nights out come from the Day tab's calendars and location.
         routines.dayInfo = { planner.routineInfo(for: $0) }
+        // A slow cooker tea goes on in that morning's routine.
+        let teas = TeaModel()
+        _teas = State(initialValue: teas)
+        routines.teaPrep = { teas.slowCookerPrep(on: $0) }
         // The watch can skip rest or end the workout; the iPhone stays the logger.
         WatchBridge.shared.onCommand = { command in
             switch command {

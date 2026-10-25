@@ -48,6 +48,34 @@ final class TeaPlannerTests: XCTestCase {
                        [false, false, true, true, true, true, false], "Sat, Sun, Mon–Thu, Fri")
     }
 
+    func testSlowCookerTeasSuitWeeknights() throws {
+        let slow = TeaRecipe(id: "slow", title: "Slow Cooker Chicken Curry", kcal: 650, protein: 55, prepMinutes: 11,
+                             cookMinutes: 260, tags: ["slow cooker"])
+        XCTAssertFalse(slow.isQuick)
+        XCTAssertTrue(slow.isSlowCooker && slow.suitsAWeeknight)
+        let nights = TeaPlanner.nights(from: saturday, calendar: london)
+        let monday = nights[2]
+        var diners: [String: TeaDiner] = [:]
+        for night in nights { diners[night.description] = TeaDiner.notCooking }
+        diners[monday.description] = .together
+        let plan = TeaPlanner.assign(nights: nights, diners: diners, recipes: [recipe("long"), slow],
+                                     robLikes: ["long", "slow"], beckyLikes: ["long", "slow"], calendar: london)
+        XCTAssertEqual(plan[monday.description], "slow", "Slow cooker yes, a long oven bake no")
+
+        // It goes into that morning's routine.
+        let fixtures = PlannerFixtures()
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "tests.teas.\(UUID().uuidString)"))
+        let teas = TeaModel(reminders: RecordingReminderScheduler(), defaults: defaults, calendar: fixtures.london,
+                            now: { self.saturday.date(atMinute: 8 * 60, calendar: fixtures.london) }, bundled: [slow])
+        teas.startWeek()
+        teas.setMeal(slow, on: monday)
+        XCTAssertEqual(teas.slowCookerPrep(on: monday)?.title, "Slow cooker on: Slow Cooker Chicken Curry")
+        XCTAssertEqual(teas.slowCookerPrep(on: monday)?.minutes, 11)
+        XCTAssertNil(teas.slowCookerPrep(on: saturday), "Nothing planned")
+        teas.setDiner(.notCooking, on: monday)
+        XCTAssertNil(teas.slowCookerPrep(on: monday), "Not cooking after all")
+    }
+
     func testNightsFilledFromMatchesWithQuickOnesMidweek() {
         let nights = TeaPlanner.nights(from: saturday, calendar: london)
         let monday = nights[2], tuesday = nights[3]

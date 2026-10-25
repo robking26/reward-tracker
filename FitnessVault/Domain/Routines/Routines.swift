@@ -238,14 +238,25 @@ enum RoutineRules {
         return saved ?? .homeDay
     }
 
-    /// The items for a version on the day: the home-day or office-day extras only on those days.
-    static func items(_ key: RoutineKey, setup: RoutineSetup, work: RoutineWorkDay?) -> [RoutineItem] {
+    static let slowCookerID = "slowcooker"
+
+    /// The items for a version on the day: the home-day or office-day extras only on those days. A slow cooker tea
+    /// tonight goes on in a morning at home, after breakfast, and takes the place of "Prep tea".
+    static func items(_ key: RoutineKey, setup: RoutineSetup, work: RoutineWorkDay?,
+                      teaPrep: RoutineItem? = nil) -> [RoutineItem] {
         let day = workDay(key, saved: work)
-        return setup.items(key).filter { item in item.only == nil || item.only == day }
+        var list = setup.items(key).filter { item in item.only == nil || item.only == day }
+        if let teaPrep, key.part == .morning, key.place == .home {
+            list.removeAll { $0.id == "preptea" || $0.id == teaPrep.id }
+            let after = list.firstIndex { $0.id == "dressbreakfast" }.map { $0 + 1 } ?? 0
+            list.insert(teaPrep, at: after)
+        }
+        return list
     }
 
     static func window(_ key: RoutineKey, on day: DayKey, setup: RoutineSetup, firstEvent: Date? = nil,
-                       work: RoutineWorkDay? = nil, lunchWalk: DateInterval? = nil, calendar: Calendar) -> DateInterval {
+                       work: RoutineWorkDay? = nil, lunchWalk: DateInterval? = nil, teaPrep: RoutineItem? = nil,
+                       calendar: Calendar) -> DateInterval {
         let times = setup.times(key)
         // An Outlook "Lunch walk" is when the walk after lunch happens.
         if key.part == .lunchWalk, let lunchWalk {
@@ -254,7 +265,7 @@ enum RoutineRules {
         var start = day.date(atMinute: times.start, calendar: calendar)
         var finishMinute = times.finish
         if times.isFitted {
-            let total = items(key, setup: setup, work: work).reduce(0) { $0 + ($1.minutes ?? 5) }
+            let total = items(key, setup: setup, work: work, teaPrep: teaPrep).reduce(0) { $0 + ($1.minutes ?? 5) }
             finishMinute = times.start + total + 10
         }
         // Always finishes the same day, so a missed night routine belongs to that day's earnings.
@@ -274,11 +285,12 @@ enum RoutineRules {
     }
 
     static func status(_ part: RoutinePart, on day: DayKey, record: RoutineRecord?, setup: RoutineSetup, now: Date,
-                       calendar: Calendar) -> RoutineStatus {
+                       teaPrep: RoutineItem? = nil, calendar: Calendar) -> RoutineStatus {
         guard setup.isSetUp else { return .notSetUp }
         let version = key(for: record, part: part, on: day, calendar: calendar)
-        let items = items(version, setup: setup, work: record?.work)
-        let due = record?.window ?? window(version, on: day, setup: setup, work: record?.work, calendar: calendar)
+        let items = items(version, setup: setup, work: record?.work, teaPrep: teaPrep)
+        let due = record?.window ?? window(version, on: day, setup: setup, work: record?.work, teaPrep: teaPrep,
+                                           calendar: calendar)
         let finished = isComplete(record, items: items, share: setup.share)
             && (record?.completedAt.map { $0 <= due.end } ?? false)
         if version.place == .away {
@@ -300,10 +312,10 @@ enum RoutineRules {
     /// True when a home routine on `day` was missed: not done by its time, from the day penalties started.
     /// Morning and night together still only halve the day once.
     static func isPenalised(_ day: DayKey, records: [RoutinePart: RoutineRecord], setup: RoutineSetup, now: Date,
-                            calendar: Calendar) -> Bool {
+                            teaPrep: RoutineItem? = nil, calendar: Calendar) -> Bool {
         guard let from = setup.penaltyFrom, day >= from else { return false }
         return RoutinePart.penalised.contains { part in
-            status(part, on: day, record: records[part], setup: setup, now: now, calendar: calendar) == .missed
+            status(part, on: day, record: records[part], setup: setup, now: now, teaPrep: teaPrep, calendar: calendar) == .missed
         }
     }
 

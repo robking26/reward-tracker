@@ -30,8 +30,16 @@ struct TeaRecipe: Codable, Hashable, Sendable, Identifiable {
 
     var meetsTargets: Bool { portion != nil }
 
-    /// Monday to Thursday need these: 30 minutes or less, prep and cook.
+    /// 30 minutes or less, prep and cook.
     var isQuick: Bool { totalMinutes <= TeaTargets.quickMinutes }
+
+    /// Goes in the slow cooker: prepped in the morning routine, ready for tea.
+    var isSlowCooker: Bool {
+        tags.contains { $0.lowercased() == "slow cooker" } || title.lowercased().contains("slow cooker")
+    }
+
+    /// Monday to Thursday: quick, or in the slow cooker since the morning.
+    var suitsAWeeknight: Bool { isQuick || isSlowCooker }
 
     /// Your portion's numbers.
     var portionKcal: Double { portion?.kcal(self) ?? kcal }
@@ -274,7 +282,7 @@ enum TeaPlanner {
         (0..<nightsInAWeek).map { start.adding(days: $0, calendar: calendar) }
     }
 
-    /// Monday to Thursday teas have to be quick: 30 minutes or less.
+    /// Monday to Thursday teas have to be quick (30 minutes or less) or slow cooker ones prepped in the morning.
     static func needsQuick(_ day: DayKey, calendar: Calendar) -> Bool {
         let weekday = calendar.component(.weekday, from: day.startDate(calendar: calendar))
         return (2...5).contains(weekday)
@@ -287,7 +295,7 @@ enum TeaPlanner {
     }
 
     /// Fills each night: together nights from what you both liked, solo nights from that person's likes (shared likes
-    /// first). Monday to Thursday only quick meals. No meal twice unless there aren't enough to go round.
+    /// first). Monday to Thursday only quick or slow cooker meals. No meal twice unless there aren't enough to go round.
     static func assign(nights: [DayKey], diners: [String: TeaDiner], recipes: [TeaRecipe], robLikes: Set<String>,
                        beckyLikes: Set<String>, calendar: Calendar) -> [String: String] {
         let eligible = recipes.filter(\.meetsTargets)
@@ -310,7 +318,7 @@ enum TeaPlanner {
             case .notCooking: pool = []
             }
             let quick = needsQuick(night, calendar: calendar)
-            let fits = { (recipe: TeaRecipe) in !quick || recipe.isQuick }
+            let fits = { (recipe: TeaRecipe) in !quick || recipe.suitsAWeeknight }
             var pick: TeaRecipe?
             for allowRepeat in [false, true] where pick == nil {
                 for likes in pool where pick == nil {

@@ -146,6 +146,22 @@ final class RoutineRulesTests: XCTestCase {
         XCTAssertEqual(RoutineRules.required(0, share: 0.8), 0)
     }
 
+    func testASlowCookerTeaGoesOnInTheMorning() {
+        let weekday = RoutineKey(part: .morning, days: .weekday, place: .home)
+        let setup = setup()
+        let prep = RoutineItem(id: RoutineRules.slowCookerID, title: "Slow cooker on: Chicken Curry", symbol: "frying.pan.fill",
+                               minutes: 11)
+        let home = RoutineRules.items(weekday, setup: setup, work: .homeDay, teaPrep: prep).map(\.id)
+        XCTAssertEqual(home, ["run10", "rehab15", "showerteeth", "shave", "dressbreakfast", "slowcooker", "breakfastwalk",
+                              "facehair", "washon", "gymkit"], "After breakfast, instead of prep tea")
+        let office = RoutineRules.items(weekday, setup: setup, work: .officeDay, teaPrep: prep).map(\.id)
+        XCTAssertTrue(office.contains("slowcooker"), "Before heading to the office too")
+        let away = RoutineKey(part: .morning, days: .weekday, place: .away)
+        XCTAssertFalse(RoutineRules.items(away, setup: setup, work: nil, teaPrep: prep).contains { $0.id == "slowcooker" })
+        let night = RoutineKey(part: .evening, days: .weekday, place: .home)
+        XCTAssertFalse(RoutineRules.items(night, setup: setup, work: nil, teaPrep: prep).contains { $0.id == "slowcooker" })
+    }
+
     func testRobsTimedMornings() {
         let weekday = RoutineKey(part: .morning, days: .weekday, place: .home)
         let setup = setup()

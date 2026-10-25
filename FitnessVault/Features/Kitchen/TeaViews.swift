@@ -19,7 +19,7 @@ struct TeasSection: View {
                                subtitle: "Pick together on Saturday morning")
                     Text(teas.onTarget.isEmpty
                          ? "Add recipes from your books first; then you each swipe and the matches fill the week."
-                         : "Say who's eating each night, then you each swipe through \(teas.onTarget.count) recipes. Matches fill the week; Monday to Thursday get quick ones (30 minutes or less).")
+                         : "Say who's eating each night, then you each swipe through \(teas.onTarget.count) recipes. Matches fill the week; Monday to Thursday get quick ones (30 minutes or less) or slow cooker ones, which go on in the morning routine.")
                         .font(.subheadline)
                         .foregroundStyle(Palette.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -89,7 +89,7 @@ private struct NightRow: View {
                 HStack(spacing: 6) {
                     Label(diner.title, systemImage: diner.symbol)
                     if TeaPlanner.needsQuick(night, calendar: teas.calendar) {
-                        Label("Quick", systemImage: "bolt.fill")
+                        Label("Quick or slow cooker", systemImage: "bolt.fill")
                     }
                     if let recipe {
                         Text("\(Int(recipe.portionKcal)) kcal · \(Int(recipe.portionProtein)) g protein")
@@ -155,7 +155,7 @@ struct TeaPlanFlow: View {
                                     .font(.body.weight(.semibold))
                                     .foregroundStyle(Palette.textPrimary)
                                 if TeaPlanner.needsQuick(night, calendar: teas.calendar) {
-                                    Label("Quick meals, 30 min or less", systemImage: "bolt.fill")
+                                    Label("Quick (30 min or less) or slow cooker", systemImage: "bolt.fill")
                                         .font(.caption)
                                         .foregroundStyle(Palette.kitchen)
                                 }
@@ -464,7 +464,11 @@ struct TeaRecipeDetail: View {
                     ChipFlow().callAsFunction {
                         Chip(text: "Prep \(current.prepMinutes) min", symbol: "clock")
                         Chip(text: "Cook \(current.cookMinutes) min", symbol: "flame")
-                        if current.isQuick { Chip(text: "Quick: Monday to Thursday", symbol: "bolt.fill", tint: Palette.kitchen) }
+                        if current.isSlowCooker {
+                            Chip(text: "Slow cooker: on in the morning routine", symbol: "frying.pan.fill", tint: Palette.kitchen)
+                        } else if current.isQuick {
+                            Chip(text: "Quick: Monday to Thursday", symbol: "bolt.fill", tint: Palette.kitchen)
+                        }
                         Chip(text: "Serves \(recipe.servings)", symbol: "person.2")
                         if current.freezable { Chip(text: "Freezes", symbol: "snowflake", tint: Palette.frost) }
                         if !recipe.meetsTargets {
@@ -585,7 +589,7 @@ private struct RecipeBankCard: View {
                         .font(.headline)
                         .foregroundStyle(Palette.textPrimary)
                     Text(teas.recipes.isEmpty ? "From your recipe books, via Claude"
-                         : "\(teas.recipes.count) recipes · \(teas.onTarget.count) on target · \(teas.onTarget.filter(\.isQuick).count) quick")
+                         : "\(teas.recipes.count) recipes · \(teas.onTarget.count) on target · \(teas.onTarget.filter(\.suitsAWeeknight).count) for weeknights")
                         .font(.caption)
                         .foregroundStyle(Palette.textSecondary)
                 }
@@ -665,7 +669,7 @@ struct RecipeBankView: View {
     }
 
     private func bankLine(_ recipe: TeaRecipe) -> String {
-        let quick = recipe.isQuick ? " · quick" : ""
+        let quick = recipe.isSlowCooker ? " · slow cooker" : (recipe.isQuick ? " · quick" : "")
         guard let portion = recipe.portion else {
             return "\(Int(recipe.kcal)) kcal · \(Int(recipe.protein)) g protein: can't reach your targets\(quick)"
         }

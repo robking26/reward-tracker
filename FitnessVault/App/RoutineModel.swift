@@ -21,6 +21,8 @@ final class RoutineModel {
     @ObservationIgnored var onChange: (() -> Void)?
     /// What the calendar and location say about a day: leave, the first event, out at 8:30 pm. Set by the Day tab.
     @ObservationIgnored var dayInfo: ((DayKey) -> RoutineDayInfo)?
+    /// Tonight's slow cooker tea, which goes on in the morning routine.
+    @ObservationIgnored var teaPrep: ((DayKey) -> RoutineItem?)?
 
     static let setupKey = "routines.setup"
 
@@ -79,13 +81,14 @@ final class RoutineModel {
     }
 
     func items(_ part: RoutinePart, on day: DayKey) -> [RoutineItem] {
-        RoutineRules.items(key(part, on: day), setup: setup, work: record(part, on: day)?.work)
+        RoutineRules.items(key(part, on: day), setup: setup, work: record(part, on: day)?.work, teaPrep: teaPrep?(day))
     }
 
     func window(_ part: RoutinePart, on day: DayKey) -> DateInterval {
         let saved = record(part, on: day)
         if let window = saved?.window { return window }
-        return RoutineRules.window(key(part, on: day), on: day, setup: setup, work: saved?.work, calendar: calendar)
+        return RoutineRules.window(key(part, on: day), on: day, setup: setup, work: saved?.work, teaPrep: teaPrep?(day),
+                                   calendar: calendar)
     }
 
     /// Home day or office day, for a weekday morning at home.
@@ -100,7 +103,8 @@ final class RoutineModel {
 
     func status(_ part: RoutinePart, on day: DayKey) -> RoutineStatus {
         _ = revision
-        return RoutineRules.status(part, on: day, record: record(part, on: day), setup: setup, now: now(), calendar: calendar)
+        return RoutineRules.status(part, on: day, record: record(part, on: day), setup: setup, now: now(),
+                                   teaPrep: teaPrep?(day), calendar: calendar)
     }
 
     /// The routine to show now: the first of the day's that hasn't closed yet.
@@ -203,7 +207,7 @@ final class RoutineModel {
         schedule(log, part: part, on: day, info: dayInfo?(day) ?? RoutineDayInfo())
         if let record = log.record {
             let key = RoutineRules.key(for: record, part: part, on: day, calendar: calendar)
-            let items = RoutineRules.items(key, setup: setup, work: record.work)
+            let items = RoutineRules.items(key, setup: setup, work: record.work, teaPrep: teaPrep?(day))
             log.completedAt = RoutineRules.isComplete(record, items: items, share: setup.share) ? now() : nil
         }
         log.updatedAt = now()
@@ -215,7 +219,7 @@ final class RoutineModel {
         let key = RoutineKey(part: part, days: days, place: place)
         let work = RoutineRules.workDay(key, saved: info.workDay)
         let window = RoutineRules.window(key, on: day, setup: setup, firstEvent: info.firstEvent, work: work,
-                                         lunchWalk: info.lunchWalk, calendar: calendar)
+                                         lunchWalk: info.lunchWalk, teaPrep: teaPrep?(day), calendar: calendar)
         log.workRaw = work?.rawValue
         log.daysRaw = days.rawValue
         log.windowStart = window.start
@@ -252,7 +256,8 @@ final class RoutineModel {
     func isPenalised(_ day: DayKey) -> Bool {
         var records: [RoutinePart: RoutineRecord] = [:]
         for part in RoutinePart.allCases { records[part] = record(part, on: day) }
-        return RoutineRules.isPenalised(day, records: records, setup: setup, now: now(), calendar: calendar)
+        return RoutineRules.isPenalised(day, records: records, setup: setup, now: now(), teaPrep: teaPrep?(day),
+                                        calendar: calendar)
     }
 
     // MARK: Setup

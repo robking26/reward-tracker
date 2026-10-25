@@ -173,12 +173,20 @@ final class TeaModel {
         save(current)
     }
 
-    /// Choices for a night: quick ones Monday to Thursday, the night's diners' likes first.
+    /// Choices for a night: quick or slow cooker ones Monday to Thursday, the night's diners' likes first.
     func options(for night: DayKey) -> [TeaRecipe] {
         let quick = TeaPlanner.needsQuick(night, calendar: calendar)
         let liked = Set((week?.robLikes ?? []) + (week?.beckyLikes ?? []))
-        return onTarget.filter { !quick || $0.isQuick }
+        return onTarget.filter { !quick || $0.suitsAWeeknight }
             .sorted { liked.contains($0.id) == liked.contains($1.id) ? $0.title < $1.title : liked.contains($0.id) }
+    }
+
+    /// Tonight's slow cooker tea, as a morning routine item: it goes on in the morning.
+    func slowCookerPrep(on day: DayKey) -> RoutineItem? {
+        guard let week = currentWeek, diner(on: day) != .notCooking,
+              let recipe = recipe(week.meals[day.description]), recipe.isSlowCooker else { return nil }
+        return RoutineItem(id: RoutineRules.slowCookerID, title: "Slow cooker on: \(recipe.title)",
+                           symbol: "frying.pan.fill", minutes: max(5, recipe.prepMinutes))
     }
 
     func resetSwipes() {
