@@ -125,6 +125,7 @@ final class ScreenshotTests: XCTestCase {
             .environment(planner ?? PreviewFixtures.planner())
             .environment(routines ?? PreviewFixtures.routines())
             .environment(PreviewFixtures.journal())
+            .environment(PreviewFixtures.teas())
             .environment(battery ?? PreviewFixtures.battery())
             .preferredColorScheme(.dark)
         window.rootViewController = UIHostingController(rootView: root)

@@ -57,6 +57,28 @@ enum PreviewFixtures {
         return LifeBatteryModel(defaults: defaults)
     }
 
+    /// A small bank of teas and a week started, for previews and screenshots.
+    static func teas() -> TeaModel {
+        let defaults = UserDefaults(suiteName: "preview.teas.\(UUID().uuidString)") ?? .standard
+        let samples = [
+            TeaRecipe(id: "chilli", title: "Smoky turkey chilli", source: "Sample", servings: 4, kcal: 640, protein: 56, carbs: 62,
+                      fat: 14, prepMinutes: 15, cookMinutes: 40, freezable: true,
+                      ingredients: ["500 g 2% turkey mince", "Kidney beans", "Chopped tomatoes", "Smoked paprika", "Basmati rice"]),
+            TeaRecipe(id: "katsu", title: "Chicken katsu curry", source: "Sample", servings: 2, kcal: 680, protein: 58, carbs: 78,
+                      fat: 12, prepMinutes: 20, cookMinutes: 25, freezable: true,
+                      ingredients: ["Chicken breast", "Panko", "Katsu sauce", "Rice", "Pak choi"]),
+            TeaRecipe(id: "salmon", title: "Miso salmon, noodles and greens", source: "Sample", servings: 2, kcal: 660, protein: 52,
+                      carbs: 60, fat: 20, prepMinutes: 10, cookMinutes: 15, freezable: false,
+                      ingredients: ["Salmon fillets", "White miso", "Egg noodles", "Tenderstem", "Spring onion"]),
+            TeaRecipe(id: "lasagne", title: "Lean beef lasagne", source: "Sample", servings: 4, kcal: 690, protein: 54, carbs: 66,
+                      fat: 18, prepMinutes: 25, cookMinutes: 45, freezable: true,
+                      ingredients: ["5% beef mince", "Lasagne sheets", "Passata", "Light white sauce", "Mozzarella"]),
+        ]
+        let teas = TeaModel(reminders: RecordingReminderScheduler(), defaults: defaults, bundled: samples)
+        teas.startWeek()
+        return teas
+    }
+
     static func planner() -> PlannerModel {
         let defaults = UserDefaults(suiteName: "preview.planner.\(UUID().uuidString)") ?? .standard
         let planner = PlannerModel(calendarService: DemoCalendarService(), location: FixedLocationService(nil),

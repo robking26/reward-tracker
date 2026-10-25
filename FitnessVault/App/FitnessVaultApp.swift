@@ -12,6 +12,7 @@ struct FitnessVaultApp: App {
     @State private var routines: RoutineModel
     @State private var journal: JournalModel
     @State private var battery = LifeBatteryModel()
+    @State private var teas = TeaModel()
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -56,12 +57,14 @@ struct FitnessVaultApp: App {
                 .environment(routines)
                 .environment(journal)
                 .environment(battery)
+                .environment(teas)
                 .modelContainer(container)
                 .preferredColorScheme(.dark)
                 .tint(Palette.accent)
                 .task {
                     kitchen.start()
                     routines.scheduleReminders()
+                    teas.scheduleReminders()
                     await model.start()
                     BackgroundRefresh.schedule(at: model.nextSettlement)
                 }

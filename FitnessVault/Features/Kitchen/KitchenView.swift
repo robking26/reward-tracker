@@ -6,6 +6,7 @@ enum KitchenSection: String, CaseIterable, Identifiable {
     case today = "Today"
     case cycle = "Cycle"
     case shopping = "Shopping"
+    case teas = "Teas"
 
     var id: String { rawValue }
 
@@ -14,6 +15,7 @@ enum KitchenSection: String, CaseIterable, Identifiable {
         case .today: "fork.knife"
         case .cycle: "arrow.triangle.2.circlepath"
         case .shopping: "cart.fill"
+        case .teas: "frying.pan.fill"
         }
     }
 }
@@ -32,6 +34,7 @@ struct KitchenView: View {
                 case .today: FoodTodaySection()
                 case .cycle: CycleSection()
                 case .shopping: CycleShoppingSection()
+                case .teas: TeasSection()
                 }
             }
             .padding(.horizontal, Spacing.page)
