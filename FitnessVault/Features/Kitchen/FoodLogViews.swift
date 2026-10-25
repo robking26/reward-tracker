@@ -129,6 +129,7 @@ private struct UnplannedMealCard: View {
 /// Tonight's tea from the Teas plan, with one tap to log your portion.
 private struct TeaTodayCard: View {
     @Environment(KitchenModel.self) private var kitchen
+    @Environment(TeaModel.self) private var teas
     let recipe: TeaRecipe
     let day: DayKey
 
@@ -153,6 +154,15 @@ private struct TeaTodayCard: View {
                             .font(.caption)
                             .monospacedDigit()
                             .foregroundStyle(Palette.textTertiary)
+                        if let cooked = teas.cookedOn(day) {
+                            Text("Leftovers from \(cooked.startDate(calendar: teas.calendar).formatted(.dateTime.weekday(.wide))): just reheat")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Palette.kitchen)
+                        } else if let kept = teas.keptFor(day) {
+                            Text("Cook 2 portions: one's for \(teas.diner(on: kept) == .becky ? "Becky" : "you") on \(kept.startDate(calendar: teas.calendar).formatted(.dateTime.weekday(.wide)))")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Palette.kitchen)
+                        }
                     }
                     Spacer(minLength: 0)
                     Image(systemName: "chevron.right")

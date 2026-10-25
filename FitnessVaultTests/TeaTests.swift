@@ -94,6 +94,56 @@ final class TeaPlannerTests: XCTestCase {
         XCTAssertEqual(plan.count, 3, "Nothing on nights nobody's cooking")
     }
 
+    func testAJustMeAndAJustBeckyNightShareOneMeal() {
+        let nights = TeaPlanner.nights(from: saturday, calendar: london)
+        let monday = nights[2], tuesday = nights[3], thursday = nights[5], friday = nights[6]
+        var diners: [String: TeaDiner] = [:]
+        for night in nights { diners[night.description] = TeaDiner.notCooking }
+        diners[monday.description] = .rob
+        diners[tuesday.description] = .becky
+        let recipes = [recipe("robs", quick: true), recipe("beckys", quick: true), recipe("shared", quick: true)]
+        let plan = TeaPlanner.plan(nights: nights, diners: diners, recipes: recipes, robLikes: ["robs", "shared"],
+                                   beckyLikes: ["beckys", "shared"], calendar: london)
+        XCTAssertEqual(plan.meals[monday.description], "shared", "One you both picked")
+        XCTAssertEqual(plan.meals[tuesday.description], "shared")
+        XCTAssertEqual(plan.leftovers, [tuesday.description: monday.description], "Cooked Monday, Becky's portion kept")
+
+        // No shared pick: still one meal, from the cook's picks.
+        let solo = TeaPlanner.plan(nights: nights, diners: diners, recipes: recipes, robLikes: ["robs"],
+                                   beckyLikes: ["beckys"], calendar: london)
+        XCTAssertEqual(solo.meals[monday.description], "robs")
+        XCTAssertEqual(solo.meals[tuesday.description], "robs")
+
+        // Three days apart: only a meal that freezes is shared.
+        diners[tuesday.description] = .notCooking
+        diners[thursday.description] = .becky
+        let apart = TeaPlanner.plan(nights: nights, diners: diners, recipes: recipes, robLikes: ["robs"],
+                                    beckyLikes: ["beckys"], calendar: london)
+        XCTAssertTrue(apart.leftovers.isEmpty, "Too long in the fridge")
+        XCTAssertEqual(apart.meals[thursday.description], "beckys")
+        var freezes = recipe("robs", quick: true)
+        freezes.freezable = true
+        let frozen = TeaPlanner.plan(nights: nights, diners: diners, recipes: [freezes, recipe("beckys", quick: true)],
+                                     robLikes: ["robs"], beckyLikes: ["beckys"], calendar: london)
+        XCTAssertEqual(frozen.leftovers, [thursday.description: monday.description], "It freezes, so it keeps")
+
+        // A long cook on Saturday for Becky, reheated on Monday for you: Monday only needs reheating.
+        diners[thursday.description] = .notCooking
+        diners[saturday.description] = .becky
+        let weekend = TeaPlanner.plan(nights: nights, diners: diners, recipes: [recipe("long")], robLikes: ["long"],
+                                      beckyLikes: ["long"], calendar: london)
+        XCTAssertEqual(weekend.meals[saturday.description], "long")
+        XCTAssertEqual(weekend.meals[monday.description], "long")
+        XCTAssertEqual(weekend.leftovers, [monday.description: saturday.description])
+
+        // On its own, Monday would need a quick meal.
+        diners[saturday.description] = .notCooking
+        let alone = TeaPlanner.plan(nights: nights, diners: diners, recipes: [recipe("long")], robLikes: ["long"],
+                                    beckyLikes: [], calendar: london)
+        XCTAssertNil(alone.meals[monday.description])
+        _ = friday
+    }
+
     func testTheRecipeBooksAreInTheBank() throws {
         let url = try XCTUnwrap(Bundle(for: TeaPlannerTests.self).url(forResource: "TeaRecipes", withExtension: "json")
             ?? Bundle.main.url(forResource: "TeaRecipes", withExtension: "json"))

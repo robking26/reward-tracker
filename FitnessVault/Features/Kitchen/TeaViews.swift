@@ -86,6 +86,12 @@ private struct NightRow: View {
                 Text(recipe?.title ?? "Nothing matched yet")
                     .font(.body.weight(.semibold))
                     .foregroundStyle(recipe == nil ? Palette.textTertiary : Palette.textPrimary)
+                if let shared = sharedText {
+                    Label(shared, systemImage: "arrow.2.squarepath")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Palette.kitchen)
+                        .lineLimit(1)
+                }
                 HStack(spacing: 6) {
                     Label(diner.title, systemImage: diner.symbol)
                     if TeaPlanner.needsQuick(night, calendar: teas.calendar) {
@@ -108,6 +114,21 @@ private struct NightRow: View {
         } else {
             content
         }
+    }
+}
+
+extension NightRow {
+    /// One meal for a just-you and a just-Becky night: cooked once, the other portion kept.
+    fileprivate var sharedText: String? {
+        func day(_ key: DayKey) -> String {
+            key.startDate(calendar: teas.calendar).formatted(.dateTime.weekday(.wide))
+        }
+        if let cooked = teas.cookedOn(night) { return "Leftovers from \(day(cooked)): just reheat" }
+        if let kept = teas.keptFor(night) {
+            let who = teas.diner(on: kept) == .becky ? "Becky" : "you"
+            return "Cook 2 portions: one kept for \(who) on \(day(kept))"
+        }
+        return nil
     }
 }
 

@@ -183,13 +183,27 @@ final class TeaModel {
     /// Fills the nights from the swipes.
     func makePlan() {
         guard var current = week else { return }
-        current.meals = TeaPlanner.assign(nights: nights, diners: current.diners, recipes: recipes,
-                                          robLikes: current.robLikes, beckyLikes: current.beckyLikes, calendar: calendar)
+        let plan = TeaPlanner.plan(nights: nights, diners: current.diners, recipes: recipes,
+                                   robLikes: current.robLikes, beckyLikes: current.beckyLikes, calendar: calendar)
+        current.meals = plan.meals
+        current.leftovers = plan.leftovers
         save(current)
+    }
+
+    /// The night this one's meal was cooked, when it's the second portion.
+    func cookedOn(_ night: DayKey) -> DayKey? {
+        week?.leftovers?[night.description].flatMap(DayKey.init(string:))
+    }
+
+    /// The night the second portion of this one's meal is eaten.
+    func keptFor(_ night: DayKey) -> DayKey? {
+        week?.leftovers?.first { $0.value == night.description }.flatMap { DayKey(string: $0.key) }
     }
 
     func setMeal(_ recipe: TeaRecipe?, on night: DayKey) {
         guard var current = week else { return }
+        // Changing either night of a shared meal makes them separate meals.
+        current.leftovers = current.leftovers?.filter { $0.key != night.description && $0.value != night.description }
         current.meals[night.description] = recipe?.id
         save(current)
     }
@@ -210,7 +224,7 @@ final class TeaModel {
 
     /// Tonight's slow cooker tea, as a morning routine item: it goes on in the morning.
     func slowCookerPrep(on day: DayKey) -> RoutineItem? {
-        guard let week = currentWeek, diner(on: day) != .notCooking,
+        guard let week = currentWeek, diner(on: day) != .notCooking, cookedOn(day) == nil,
               let recipe = recipe(week.meals[day.description]), recipe.isSlowCooker else { return nil }
         return RoutineItem(id: RoutineRules.slowCookerID, title: "Slow cooker on: \(recipe.title)",
                            symbol: "frying.pan.fill", minutes: max(5, recipe.prepMinutes))
@@ -223,6 +237,7 @@ final class TeaModel {
         current.robSeen = []
         current.beckySeen = []
         current.meals = [:]
+        current.leftovers = nil
         current.order = onTarget.map(\.id).shuffled()
         save(current)
     }

@@ -258,6 +258,14 @@ enum TeaSwiper: String, Codable, Sendable {
     var name: String { self == .rob ? "Rob" : "Becky" }
 }
 
+/// A week's meals, and which nights are the second portion of a meal cooked earlier.
+struct TeaPlan: Hashable, Sendable {
+    /// Night to recipe ID.
+    var meals: [String: String] = [:]
+    /// Leftovers night to the night it was cooked.
+    var leftovers: [String: String] = [:]
+}
+
 /// One week's teas: who's eating each night, what each of you swiped right on, and what's planned.
 struct TeaWeek: Codable, Hashable, Sendable {
     /// The first night, yyyy-MM-dd.
@@ -272,6 +280,8 @@ struct TeaWeek: Codable, Hashable, Sendable {
     var meals: [String: String] = [:]
     /// This week's shuffled deck: recipe IDs in the order they're shown. Nil for weeks saved before shuffling.
     var order: [String]? = nil
+    /// Leftovers night to the night it was cooked: one meal for a just-Rob and a just-Becky night.
+    var leftovers: [String: String]? = nil
 
     func likes(_ swiper: TeaSwiper) -> [String] { swiper == .rob ? robLikes : beckyLikes }
     func seen(_ swiper: TeaSwiper) -> [String] { swiper == .rob ? robSeen : beckySeen }
@@ -296,46 +306,90 @@ enum TeaPlanner {
         recipes.filter(\.meetsTargets).sorted { stableHash($0.id + week) < stableHash($1.id + week) }
     }
 
-    /// Fills each night from the picks, in the order they were picked: together nights from what you both liked
-    /// (then either of your picks if there aren't enough), solo nights from that person's picks. Monday to Thursday
-    /// only quick or slow cooker meals. No meal twice unless there aren't enough to go round.
-    static func assign(nights: [DayKey], diners: [String: TeaDiner], recipes: [TeaRecipe], robLikes: [String],
-                       beckyLikes: [String], calendar: Calendar) -> [String: String] {
+    /// Leftovers keep this many days in the fridge; further apart, the meal has to freeze.
+    static let fridgeDays = 2
+
+    /// Fills each night from the picks, in the order they were picked. A night that's just Rob and one that's just
+    /// Becky share a meal: cooked once on the first night, the second portion kept for the other (closest nights paired
+    /// first; more than two days apart only if it freezes). Together nights get what you both picked (then either of
+    /// your picks if there aren't enough), solo nights that person's picks. Monday to Thursday cooking is quick or slow
+    /// cooker; a leftovers night is only reheating. No meal twice unless there aren't enough to go round.
+    static func plan(nights: [DayKey], diners: [String: TeaDiner], recipes: [TeaRecipe], robLikes: [String],
+                     beckyLikes: [String], calendar: Calendar) -> TeaPlan {
         let eligible = Dictionary(recipes.filter(\.meetsTargets).map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let beckySet = Set(beckyLikes)
         let both = robLikes.filter { beckySet.contains($0) }
+        func diner(_ night: DayKey) -> TeaDiner { diners[night.description] ?? .notCooking }
+        func picks(_ diner: TeaDiner) -> [String] { diner == .becky ? beckyLikes : robLikes }
         var used = Set<String>()
-        var result: [String: String] = [:]
-        // Quick nights first: they have fewer choices.
-        let ordered = nights.sorted { lhs, rhs in
+        var result = TeaPlan()
+        func choose(from pool: [[String]], fits: (TeaRecipe) -> Bool) -> TeaRecipe? {
+            for allowRepeat in [false, true] {
+                for likes in pool {
+                    if let pick = likes.lazy.compactMap({ eligible[$0] })
+                        .first(where: { fits($0) && (allowRepeat || !used.contains($0.id)) }) { return pick }
+                }
+            }
+            return nil
+        }
+        func cookable(_ night: DayKey) -> (TeaRecipe) -> Bool {
+            let quick = needsQuick(night, calendar: calendar)
+            return { !quick || $0.suitsAWeeknight }
+        }
+
+        // Cook once for a just-Rob night and a just-Becky night.
+        let robNights = nights.filter { diner($0) == .rob }
+        let beckyNights = nights.filter { diner($0) == .becky }
+        var pairs: [(cook: DayKey, later: DayKey, gap: Int)] = []
+        for rob in robNights {
+            for becky in beckyNights {
+                let cook = min(rob, becky), later = max(rob, becky)
+                let gap = calendar.dateComponents([.day], from: cook.startDate(calendar: calendar),
+                                                  to: later.startDate(calendar: calendar)).day ?? 0
+                pairs.append((cook, later, gap))
+            }
+        }
+        pairs.sort { $0.gap == $1.gap ? $0.cook < $1.cook : $0.gap < $1.gap }
+        var paired = Set<DayKey>()
+        for pair in pairs where !paired.contains(pair.cook) && !paired.contains(pair.later) {
+            let canCook = cookable(pair.cook)
+            let keeps = pair.gap <= fridgeDays
+            let pool = [both, picks(diner(pair.cook)), picks(diner(pair.later))]
+            guard let pick = choose(from: pool, fits: { canCook($0) && (keeps || $0.freezable) }) else { continue }
+            result.meals[pair.cook.description] = pick.id
+            result.meals[pair.later.description] = pick.id
+            result.leftovers[pair.later.description] = pair.cook.description
+            used.insert(pick.id)
+            paired.insert(pair.cook)
+            paired.insert(pair.later)
+        }
+
+        // Then everything else, quick nights first: they have fewer choices.
+        let ordered = nights.filter { !paired.contains($0) }.sorted { lhs, rhs in
             let left = needsQuick(lhs, calendar: calendar), right = needsQuick(rhs, calendar: calendar)
             return left == right ? lhs < rhs : left
         }
         for night in ordered {
-            let diner = diners[night.description] ?? .notCooking
-            guard diner != .notCooking else { continue }
             let pool: [[String]]
-            switch diner {
+            switch diner(night) {
             case .together: pool = [both, robLikes, beckyLikes]
             case .rob: pool = [robLikes]
             case .becky: pool = [beckyLikes]
-            case .notCooking: pool = []
+            case .notCooking: continue
             }
-            let quick = needsQuick(night, calendar: calendar)
-            let fits = { (recipe: TeaRecipe) in !quick || recipe.suitsAWeeknight }
-            var pick: TeaRecipe?
-            for allowRepeat in [false, true] where pick == nil {
-                for likes in pool where pick == nil {
-                    pick = likes.lazy.compactMap { eligible[$0] }
-                        .first { fits($0) && (allowRepeat || !used.contains($0.id)) }
-                }
-            }
-            if let pick {
-                result[night.description] = pick.id
+            if let pick = choose(from: pool, fits: cookable(night)) {
+                result.meals[night.description] = pick.id
                 used.insert(pick.id)
             }
         }
         return result
+    }
+
+    /// Just the meals: night to recipe ID.
+    static func assign(nights: [DayKey], diners: [String: TeaDiner], recipes: [TeaRecipe], robLikes: [String],
+                       beckyLikes: [String], calendar: Calendar) -> [String: String] {
+        plan(nights: nights, diners: diners, recipes: recipes, robLikes: robLikes, beckyLikes: beckyLikes,
+             calendar: calendar).meals
     }
 
     /// Recipes from a JSON file or pasted text: an array, or an object with a "recipes" array.
