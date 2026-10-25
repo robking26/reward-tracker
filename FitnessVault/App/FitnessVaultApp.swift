@@ -23,7 +23,7 @@ struct FitnessVaultApp: App {
         _model = State(initialValue: model)
         let training = TrainingModel(container: container)
         _training = State(initialValue: training)
-        _kitchen = State(initialValue: KitchenModel(container: container))
+        _kitchen = State(initialValue: KitchenModel(container: container, restartOn: KitchenModel.robsFirstMonday))
         // A missed home routine halves that day's earnings; changes re-apply straight away.
         let routines = RoutineModel(container: container)
         model.routinePenalty = { routines.isPenalised($0) }

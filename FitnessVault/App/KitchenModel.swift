@@ -24,9 +24,14 @@ final class KitchenModel {
 
     static let anchorKey = "kitchen.cycleAnchor"
     static let tickedKey = "kitchen.cycleTicked"
+    static let restartedKey = "kitchen.cycleRestartedOn"
+
+    /// The Monday Rob's cycle week 1 starts.
+    static let robsFirstMonday = DayKey(year: 2026, month: 10, day: 26)
 
     init(container: ModelContainer, products: ProductLookup? = nil, reminders: ReminderScheduling? = nil,
-         defaults: UserDefaults = .standard, calendar: Calendar = .current, now: @escaping () -> Date = { .now }) {
+         defaults: UserDefaults = .standard, calendar: Calendar = .current, now: @escaping () -> Date = { .now },
+         restartOn firstMonday: DayKey? = nil) {
         self.container = container
         context = container.mainContext
         self.products = products ?? OpenFoodFactsClient()
@@ -39,6 +44,12 @@ final class KitchenModel {
             anchor = stored
         } else {
             anchor = MealCycle.mondayOf(today, calendar: calendar)
+        }
+        // Once: week 1 starts on a given Monday, whatever was set before. Changing the week later still works.
+        if let firstMonday, defaults.string(forKey: Self.restartedKey) != firstMonday.description {
+            anchor = firstMonday
+            defaults.set(firstMonday.description, forKey: Self.anchorKey)
+            defaults.set(firstMonday.description, forKey: Self.restartedKey)
         }
         ticked = Set(defaults.stringArray(forKey: Self.tickedKey) ?? [])
         reload()

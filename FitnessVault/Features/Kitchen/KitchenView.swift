@@ -291,6 +291,7 @@ struct CycleMealDetailView: View {
 struct CycleShoppingSection: View {
     @Environment(KitchenModel.self) private var kitchen
     @State private var nextWeek = false
+    @State private var chose = false
 
     var body: some View {
         let monday = kitchen.shoppingMonday(next: nextWeek)
@@ -302,6 +303,13 @@ struct CycleShoppingSection: View {
                 Text("Next week").tag(true)
             }
             .pickerStyle(.segmented)
+            .onAppear {
+                // At the weekend the shop is for the week ahead.
+                guard !chose else { return }
+                chose = true
+                let weekday = kitchen.calendar.component(.weekday, from: kitchen.now())
+                nextWeek = weekday == 1 || weekday == 7
+            }
 
             HStack {
                 Text("Week \(week) · from \(start)")

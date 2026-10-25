@@ -55,6 +55,27 @@ final class KitchenModelTests: XCTestCase {
         XCTAssertEqual(relaunched.currentWeek, 6)
     }
 
+    func testWeekOneCanStartOnAChosenMonday() {
+        let sunday = at(9, day: DayKey(year: 2026, month: 10, day: 25))
+        let clock = TestClock(sunday)
+        let defaults = UserDefaults(suiteName: "kitchen.test.\(UUID().uuidString)")!
+        defaults.set("2026-10-19", forKey: KitchenModel.anchorKey)
+        let container = Persistence.makeContainer(inMemory: true)
+        func open() -> KitchenModel {
+            KitchenModel(container: container, products: FixedProductLookup(), reminders: RecordingReminderScheduler(),
+                         defaults: defaults, calendar: london, now: { clock.date }, restartOn: KitchenModel.robsFirstMonday)
+        }
+        let kitchen = open()
+        XCTAssertEqual(kitchen.week(of: DayKey(year: 2026, month: 10, day: 26)), 1, "Week 1 is tomorrow, whatever was saved")
+        XCTAssertEqual(kitchen.week(of: DayKey(year: 2026, month: 11, day: 2)), 2)
+        XCTAssertEqual(kitchen.week(of: kitchen.shoppingMonday(next: true)), 1, "Sunday's shop is for week 1")
+
+        // Moving the week by hand afterwards sticks across launches.
+        clock.date = at(9, day: DayKey(year: 2026, month: 10, day: 28))
+        kitchen.setCurrentWeek(3)
+        XCTAssertEqual(open().currentWeek, 3)
+    }
+
     func testStartClearsTheOldDinnerReminders() {
         let h = make(at: at(9))
         XCTAssertEqual(h.reminders.plans.last, [], "Defrost and slow-cooker reminders are gone")
