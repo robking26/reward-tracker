@@ -179,10 +179,13 @@ struct TeaPortion: Hashable, Sendable {
     var boost: TeaBoost?
     var boostGrams: Double = 0
 
-    func kcal(_ recipe: TeaRecipe) -> Double { recipe.kcal * scale + extra(\.kcal) }
-    func protein(_ recipe: TeaRecipe) -> Double { recipe.protein * scale + extra(\.protein) }
-    func carbs(_ recipe: TeaRecipe) -> Double { recipe.carbs * scale + extra(\.carbs) }
-    func fat(_ recipe: TeaRecipe) -> Double { recipe.fat * scale + extra(\.fat) }
+    // To one decimal place, so a portion right on 50 g reads 50 and not 49.99999.
+    func kcal(_ recipe: TeaRecipe) -> Double { Self.tidy(recipe.kcal * scale + extra(\.kcal)) }
+    func protein(_ recipe: TeaRecipe) -> Double { Self.tidy(recipe.protein * scale + extra(\.protein)) }
+    func carbs(_ recipe: TeaRecipe) -> Double { Self.tidy(recipe.carbs * scale + extra(\.carbs)) }
+    func fat(_ recipe: TeaRecipe) -> Double { Self.tidy(recipe.fat * scale + extra(\.fat)) }
+
+    private static func tidy(_ value: Double) -> Double { (value * 10).rounded() / 10 }
 
     private func extra(_ value: KeyPath<TeaBoost, Double>) -> Double {
         boost.map { $0[keyPath: value] * boostGrams / 100 } ?? 0
