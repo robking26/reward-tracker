@@ -346,6 +346,82 @@ final class DayPlannerTests: XCTestCase {
         XCTAssertEqual(gym.travelThere, 10)
     }
 
+    func testAMovedSuggestionGoesWhereYouPutIt() throws {
+        let events = [helper.event("Home focus", "work", monday, 540, 570),
+                      helper.event("Football", "mine", monday, 1_230, 1_290)]
+        var plan = input(days: [monday], events: events, settings: settings(gym: 1, swims: 0, runs: 0),
+                         travel: travel([(.home, .gym, 10)]))
+        plan.pinned = [DayPlanner.key(.gym, monday): at(monday, 18, 30)]
+        let gym = try XCTUnwrap(DayPlanner.plan(plan)[0].suggestions.first { $0.kind == .gym })
+        XCTAssertEqual(gym.leaveAt, at(monday, 18, 30))
+        XCTAssertTrue(gym.isPinned)
+        XCTAssertFalse(gym.conflicts)
+        plan.pinned = [DayPlanner.key(.gym, monday): at(monday, 19, 30)]
+        let clash = try XCTUnwrap(DayPlanner.plan(plan)[0].suggestions.first { $0.kind == .gym })
+        XCTAssertEqual(clash.leaveAt, at(monday, 19, 30), "Still where you put it")
+        XCTAssertTrue(clash.conflicts, "Flagged: it overlaps football")
+    }
+
+    func testTheNearestPoolWins() throws {
+        var settings = settings(gym: 0, swims: 1, runs: 0)
+        settings.places.pool2 = SavedPlace(name: "Horwich Leisure Centre", coordinate: Coordinate(latitude: 53.6, longitude: -2.55))
+        let plan = input(days: [monday], settings: settings, travel: travel([(.home, .pool, 30), (.home, .pool2, 5)]))
+        let swim = try XCTUnwrap(DayPlanner.plan(plan)[0].suggestions.first { $0.kind == .swim })
+        XCTAssertEqual(swim.venue, .pool2)
+        XCTAssertEqual(swim.displayTitle, "Swim · Horwich Leisure Centre")
+    }
+
+    func testSwimStraightAfterTheGymWhenItHasAPool() throws {
+        var settings = settings(gym: 1, swims: 1, runs: 0)
+        settings.places.gym = SavedPlace(name: "Nuffield Health Bolton", coordinate: .bolton)
+        settings.places.pool = SavedPlace(name: "Nuffield Health Bolton", coordinate: .bolton)
+        let plan = input(days: [monday], settings: settings, travel: travel([(.home, .gym, 10), (.home, .pool, 10)]))
+        let suggestions = DayPlanner.plan(plan)[0].suggestions
+        let gym = try XCTUnwrap(suggestions.first { $0.kind == .gym })
+        let swim = try XCTUnwrap(suggestions.first { $0.kind == .swim })
+        XCTAssertEqual(swim.leaveAt, gym.end, "No drive home and back in between")
+        XCTAssertEqual(swim.travelThere, 0)
+        XCTAssertEqual(gym.travelBack, 0)
+        XCTAssertEqual(swim.travelBack, 15, "Home from the pool")
+    }
+
+    func testChoresAreBatchedAndOutdoorOnesWaitForTheWeather() throws {
+        let tuesday = monday.adding(days: 1, calendar: london)
+        var plan = input(days: [monday, tuesday], settings: settings(gym: 0, swims: 0, runs: 0))
+        func chore(_ title: String, _ minutes: Int, outdoor: Bool = false) -> Chore {
+            Chore(id: title, title: title, minutes: minutes, outdoor: outdoor, createdAt: .distantPast)
+        }
+        plan.chores = [chore("Hoover", 30), chore("Dust", 20), chore("Iron shirts", 30), chore("Mow the lawn", 45, outdoor: true)]
+        plan.weather = (0..<48).map { hour in
+            let wet = hour < 24
+            return HourlyWeather(date: monday.startDate(calendar: london).addingTimeInterval(Double(hour) * 3_600), temperature: 12,
+                                 precipitationProbability: wet ? 90 : 5, precipitation: wet ? 2 : 0,
+                                 isDaylight: (7...17).contains(hour % 24))
+        }
+        let all = DayPlanner.plan(plan).flatMap(\.suggestions).filter { $0.kind == .chore }
+        XCTAssertEqual(Set(all.compactMap(\.tag)), ["Hoover+Dust", "Iron shirts", "Mow the lawn"])
+        XCTAssertEqual(all.first { $0.tag == "Hoover+Dust" }?.minutes, 50)
+        XCTAssertEqual(all.first { $0.tag == "Mow the lawn" }?.day, tuesday, "Monday's wet")
+        plan.chores[0].doneAt = .now
+        XCTAssertFalse(DayPlanner.plan(plan).flatMap(\.suggestions).contains { ($0.tag ?? "").contains("Hoover") })
+    }
+
+    func testChoreEstimates() {
+        XCTAssertEqual(ChoreEstimator.estimate("Mow the lawn").minutes, 45)
+        XCTAssertTrue(ChoreEstimator.estimate("Mow the lawn").outdoor)
+        XCTAssertTrue(ChoreEstimator.estimate("Weed the borders").outdoor)
+        XCTAssertEqual(ChoreEstimator.estimate("Clean bathroom (40 min)").minutes, 40)
+        XCTAssertEqual(ChoreEstimator.estimate("Sort the loft 2 hours").minutes, 120)
+        XCTAssertFalse(ChoreEstimator.estimate("Hoover upstairs").outdoor)
+        XCTAssertEqual(ChoreEstimator.estimate("Something unusual").minutes, 20)
+        XCTAssertEqual(ChoreEstimator.parse("- Mow the lawn\n\n2. Hoover\n• Bins out\n10 minute tidy"),
+                       ["Mow the lawn", "Hoover", "Bins out", "10 minute tidy"])
+        let bundles = ChoreBatcher.bundles([Chore(id: "a", title: "a", minutes: 40, outdoor: false, createdAt: .now),
+                                            Chore(id: "b", title: "b", minutes: 30, outdoor: false, createdAt: .now)],
+                                           batch: true, maxMinutes: 60)
+        XCTAssertEqual(bundles.map { $0.map(\.id) }, [["a"], ["b"]], "Over the hour: two blocks")
+    }
+
     func testOldSettingsKeepTheirValues() throws {
         let decoded = try JSONDecoder().decode(PlannerSettings.self, from: Data(#"{"gymPerWeek": 4}"#.utf8))
         XCTAssertEqual(decoded.gymPerWeek, 4)
@@ -406,6 +482,18 @@ final class CalendarLayoutTests: XCTestCase {
         XCTAssertEqual(columns["b"], CalendarColumn(column: 1, count: 2))
         XCTAssertEqual(columns["c"], CalendarColumn(column: 0, count: 2), "Takes the column a has left free")
         XCTAssertEqual(columns["d"], CalendarColumn(column: 0, count: 1), "On its own: full width")
+    }
+
+    func testTheGridFollowsTheClockWhenTheClocksChange() {
+        let fixtures = PlannerFixtures()
+        // Sunday 25 October 2026: the clocks go back at 2 am, so the day is 25 hours long.
+        let sunday = DayKey(year: 2026, month: 10, day: 25)
+        let nine = sunday.date(atMinute: 9 * 60, calendar: fixtures.london)
+        XCTAssertEqual(nine.timeIntervalSince(sunday.startDate(calendar: fixtures.london)) / 3_600, 10, "Ten hours since midnight")
+        XCTAssertEqual(CalendarLayout.wallClockHours(nine, on: sunday, calendar: fixtures.london), 9, "Drawn at 9")
+        let spring = DayKey(year: 2026, month: 3, day: 29)
+        XCTAssertEqual(CalendarLayout.wallClockHours(spring.date(atMinute: 18 * 60 + 30, calendar: fixtures.london), on: spring,
+                                                     calendar: fixtures.london), 18.5)
     }
 
     func testBackToBackDoesntOverlap() {

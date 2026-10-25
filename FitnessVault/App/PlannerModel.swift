@@ -20,6 +20,9 @@ final class PlannerModel {
     private(set) var dismissed: Set<String>
     private(set) var shopsDone: Set<DayKey>
     private(set) var cooksDone: Set<DayKey>
+    /// Suggestions you've moved: when to leave instead.
+    private(set) var pinned: [String: Date]
+    private(set) var chores: [Chore]
 
     private(set) var access: CalendarAccess
     private(set) var calendars: [CalendarInfo] = []
@@ -47,6 +50,8 @@ final class PlannerModel {
     static let dismissedKey = "planner.dismissed"
     static let shopsKey = "planner.shopsDone"
     static let cooksKey = "planner.cooksDone"
+    static let pinnedKey = "planner.pinned"
+    static let choresKey = "planner.chores"
     static let horizonDays = 7
 
     init(calendarService: CalendarProviding? = nil, location: LocationProviding? = nil, weather: WeatherProviding? = nil,
@@ -66,6 +71,9 @@ final class PlannerModel {
         dismissed = Set(defaults.stringArray(forKey: Self.dismissedKey) ?? [])
         shopsDone = Set((defaults.stringArray(forKey: Self.shopsKey) ?? []).compactMap(DayKey.init(string:)))
         cooksDone = Set((defaults.stringArray(forKey: Self.cooksKey) ?? []).compactMap(DayKey.init(string:)))
+        pinned = ((defaults.dictionary(forKey: Self.pinnedKey) as? [String: Double]) ?? [:])
+            .mapValues { Date(timeIntervalSinceReferenceDate: $0) }
+        chores = defaults.data(forKey: Self.choresKey).flatMap { try? JSONDecoder().decode([Chore].self, from: $0) } ?? []
         access = service.access
         loadCalendars()
         rebuild()
@@ -220,7 +228,7 @@ final class PlannerModel {
                                  decisions: decisions, travel: travel, weather: weather,
                                  hasCurrentLocation: currentLocation != nil, gymDays: gymDays, swimDays: swimDays,
                                  shopsDone: shopsDone, cooksDone: cooksDone, batchCook: batchCook,
-                                 kneeSettled: kneeSettled, dismissed: dismissed)
+                                 kneeSettled: kneeSettled, dismissed: dismissed, pinned: pinned, chores: chores)
         pictures = DayPlanner.plan(input)
         revision += 1
     }
@@ -243,18 +251,24 @@ final class PlannerModel {
 
     /// Adds the slot, including the drive, to your own calendar. The planner then treats it as booked.
     func accept(_ suggestion: Suggestion) {
-        let venue = suggestion.kind.venue.flatMap { settings.places[$0] }
-        var title = suggestion.kind.title
-        if let venue, suggestion.kind != .batchCook { title += " · \(venue.name)" }
+        let venue = suggestion.venue.flatMap { $0 == .home ? nil : settings.places[$0] }
+        let title = suggestion.displayTitle
         var notes = "\(ActivityKind.marker)\(suggestion.kind.rawValue)\n"
         if suggestion.travelThere > 0 {
             notes += "Leave \(PlannerFormat.time(suggestion.leaveAt, calendar)), \(suggestion.travelThere) min drive. "
         }
-        notes += "\(suggestion.kind.title) \(PlannerFormat.range(suggestion.start, suggestion.end, calendar)). \(suggestion.detail)"
+        notes += "\(suggestion.title) \(PlannerFormat.range(suggestion.start, suggestion.end, calendar)). \(suggestion.detail)"
         do {
             try calendarService.add(title: title, start: suggestion.leaveAt, end: suggestion.backAt,
                                     location: venue?.name, notes: notes, calendarIDs: ownCalendarIDs)
             message = "Added to your calendar."
+            // Booked chores aren't suggested again; tick them off in Chores once they're done.
+            if let tag = suggestion.tag, suggestion.kind == .chore {
+                let ids = Set(tag.split(separator: "+").map(String.init))
+                updateChores { chores in
+                    for index in chores.indices where ids.contains(chores[index].id) { chores[index].bookedOn = suggestion.day }
+                }
+            }
         } catch {
             message = error.localizedDescription
         }
@@ -284,11 +298,82 @@ final class PlannerModel {
         case .batchCook:
             cooksDone.insert(monday)
             defaults.set(cooksDone.map(\.description), forKey: Self.cooksKey)
+        case .chore:
+            let ids = Set((suggestion.tag ?? "").split(separator: "+").map(String.init))
+            updateChores { chores in
+                for index in chores.indices where ids.contains(chores[index].id) { chores[index].doneAt = now() }
+            }
+            message = "Chores ticked off."
+            return
         default:
             dismiss(suggestion)
             return
         }
         rebuild()
+    }
+
+    // MARK: Moving suggestions
+
+    /// Moves a suggestion to leave at a time you choose. It stays there until you put it back.
+    func move(_ suggestion: Suggestion, leavingAt date: Date) {
+        pinned[suggestion.id] = date
+        savePinned()
+        rebuild()
+    }
+
+    func resetTime(_ suggestion: Suggestion) {
+        pinned[suggestion.id] = nil
+        savePinned()
+        rebuild()
+    }
+
+    private func savePinned() {
+        // Only keep the coming fortnight.
+        let cutoff = today.adding(days: -1, calendar: calendar)
+        pinned = pinned.filter { id, _ in
+            id.split(separator: "|").last.flatMap { DayKey(string: String($0)) }.map { $0 >= cutoff } ?? false
+        }
+        defaults.set(pinned.mapValues(\.timeIntervalSinceReferenceDate), forKey: Self.pinnedKey)
+    }
+
+    /// Re-reads the calendars and works everything out again from scratch: drive times, the forecast, suggestions.
+    func refreshSuggestions() async {
+        travelFetchedAt = nil
+        weatherFetchedAt = nil
+        await refresh()
+        message = "Suggestions updated from your calendar."
+    }
+
+    // MARK: Chores
+
+    var openChores: [Chore] { chores.filter { $0.doneAt == nil } }
+
+    /// Adds each line of a written list, with a time estimate and whether it's outdoors.
+    func addChores(from text: String) {
+        let titles = ChoreEstimator.parse(text)
+        guard !titles.isEmpty else { return }
+        updateChores { chores in
+            for title in titles {
+                let estimate = ChoreEstimator.estimate(title)
+                chores.append(Chore(id: UUID().uuidString, title: title, minutes: estimate.minutes, outdoor: estimate.outdoor,
+                                    createdAt: now()))
+            }
+        }
+    }
+
+    func updateChores(_ change: (inout [Chore]) -> Void) {
+        var copy = chores
+        change(&copy)
+        // Done chores are kept for a week, then let go.
+        let cutoff = now().addingTimeInterval(-7 * 86_400)
+        chores = copy.filter { ($0.doneAt ?? .distantFuture) > cutoff }
+        if let data = try? JSONEncoder().encode(chores) { defaults.set(data, forKey: Self.choresKey) }
+        rebuild()
+    }
+
+    /// Where a chore is planned: the suggestion that includes it, if any.
+    func suggestion(for chore: Chore) -> Suggestion? {
+        pictures.flatMap(\.suggestions).first { $0.kind == .chore && ($0.tag ?? "").split(separator: "+").contains { $0 == chore.id } }
     }
 
     // MARK: Settings

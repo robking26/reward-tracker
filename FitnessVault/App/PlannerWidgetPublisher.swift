@@ -14,8 +14,7 @@ enum PlannerWidgetPublisher {
                               kind: kind(item.source), colour: colour(item.source))
             }
         for suggestion in picture.suggestions {
-            var title = suggestion.kind.title
-            if let venue = suggestion.venueName, suggestion.kind != .batchCook { title += " · \(venue)" }
+            let title = suggestion.displayTitle
             items.append(DayWidgetItem(id: suggestion.id, title: title, start: suggestion.leaveAt, end: suggestion.backAt,
                                        kind: .suggestion, colour: colour(suggestion.kind)))
         }
@@ -73,6 +72,7 @@ enum PlannerWidgetPublisher {
         case .aldiShop, .batchCook: 0xFFB36B
         case .run: 0xFF9AA8
         case .walk: 0x7FE0C3
+        case .chore: 0xFFB36B
         }
     }
 }

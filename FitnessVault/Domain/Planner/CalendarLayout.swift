@@ -14,6 +14,15 @@ struct CalendarColumn: Hashable, Sendable {
 }
 
 enum CalendarLayout {
+    /// Where a time sits on a 0–24 hour grid, by the clock on the wall. On the days the clocks change, the time since
+    /// midnight is an hour more or less than this, which would draw everything after 2 am an hour out.
+    static func wallClockHours(_ date: Date, on day: DayKey, calendar: Calendar) -> Double {
+        if date <= day.startDate(calendar: calendar) { return 0 }
+        if date >= day.endDate(calendar: calendar) { return 24 }
+        let parts = calendar.dateComponents([.hour, .minute, .second], from: date)
+        return Double(parts.hour ?? 0) + Double(parts.minute ?? 0) / 60 + Double(parts.second ?? 0) / 3_600
+    }
+
     /// Overlapping items sit side by side, like a calendar app: each group of overlaps shares the width, and an item
     /// takes the first column that's free when it starts.
     static func columns(_ slots: [CalendarSlot]) -> [String: CalendarColumn] {

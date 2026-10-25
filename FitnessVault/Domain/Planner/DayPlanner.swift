@@ -2,7 +2,7 @@ import Foundation
 
 /// Things the planner fits into free time.
 enum ActivityKind: String, Codable, CaseIterable, Sendable, Identifiable {
-    case gym, swim, aldiShop, batchCook, run, walk
+    case gym, swim, aldiShop, batchCook, run, walk, chore
 
     /// Written into the notes of an event added from a suggestion, so the planner knows it's booked.
     static let marker = "vaultality:"
@@ -17,6 +17,7 @@ enum ActivityKind: String, Codable, CaseIterable, Sendable, Identifiable {
         case .batchCook: "Batch cook lunches"
         case .run: "Run"
         case .walk: "Walk"
+        case .chore: "Chores"
         }
     }
 
@@ -28,6 +29,7 @@ enum ActivityKind: String, Codable, CaseIterable, Sendable, Identifiable {
         case .batchCook: "fork.knife"
         case .run: "figure.run"
         case .walk: "figure.walk"
+        case .chore: "checklist"
         }
     }
 
@@ -37,7 +39,7 @@ enum ActivityKind: String, Codable, CaseIterable, Sendable, Identifiable {
         case .gym: .gym
         case .swim: .pool
         case .aldiShop: .aldi
-        case .batchCook: .home
+        case .batchCook, .chore: .home
         case .run, .walk: nil
         }
     }
@@ -69,6 +71,11 @@ struct PlannerSettings: Codable, Hashable, Sendable {
     var bufferMinutes = 10
     /// Off: the daily walks after lunch and tea are routines now, so the planner doesn't add its own.
     var suggestWalks = false
+    /// When the gym has a pool too, the swim goes straight after the gym: no drive home and back.
+    var pairSwimWithGym = true
+    /// Indoor chores grouped into one block, up to this many minutes.
+    var batchChores = true
+    var choreBatchMinutes = 60
 
     init() {}
 
@@ -93,6 +100,9 @@ struct PlannerSettings: Codable, Hashable, Sendable {
         fallbackTravelMinutes = try c.decodeIfPresent(Int.self, forKey: .fallbackTravelMinutes) ?? base.fallbackTravelMinutes
         bufferMinutes = try c.decodeIfPresent(Int.self, forKey: .bufferMinutes) ?? base.bufferMinutes
         suggestWalks = try c.decodeIfPresent(Bool.self, forKey: .suggestWalks) ?? base.suggestWalks
+        pairSwimWithGym = try c.decodeIfPresent(Bool.self, forKey: .pairSwimWithGym) ?? base.pairSwimWithGym
+        batchChores = try c.decodeIfPresent(Bool.self, forKey: .batchChores) ?? base.batchChores
+        choreBatchMinutes = try c.decodeIfPresent(Int.self, forKey: .choreBatchMinutes) ?? base.choreBatchMinutes
     }
 }
 
@@ -111,8 +121,28 @@ struct Suggestion: Hashable, Sendable, Identifiable {
     var travelIsEstimate: Bool
     var venueName: String?
     var detail: String
+    /// Which saved place it's at (the swim picks the nearest pool).
+    var venue: PlaceID? = nil
+    /// Tells apart suggestions of the same kind on a day: which chores a block is for.
+    var tag: String? = nil
+    /// A title of its own, e.g. "Mow the lawn".
+    var label: String? = nil
+    /// Needs dry, light weather.
+    var outdoor = false
+    /// You moved it to this time.
+    var isPinned = false
+    /// Moved onto something already in the calendar.
+    var conflicts = false
 
-    var id: String { "\(kind.rawValue)|\(day)" }
+    var id: String { DayPlanner.id(kind, tag: tag, day: day) }
+    var title: String { label ?? kind.title }
+
+    /// "Gym · PureGym Bolton", "Mow the lawn", "Batch cook lunches".
+    var displayTitle: String {
+        if let label { return label }
+        if let venueName, venue != .home, kind != .batchCook, kind != .chore { return "\(kind.title) · \(venueName)" }
+        return kind.title
+    }
     var block: DateInterval { DateInterval(start: leaveAt, end: max(backAt, leaveAt)) }
     var minutes: Int { Int(end.timeIntervalSince(start) / 60) }
 }
@@ -170,6 +200,23 @@ struct PlannerInput {
     var kneeSettled = true
     /// Suggestion IDs you've waved away.
     var dismissed: Set<String> = []
+    /// Suggestions you've moved, by ID: when to leave instead.
+    var pinned: [String: Date] = [:]
+    /// Chores still to do, in your order.
+    var chores: [Chore] = []
+}
+
+/// What to fit: the activity, how long it is, where it can happen, and whether it needs the weather.
+struct FitRequest {
+    var kind: ActivityKind
+    var minutes: Int
+    var detail: String
+    var notBefore: Date? = nil
+    var tag: String? = nil
+    var label: String? = nil
+    var outdoor: Bool
+    /// The places it could happen; the planner picks the best. Empty for walks and runs.
+    var venues: [PlaceID]
 }
 
 enum DayPlanner {
@@ -298,14 +345,19 @@ enum DayPlanner {
         func has(_ kind: ActivityKind, _ day: DayKey) -> Bool {
             booked.contains(key(kind, day)) || (chosen[day] ?? []).contains { $0.kind == kind }
         }
-        func place(_ kind: ActivityKind, on day: DayKey, notBefore: Date? = nil, detail: String,
-                   minutes: Int) -> Suggestion? {
-            guard let picture = byDay[day], !input.dismissed.contains(key(kind, day)) else { return nil }
+        func placeRequest(_ request: FitRequest, on day: DayKey) -> Suggestion? {
+            guard let picture = byDay[day], !input.dismissed.contains(id(request.kind, tag: request.tag, day: day)) else {
+                return nil
+            }
             let taken = (chosen[day] ?? []).map(\.block)
-            guard let suggestion = fit(kind, minutes: minutes, picture: picture, taken: taken, notBefore: notBefore,
-                                       detail: detail, input: input) else { return nil }
+            guard let suggestion = fit(request, picture: picture, taken: taken, input: input) else { return nil }
             chosen[day, default: []].append(suggestion)
             return suggestion
+        }
+        func place(_ kind: ActivityKind, on day: DayKey, notBefore: Date? = nil, detail: String,
+                   minutes: Int) -> Suggestion? {
+            placeRequest(FitRequest(kind: kind, minutes: minutes, detail: detail, notBefore: notBefore, outdoor: kind.isOutdoor,
+                                    venues: venues(for: kind, settings: settings)), on: day)
         }
 
         // The Aldi shop, then the batch cook, over the weekend before the week they're for.
@@ -354,6 +406,18 @@ enum DayPlanner {
         let swimDone = weekDays.filter { input.swimDays.contains($0) || booked.contains(key(.swim, $0)) }.count
         var swimLeft = max(0, settings.swimsPerWeek - swimDone)
         var swimCount = swimDone
+        if settings.pairSwimWithGym {
+            for day in days where swimLeft > 0 && !has(.swim, day) && !input.swimDays.contains(day)
+                && input.pinned[key(.swim, day)] == nil && !input.dismissed.contains(key(.swim, day)) {
+                guard let gym = (chosen[day] ?? []).first(where: { $0.kind == .gym }), let picture = byDay[day],
+                      let pair = pairedSwim(after: gym, picture: picture, others: (chosen[day] ?? []).filter { $0.id != gym.id },
+                                            detail: "Swim \(swimCount + 1) of \(settings.swimsPerWeek) this week, straight after the gym",
+                                            input: input) else { continue }
+                chosen[day] = (chosen[day] ?? []).map { $0.id == gym.id ? pair.gym : $0 } + [pair.swim]
+                swimLeft -= 1
+                swimCount += 1
+            }
+        }
         for avoidGym in [true, false] where swimLeft > 0 {
             for day in days where swimLeft > 0 && !has(.swim, day) && !input.swimDays.contains(day) {
                 if avoidGym && (has(.gym, day) || input.gymDays.contains(day)) { continue }
@@ -363,6 +427,20 @@ enum DayPlanner {
                     swimCount += 1
                 }
             }
+        }
+
+        // Chores: outdoor ones on their own when it's dry, indoor ones batched, each into the first day it fits.
+        let open = input.chores.filter(\.isOpen)
+        let alreadyPlaced = Set(chosen.values.flatMap { $0 }.compactMap(\.tag))
+        for bundle in ChoreBatcher.bundles(open, batch: settings.batchChores, maxMinutes: settings.choreBatchMinutes) {
+            let tag = bundle.map(\.id).joined(separator: "+")
+            if alreadyPlaced.contains(tag) { continue }
+            let minutes = bundle.reduce(0) { $0 + $1.minutes }
+            let label = bundle.count == 1 ? bundle[0].title : "Chores: \(bundle.count) jobs"
+            let detail = bundle.map { "\($0.title) (\($0.minutes) min)" }.joined(separator: ", ")
+            let request = FitRequest(kind: .chore, minutes: minutes, detail: detail, tag: tag, label: label,
+                                     outdoor: bundle.allSatisfy(\.outdoor), venues: [.home])
+            for day in days where placeRequest(request, on: day) != nil { break }
         }
 
         // Runs only while the knee is settled; a walk on the days without one. Both only when it's dry and light.
@@ -389,55 +467,113 @@ enum DayPlanner {
 
     static func key(_ kind: ActivityKind, _ day: DayKey) -> String { "\(kind.rawValue)|\(day)" }
 
-    /// The best slot for `kind` on a day: enough free time for the drive there, the activity and the drive back,
-    /// as close as possible to a sensible time of day. Walks and runs also need dry, light weather.
-    static func fit(_ kind: ActivityKind, minutes: Int, picture: DayPicture, taken: [DateInterval], notBefore: Date?,
-                    detail: String, input: PlannerInput) -> Suggestion? {
-        let venueName: String?
-        if let venue = kind.venue {
-            if venue != .home && input.settings.places[venue] == nil { return nil }
-            venueName = venue == .home ? "Home" : input.settings.places[venue]?.name
-        } else {
-            venueName = nil
+    static func id(_ kind: ActivityKind, tag: String?, day: DayKey) -> String {
+        tag.map { "\(kind.rawValue)-\($0)|\(day)" } ?? key(kind, day)
+    }
+
+    /// Where each kind can happen: the gym, any of your pools, Aldi, home. Nothing for walks and runs.
+    static func venues(for kind: ActivityKind, settings: PlannerSettings) -> [PlaceID] {
+        switch kind {
+        case .swim: settings.places.pools
+        case .run, .walk: []
+        default: kind.venue.map { [$0] } ?? []
         }
-        let preferred = preferredStart(kind, picture: picture, input: input)
+    }
+
+    /// The best slot on a day: enough free time for the drive there, the activity and the drive back, as close as
+    /// possible to a sensible time of day, at the nearest of its places. Outdoor things also need dry, light weather.
+    /// A suggestion you've moved goes exactly where you put it, flagged if that clashes with the calendar.
+    static func fit(_ request: FitRequest, picture: DayPicture, taken: [DateInterval], input: PlannerInput) -> Suggestion? {
+        let needsVenue = request.kind.venue != nil
+        let venues = request.venues.filter { $0 == .home || input.settings.places[$0] != nil }
+        if needsVenue && venues.isEmpty { return nil }
+        let candidates: [PlaceID?] = needsVenue ? venues.map { Optional($0) } : [nil]
+        let pinned = input.pinned[id(request.kind, tag: request.tag, day: picture.day)]
+        let preferred = preferredStart(request.kind, outdoor: request.outdoor, picture: picture, input: input)
         var best: (suggestion: Suggestion, score: TimeInterval)?
 
-        for window in picture.free where !window.isLunch || kind == .walk {
-            for (index, part) in subtract(taken, from: window.interval).enumerated() {
-                // After another suggestion you're back where that one returned you.
-                let origin = index == 0 && part.start == window.interval.start ? window.origin : window.returnTo
-                var there = (minutes: 0, estimate: false), back = (minutes: 0, estimate: false)
-                if let venue = kind.venue {
-                    there = travel(from: origin, to: venue, input: input)
-                    back = travel(from: venue, to: window.returnTo, input: input)
-                }
-                let total = TimeInterval((there.minutes + minutes + back.minutes) * 60)
-                var leave = max(part.start, notBefore.map(roundedUp) ?? part.start)
-                while leave.addingTimeInterval(total) <= part.end {
-                    let start = leave.addingTimeInterval(TimeInterval(there.minutes * 60))
-                    let end = start.addingTimeInterval(TimeInterval(minutes * 60))
-                    let outside = WeatherAdvisor.isGoodOutside(DateInterval(start: start, end: end), forecast: input.weather)
-                    if !kind.isOutdoor || outside != false {
-                        let score = abs(start.timeIntervalSince(preferred))
-                        if best.map({ score < $0.score }) ?? true {
-                            let suggestion = Suggestion(kind: kind, day: picture.day, leaveAt: leave, start: start, end: end,
-                                                        backAt: end.addingTimeInterval(TimeInterval(back.minutes * 60)),
-                                                        origin: origin, travelThere: there.minutes, travelBack: back.minutes,
-                                                        travelIsEstimate: there.estimate || back.estimate,
-                                                        venueName: venueName, detail: detail)
-                            best = (suggestion, score)
+        func make(_ venue: PlaceID?, origin: PlaceID, returnTo: PlaceID, leave: Date) -> Suggestion {
+            var there = (minutes: 0, estimate: false), back = (minutes: 0, estimate: false)
+            if let venue {
+                there = travel(from: origin, to: venue, input: input)
+                back = travel(from: venue, to: returnTo, input: input)
+            }
+            let start = leave.addingTimeInterval(TimeInterval(there.minutes * 60))
+            let end = start.addingTimeInterval(TimeInterval(request.minutes * 60))
+            let name = venue.flatMap { $0 == .home ? "Home" : input.settings.places[$0]?.name }
+            return Suggestion(kind: request.kind, day: picture.day, leaveAt: leave, start: start, end: end,
+                              backAt: end.addingTimeInterval(TimeInterval(back.minutes * 60)), origin: origin,
+                              travelThere: there.minutes, travelBack: back.minutes,
+                              travelIsEstimate: there.estimate || back.estimate, venueName: name, detail: request.detail,
+                              venue: venue, tag: request.tag, label: request.label, outdoor: request.outdoor,
+                              isPinned: pinned != nil)
+        }
+
+        for venue in candidates {
+            for window in picture.free where !window.isLunch || request.kind == .walk {
+                for (index, part) in subtract(taken, from: window.interval).enumerated() {
+                    // After another suggestion you're back where that one returned you.
+                    let origin = index == 0 && part.start == window.interval.start ? window.origin : window.returnTo
+                    let probe = make(venue, origin: origin, returnTo: window.returnTo, leave: part.start)
+                    let total = probe.backAt.timeIntervalSince(probe.leaveAt)
+                    let travelCost = TimeInterval((probe.travelThere + probe.travelBack) * 60)
+                    if let pinned {
+                        if pinned >= part.start && pinned.addingTimeInterval(total) <= part.end {
+                            let suggestion = make(venue, origin: origin, returnTo: window.returnTo, leave: pinned)
+                            if best.map({ travelCost < $0.score }) ?? true { best = (suggestion, travelCost) }
                         }
+                        continue
                     }
-                    leave = leave.addingTimeInterval(15 * 60)
+                    var leave = max(part.start, request.notBefore.map(roundedUp) ?? part.start)
+                    while leave.addingTimeInterval(total) <= part.end {
+                        let start = leave.addingTimeInterval(TimeInterval(probe.travelThere * 60))
+                        let end = start.addingTimeInterval(TimeInterval(request.minutes * 60))
+                        let outside = WeatherAdvisor.isGoodOutside(DateInterval(start: start, end: end), forecast: input.weather)
+                        if !request.outdoor || outside != false {
+                            // The nearer place wins when the times are as good.
+                            let score = abs(start.timeIntervalSince(preferred)) + travelCost
+                            if best.map({ score < $0.score }) ?? true {
+                                best = (make(venue, origin: origin, returnTo: window.returnTo, leave: leave), score)
+                            }
+                        }
+                        leave = leave.addingTimeInterval(15 * 60)
+                    }
                 }
             }
+        }
+        // Moved somewhere that clashes: still where you put it, from home, and flagged.
+        if let pinned, best == nil {
+            var suggestion = make(candidates.first ?? nil, origin: .home, returnTo: .home, leave: pinned)
+            suggestion.conflicts = true
+            return suggestion
         }
         return best?.suggestion
     }
 
+    /// When the gym has a pool, the swim follows the gym session with no drive home and back in between.
+    static func pairedSwim(after gym: Suggestion, picture: DayPicture, others: [Suggestion], detail: String,
+                           input: PlannerInput) -> (gym: Suggestion, swim: Suggestion)? {
+        let places = input.settings.places
+        guard let pool = places.pools.first(where: { places.isSamePlace(.gym, $0) }) else { return nil }
+        let start = gym.end
+        let end = start.addingTimeInterval(TimeInterval(input.settings.swimMinutes * 60))
+        let back = end.addingTimeInterval(TimeInterval(gym.travelBack * 60))
+        let whole = DateInterval(start: gym.leaveAt, end: back)
+        let fits = picture.free.filter { !$0.isLunch }.contains { window in
+            subtract(others.map(\.block), from: window.interval).contains { $0.start <= whole.start && $0.end >= whole.end }
+        }
+        guard fits else { return nil }
+        var shortened = gym
+        shortened.backAt = gym.end
+        shortened.travelBack = 0
+        let swim = Suggestion(kind: .swim, day: gym.day, leaveAt: start, start: start, end: end, backAt: back, origin: .gym,
+                              travelThere: 0, travelBack: gym.travelBack, travelIsEstimate: gym.travelIsEstimate,
+                              venueName: places[pool]?.name, detail: detail, venue: pool)
+        return (shortened, swim)
+    }
+
     /// After work on work days; mid-morning on days off. Walks go at lunchtime on work days.
-    static func preferredStart(_ kind: ActivityKind, picture: DayPicture, input: PlannerInput) -> Date {
+    static func preferredStart(_ kind: ActivityKind, outdoor: Bool = false, picture: DayPicture, input: PlannerInput) -> Date {
         let calendar = input.calendar
         // A "Lunch walk" in Outlook is the walk.
         if kind == .walk, let walk = picture.events.first(where: { $0.source == .workFree && DayCalendar.isLunchWalk($0.event) }) {
@@ -447,7 +583,7 @@ enum DayPlanner {
             let minute: Int
             switch kind {
             case .walk: minute = 12 * 60 + 30
-            case .batchCook: minute = input.settings.workEndMinute + 90
+            case .batchCook, .chore: minute = input.settings.workEndMinute + 90
             default: minute = input.settings.workEndMinute + 30
             }
             return kind == .walk ? picture.day.date(atMinute: minute, calendar: calendar)
@@ -460,6 +596,7 @@ enum DayPlanner {
         case .batchCook: minute = 14 * 60
         case .run: minute = 9 * 60
         case .walk: minute = 11 * 60
+        case .chore: minute = outdoor ? 11 * 60 : 14 * 60
         }
         return picture.day.date(atMinute: minute, calendar: calendar)
     }

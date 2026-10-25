@@ -75,6 +75,21 @@ struct DaySettingsView: View {
                     Text("Weekday and weekend, at home and away. A home routine not finished in time halves that day's earnings.")
                 }
 
+                Section {
+                    Toggle("Swim straight after the gym when it has a pool", isOn: Binding(
+                        get: { planner.settings.pairSwimWithGym }, set: { value in planner.update { $0.pairSwimWithGym = value } }))
+                    Toggle("Batch indoor chores", isOn: Binding(
+                        get: { planner.settings.batchChores }, set: { value in planner.update { $0.batchChores = value } }))
+                    if planner.settings.batchChores {
+                        Stepper("Up to \(planner.settings.choreBatchMinutes) min a batch", value: intBinding(\.choreBatchMinutes),
+                                in: 20...180, step: 10)
+                    }
+                } header: {
+                    Text("Fitting things in")
+                } footer: {
+                    Text("Save up to three pools in Places: the nearest one to where you'll be is used. A gym and pool count as the same place when they're within 150 m or share a name.")
+                }
+
                 Section("Work hours") {
                     DatePicker("Start", selection: minuteBinding(\.workStartMinute), displayedComponents: .hourAndMinute)
                     DatePicker("Finish", selection: minuteBinding(\.workEndMinute), displayedComponents: .hourAndMinute)

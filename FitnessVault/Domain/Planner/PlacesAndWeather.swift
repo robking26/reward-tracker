@@ -32,7 +32,7 @@ struct SavedPlace: Codable, Hashable, Sendable {
 
 /// The places the planner drives between. `current` is wherever the phone is right now.
 enum PlaceID: String, Codable, CaseIterable, Sendable, Identifiable {
-    case home, office, gym, pool, aldi, current
+    case home, office, gym, pool, pool2, pool3, aldi, current
 
     var id: String { rawValue }
 
@@ -42,6 +42,8 @@ enum PlaceID: String, Codable, CaseIterable, Sendable, Identifiable {
         case .office: "Office"
         case .gym: "Gym"
         case .pool: "Pool"
+        case .pool2: "Pool 2"
+        case .pool3: "Pool 3"
         case .aldi: "Aldi"
         case .current: "Where you are"
         }
@@ -52,7 +54,7 @@ enum PlaceID: String, Codable, CaseIterable, Sendable, Identifiable {
         case .home: "house.fill"
         case .office: "building.2.fill"
         case .gym: "dumbbell.fill"
-        case .pool: "figure.pool.swim"
+        case .pool, .pool2, .pool3: "figure.pool.swim"
         case .aldi: "cart.fill"
         case .current: "location.fill"
         }
@@ -63,12 +65,13 @@ enum PlaceID: String, Codable, CaseIterable, Sendable, Identifiable {
         switch self {
         case .home, .office, .current: "Address or postcode"
         case .gym: "Your gym"
-        case .pool: "Swimming pool"
+        case .pool, .pool2, .pool3: "Swimming pool"
         case .aldi: "Aldi"
         }
     }
 
-    static let saveable: [PlaceID] = [.home, .office, .gym, .pool, .aldi]
+    static let saveable: [PlaceID] = [.home, .office, .gym, .pool, .pool2, .pool3, .aldi]
+    static let pools: [PlaceID] = [.pool, .pool2, .pool3]
 }
 
 struct PlannerPlaces: Codable, Hashable, Sendable {
@@ -76,7 +79,19 @@ struct PlannerPlaces: Codable, Hashable, Sendable {
     var office: SavedPlace?
     var gym: SavedPlace?
     var pool: SavedPlace?
+    var pool2: SavedPlace?
+    var pool3: SavedPlace?
     var aldi: SavedPlace?
+
+    /// The pools you've saved.
+    var pools: [PlaceID] { PlaceID.pools.filter { self[$0] != nil } }
+
+    /// Two saved places that are really one, like a gym with a pool: within 150 m, or the same name.
+    func isSamePlace(_ a: PlaceID, _ b: PlaceID) -> Bool {
+        guard let first = self[a], let second = self[b] else { return false }
+        return first.name.caseInsensitiveCompare(second.name) == .orderedSame
+            || first.coordinate.distance(to: second.coordinate) < 150
+    }
 
     subscript(id: PlaceID) -> SavedPlace? {
         get {
@@ -85,6 +100,8 @@ struct PlannerPlaces: Codable, Hashable, Sendable {
             case .office: office
             case .gym: gym
             case .pool: pool
+            case .pool2: pool2
+            case .pool3: pool3
             case .aldi: aldi
             case .current: nil
             }
@@ -95,6 +112,8 @@ struct PlannerPlaces: Codable, Hashable, Sendable {
             case .office: office = newValue
             case .gym: gym = newValue
             case .pool: pool = newValue
+            case .pool2: pool2 = newValue
+            case .pool3: pool3 = newValue
             case .aldi: aldi = newValue
             case .current: break
             }

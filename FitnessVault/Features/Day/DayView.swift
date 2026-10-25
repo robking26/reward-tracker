@@ -46,6 +46,7 @@ struct DayView: View {
                             if day == planner.today {
                                 RoutineCard()
                                 JournalCard()
+                                ChoresCard()
                             }
 
                             if let picture = planner.picture(for: day) {
@@ -64,6 +65,15 @@ struct DayView: View {
             .pageBackground()
             .navigationTitle("Day")
             .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        Task { await planner.refreshSuggestions() }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .foregroundStyle(Palette.textSecondary)
+                    }
+                    .accessibilityLabel("Refresh suggestions")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showingDaySettings = true
@@ -415,8 +425,7 @@ private struct HourCalendar: View {
     }
 
     private func offset(_ date: Date, dayStart: Date) -> CGFloat {
-        let hours = min(24, max(0, date.timeIntervalSince(dayStart) / 3_600))
-        return CGFloat(hours) * Self.hourHeight
+        CGFloat(CalendarLayout.wallClockHours(date, on: picture.day, calendar: planner.calendar)) * Self.hourHeight
     }
 
     private func height(from start: Date, to end: Date, dayStart: Date) -> CGFloat {
@@ -488,8 +497,7 @@ enum DayBlocks {
                             target: .event(item))
         }
         for suggestion in picture.suggestions {
-            var title = suggestion.kind.title
-            if let venue = suggestion.venueName, suggestion.kind != .batchCook { title += " · \(venue)" }
+            let title = suggestion.displayTitle
             let subtitle = suggestion.travelThere > 0 ? "Leave \(PlannerFormat.time(suggestion.leaveAt, calendar))"
                 : PlannerFormat.minutes(suggestion.minutes)
             blocks.append(DayBlock(id: "s-\(suggestion.id)", title: title, subtitle: subtitle, start: suggestion.leaveAt,
@@ -545,7 +553,7 @@ private struct BlockDetail: View {
                         .padding(.horizontal, Spacing.page)
                 }
                 .pageBackground()
-                .navigationTitle(suggestion.kind.title)
+                .navigationTitle(suggestion.title)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
             }
@@ -609,7 +617,9 @@ private struct EventRow: View {
 private struct SuggestionCard: View {
     @Environment(PlannerModel.self) private var planner
     @Environment(\.openURL) private var openURL
+    @Environment(\.dismiss) private var dismiss
     let suggestion: Suggestion
+    @State private var moving = false
 
     var body: some View {
         let tint = DayStyle.tint(suggestion.kind)
@@ -629,10 +639,34 @@ private struct SuggestionCard: View {
                 }
                 Spacer(minLength: 0)
                 Menu {
-                    if suggestion.kind == .aldiShop || suggestion.kind == .batchCook {
-                        Button("Done for this week", systemImage: "checkmark") { withAnimation { planner.markDone(suggestion) } }
+                    Button("Move…", systemImage: "clock.arrow.2.circlepath") { moving = true }
+                    if suggestion.isPinned {
+                        Button("Back to the suggested time", systemImage: "arrow.uturn.backward") {
+                            withAnimation { planner.resetTime(suggestion) }
+                            dismiss()
+                        }
                     }
-                    Button("Not this day", systemImage: "xmark") { withAnimation { planner.dismiss(suggestion) } }
+                    if suggestion.kind == .aldiShop || suggestion.kind == .batchCook {
+                        Button("Done for this week", systemImage: "checkmark") {
+                            withAnimation { planner.markDone(suggestion) }
+                            dismiss()
+                        }
+                    }
+                    if suggestion.kind == .chore {
+                        Button("Done", systemImage: "checkmark") {
+                            withAnimation { planner.markDone(suggestion) }
+                            dismiss()
+                        }
+                    }
+                    Button("Not this day", systemImage: "xmark") {
+                        withAnimation { planner.dismiss(suggestion) }
+                        dismiss()
+                    }
+                    Divider()
+                    Button("Refresh suggestions", systemImage: "arrow.clockwise") {
+                        Task { await planner.refreshSuggestions() }
+                        dismiss()
+                    }
                 } label: {
                     RoundIconLabel(symbol: "ellipsis", size: 36)
                 }
@@ -643,9 +677,17 @@ private struct SuggestionCard: View {
                 if suggestion.travelThere > 0 || suggestion.travelBack > 0 {
                     Chip(text: travelText, symbol: "car.fill")
                 }
-                if suggestion.kind.isOutdoor {
+                if suggestion.kind.isOutdoor || suggestion.outdoor {
                     Chip(text: "Dry", symbol: "sun.max.fill", tint: Palette.fresh, fill: Palette.fresh.opacity(0.12))
                 }
+                if suggestion.isPinned {
+                    Chip(text: "Moved", symbol: "hand.point.up.left.fill", tint: tint, fill: tint.opacity(0.14))
+                }
+            }
+            if suggestion.conflicts {
+                Label("Clashes with something in your calendar", systemImage: "exclamationmark.triangle.fill")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Palette.warning)
             }
             Text(suggestion.detail)
                 .font(.footnote)
@@ -653,6 +695,7 @@ private struct SuggestionCard: View {
             HStack(spacing: Spacing.xs) {
                 Button {
                     withAnimation { planner.accept(suggestion) }
+                    dismiss()
                 } label: {
                     Label("Add to calendar", systemImage: "calendar.badge.plus")
                 }
@@ -674,16 +717,23 @@ private struct SuggestionCard: View {
             RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
                 .strokeBorder(tint.opacity(0.55), style: StrokeStyle(lineWidth: 1.5, dash: [6, 5]))
         }
+        .sheet(isPresented: $moving) {
+            MoveSuggestionView(suggestion: suggestion) { date in
+                withAnimation { planner.move(suggestion, leavingAt: date) }
+                dismiss()
+            }
+            .presentationDetents([.height(340)])
+            .presentationBackground(Palette.background)
+        }
     }
 
     private var venue: SavedPlace? {
-        guard let id = suggestion.kind.venue, id != .home else { return nil }
+        guard let id = suggestion.venue, id != .home else { return nil }
         return planner.settings.places[id]
     }
 
     private var title: String {
-        if let name = suggestion.venueName, suggestion.kind != .batchCook { return "\(suggestion.kind.title) · \(name)" }
-        return suggestion.kind.title
+        suggestion.displayTitle
     }
 
     private func timing(_ calendar: Calendar) -> String {
@@ -781,6 +831,7 @@ enum DayStyle {
         case .aldiShop, .batchCook: Palette.kitchen
         case .run: Palette.rose
         case .walk: Palette.fresh
+        case .chore: Palette.kitchen
         }
     }
 }
@@ -795,5 +846,196 @@ private extension View {
             .frame(minHeight: 36)
             .background(fill, in: Capsule())
             .contentShape(Capsule())
+    }
+}
+
+// MARK: - Moving a suggestion
+
+private struct MoveSuggestionView: View {
+    @Environment(PlannerModel.self) private var planner
+    @Environment(\.dismiss) private var dismiss
+    let suggestion: Suggestion
+    let onMove: (Date) -> Void
+    @State private var time = Date.now
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: Spacing.m) {
+                Text(suggestion.travelThere > 0 ? "Leave at" : "Start at")
+                    .font(.headline)
+                    .foregroundStyle(Palette.textSecondary)
+                DatePicker("Time", selection: $time, displayedComponents: .hourAndMinute)
+                    .datePickerStyle(.wheel)
+                    .labelsHidden()
+                    .frame(maxWidth: .infinity)
+                Footnote("The drive there and back stays included. If it lands on something in your calendar, it's flagged.")
+            }
+            .padding(.horizontal, Spacing.page)
+            .pageBackground()
+            .navigationTitle("Move \(suggestion.title.lowercased())")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Move") {
+                        onMove(onTheDay(time))
+                        dismiss()
+                    }
+                }
+            }
+            .onAppear { time = suggestion.leaveAt }
+        }
+    }
+
+    /// The chosen time on the suggestion's own day.
+    private func onTheDay(_ date: Date) -> Date {
+        let calendar = planner.calendar
+        let parts = calendar.dateComponents([.hour, .minute], from: date)
+        return suggestion.day.date(atMinute: (parts.hour ?? 0) * 60 + (parts.minute ?? 0), calendar: calendar)
+    }
+}
+
+// MARK: - Chores
+
+/// On the Day tab: how many chores are waiting and when the next is planned.
+struct ChoresCard: View {
+    @Environment(PlannerModel.self) private var planner
+
+    var body: some View {
+        let open = planner.openChores
+        NavigationLink {
+            ChoresView()
+        } label: {
+            HStack(spacing: Spacing.s) {
+                IconTile(symbol: "checklist", tint: Palette.kitchen, size: 44, filled: true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Chores")
+                        .font(.headline)
+                        .foregroundStyle(Palette.textPrimary)
+                    Text(subtitle(open))
+                        .font(.caption)
+                        .foregroundStyle(Palette.textSecondary)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(Palette.textTertiary)
+            }
+            .surface()
+        }
+        .buttonStyle(CardButtonStyle())
+    }
+
+    private func subtitle(_ open: [Chore]) -> String {
+        guard !open.isEmpty else { return "Write a list and they'll be fitted into your week" }
+        let minutes = open.reduce(0) { $0 + $1.minutes }
+        var text = "\(open.count) to do · about \(PlannerFormat.minutes(minutes))"
+        let next = planner.pictures.flatMap(\.suggestions).filter { $0.kind == .chore }.min { $0.start < $1.start }
+        if let next {
+            text += " · next \(next.start.formatted(.dateTime.weekday(.abbreviated))) \(PlannerFormat.time(next.start, planner.calendar))"
+        }
+        return text
+    }
+}
+
+struct ChoresView: View {
+    @Environment(PlannerModel.self) private var planner
+    @State private var text = ""
+    @FocusState private var writing: Bool
+
+    var body: some View {
+        List {
+            Section {
+                TextField("One job per line, e.g. Mow the lawn", text: $text, axis: .vertical)
+                    .lineLimit(3...8)
+                    .focused($writing)
+                Button("Add and estimate") {
+                    planner.addChores(from: text)
+                    text = ""
+                    writing = false
+                }
+                .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            } header: {
+                Text("Add chores")
+            } footer: {
+                Text("Times are estimated from the words (write \"30 min\" to set one). Outdoor jobs like mowing or gardening only go in when it's dry and light; indoor ones are batched into blocks of up to an hour.")
+            }
+
+            if !planner.openChores.isEmpty {
+                Section("To do") {
+                    ForEach(planner.openChores) { chore in
+                        ChoreRow(chore: chore)
+                    }
+                    .onDelete { offsets in
+                        let ids = Set(offsets.map { planner.openChores[$0].id })
+                        planner.updateChores { $0.removeAll { ids.contains($0.id) } }
+                    }
+                }
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(Palette.background)
+        .navigationTitle("Chores")
+    }
+}
+
+private struct ChoreRow: View {
+    @Environment(PlannerModel.self) private var planner
+    let chore: Chore
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Button {
+                    planner.updateChores { chores in
+                        if let index = chores.firstIndex(where: { $0.id == chore.id }) { chores[index].doneAt = Date.now }
+                    }
+                } label: {
+                    Image(systemName: "circle")
+                        .font(.title3)
+                        .foregroundStyle(Palette.textTertiary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Mark \(chore.title) done")
+                Text(chore.title)
+                    .foregroundStyle(Palette.textPrimary)
+                Spacer()
+                if chore.outdoor {
+                    Image(systemName: "sun.max.fill")
+                        .foregroundStyle(Palette.fresh)
+                        .accessibilityLabel("Outdoors")
+                }
+            }
+            HStack(spacing: Spacing.s) {
+                Stepper("\(chore.minutes) min", value: Binding(get: { chore.minutes }, set: { value in
+                    planner.updateChores { chores in
+                        if let index = chores.firstIndex(where: { $0.id == chore.id }) { chores[index].minutes = value }
+                    }
+                }), in: 5...240, step: 5)
+                .font(.caption)
+                Toggle("Outdoors", isOn: Binding(get: { chore.outdoor }, set: { value in
+                    planner.updateChores { chores in
+                        if let index = chores.firstIndex(where: { $0.id == chore.id }) { chores[index].outdoor = value }
+                    }
+                }))
+                .font(.caption)
+                .tint(Palette.fresh)
+                .fixedSize()
+            }
+            Text(planned)
+                .font(.caption)
+                .foregroundStyle(Palette.textTertiary)
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var planned: String {
+        if let booked = chore.bookedOn {
+            return "In your calendar, \(booked.startDate(calendar: planner.calendar).formatted(.dateTime.weekday(.wide)))"
+        }
+        guard let suggestion = planner.suggestion(for: chore) else { return "No slot in the next week yet" }
+        let day = suggestion.start.formatted(.dateTime.weekday(.wide))
+        let batch = (suggestion.tag ?? "").contains("+") ? " with other jobs" : ""
+        return "Planned \(day) at \(PlannerFormat.time(suggestion.start, planner.calendar))\(batch)"
     }
 }
