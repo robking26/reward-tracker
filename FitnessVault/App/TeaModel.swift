@@ -60,6 +60,17 @@ final class TeaModel {
         return incoming.count
     }
 
+    /// Changes whether a recipe freezes (the books don't say, so it starts as a guess from the dish).
+    func setFreezable(_ freezable: Bool, for recipe: TeaRecipe) {
+        var changed = recipe
+        changed.freezable = freezable
+        var imported = savedImports()
+        imported.removeAll { $0.id == recipe.id }
+        imported.append(changed)
+        saveImports(imported)
+        if let index = recipes.firstIndex(where: { $0.id == recipe.id }) { recipes[index] = changed }
+    }
+
     func delete(_ recipe: TeaRecipe) {
         saveImports(savedImports().filter { $0.id != recipe.id })
         recipes.removeAll { $0.id == recipe.id }

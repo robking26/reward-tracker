@@ -11,11 +11,17 @@ final class TeaPlannerTests: XCTestCase {
     }
 
     func testTargets() {
-        XCTAssertTrue(recipe("a", kcal: 600, protein: 50).meetsTargets)
-        XCTAssertTrue(recipe("a", kcal: 700, protein: 72).meetsTargets)
-        XCTAssertFalse(recipe("a", kcal: 720).meetsTargets)
-        XCTAssertFalse(recipe("a", kcal: 650, protein: 45).meetsTargets)
-        XCTAssertEqual(TeaPlanner.deck([recipe("ok"), recipe("big", kcal: 900)], week: "x").map(\.id), ["ok"])
+        XCTAssertEqual(recipe("a", kcal: 600, protein: 50).portionScale, 1)
+        XCTAssertEqual(recipe("a", kcal: 551, protein: 48).portionScale, 1.1, "The bolognaise: a tenth more")
+        XCTAssertEqual(recipe("a", kcal: 720, protein: 55).portionScale, 0.95, "A little less")
+        XCTAssertNil(recipe("a", kcal: 650, protein: 45).portionScale, "Can't reach 50 g inside 700 kcal")
+        XCTAssertNil(recipe("a", kcal: 497, protein: 28).portionScale)
+        let bolognaise = recipe("a", kcal: 551, protein: 48)
+        XCTAssertEqual(bolognaise.portionKcal, 606.1, accuracy: 0.01)
+        XCTAssertEqual(TeaRecipe.scaled("240g chicken breast", by: 1.3), "310g chicken breast")
+        XCTAssertEqual(TeaRecipe.scaled("10ml Worcester sauce", by: 1.3), "13ml Worcester sauce")
+        XCTAssertEqual(TeaRecipe.scaled("1 onion", by: 1.3), "1 onion")
+        XCTAssertEqual(TeaPlanner.deck([recipe("ok"), recipe("big", kcal: 900, protein: 40)], week: "x").map(\.id), ["ok"])
     }
 
     func testMondayToThursdayFreeze() {
@@ -39,6 +45,17 @@ final class TeaPlannerTests: XCTestCase {
         XCTAssertEqual(plan[saturday.description], "stir-fry", "The other match, not repeated")
         XCTAssertEqual(plan[tuesday.description], "chilli", "Rob's own freezable like")
         XCTAssertEqual(plan.count, 3, "Nothing on nights nobody's cooking")
+    }
+
+    func testTheRecipeBooksAreInTheBank() throws {
+        let url = try XCTUnwrap(Bundle(for: TeaPlannerTests.self).url(forResource: "TeaRecipes", withExtension: "json")
+            ?? Bundle.main.url(forResource: "TeaRecipes", withExtension: "json"))
+        let recipes = try TeaPlanner.decode(Data(contentsOf: url))
+        XCTAssertGreaterThanOrEqual(recipes.count, 100)
+        XCTAssertEqual(Set(recipes.map(\.id)).count, recipes.count, "Unique IDs")
+        XCTAssertGreaterThanOrEqual(recipes.filter(\.meetsTargets).count, 60)
+        XCTAssertGreaterThanOrEqual(recipes.filter { $0.meetsTargets && $0.freezable }.count, 20, "Plenty for Monday to Thursday")
+        XCTAssertTrue(recipes.allSatisfy { !$0.ingredients.isEmpty })
     }
 
     func testRecipesFromClaudeComeInEvenIfTheShapeVaries() throws {
@@ -72,9 +89,9 @@ final class TeaModelTests: XCTestCase {
         let reminders = RecordingReminderScheduler()
         let teas = TeaModel(reminders: reminders, defaults: defaults, calendar: fixtures.london,
                             now: { saturday.date(atMinute: 8 * 60, calendar: fixtures.london) }, bundled: [])
-        let json = #"[{"id":"curry","title":"Curry","kcal":650,"protein":55,"freezable":true},{"id":"salad","title":"Salad","kcal":400,"protein":30}]"#
+        let json = #"[{"id":"curry","title":"Curry","kcal":650,"protein":55,"freezable":true},{"id":"salad","title":"Salad","kcal":400,"protein":20}]"#
         XCTAssertEqual(try teas.importRecipes(Data(json.utf8)), 2)
-        XCTAssertEqual(teas.onTarget.map(\.id), ["curry"], "The salad is outside the targets")
+        XCTAssertEqual(teas.onTarget.map(\.id), ["curry"], "The salad can't reach 50 g protein")
 
         teas.startWeek()
         XCTAssertTrue(teas.needs(.rob))

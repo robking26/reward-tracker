@@ -24,8 +24,41 @@ struct TeaRecipe: Codable, Hashable, Sendable, Identifiable {
 
     var totalMinutes: Int { prepMinutes + cookMinutes }
 
-    /// 600–700 kcal and at least 50 g protein a portion.
-    var meetsTargets: Bool { TeaTargets.kcal.contains(kcal) && protein >= TeaTargets.minProtein }
+    /// How much of the book's portion to eat so it lands on 600–700 kcal with at least 50 g protein: the smallest
+    /// step of 0.05 that gets there. Nil when it can't (not enough protein for the calories).
+    var portionScale: Double? {
+        guard kcal > 0, protein > 0 else { return nil }
+        let needed = max(TeaTargets.kcal.lowerBound / kcal, TeaTargets.minProtein / protein)
+        let scale = (needed * 20 - 0.000_1).rounded(.up) / 20
+        return kcal * scale <= TeaTargets.kcal.upperBound ? scale : nil
+    }
+
+    /// 600–700 kcal and at least 50 g protein a portion, at the right portion size.
+    var meetsTargets: Bool { portionScale != nil }
+
+    /// Your portion's numbers.
+    var portionKcal: Double { kcal * (portionScale ?? 1) }
+    var portionProtein: Double { protein * (portionScale ?? 1) }
+    var portionCarbs: Double { carbs * (portionScale ?? 1) }
+    var portionFat: Double { fat * (portionScale ?? 1) }
+
+    /// The ingredients with weights and volumes scaled to your portion ("240g chicken" becomes "312g chicken").
+    /// Counts like "1 onion" are left as they are.
+    var portionIngredients: [String] {
+        guard let scale = portionScale, abs(scale - 1) > 0.001 else { return ingredients }
+        return ingredients.map { Self.scaled($0, by: scale) }
+    }
+
+    static func scaled(_ line: String, by scale: Double) -> String {
+        guard let match = line.range(of: #"^\s*\d+(\.\d+)?\s*(g|kg|ml|l)\b"#, options: .regularExpression) else { return line }
+        let quantity = String(line[match])
+        let number = Double(quantity.filter { $0.isNumber || $0 == "." }) ?? 0
+        let unit = quantity.drop { !$0.isLetter }
+        let value = number * scale
+        let rounded = value >= 20 ? (value / 5).rounded() * 5 : (value * 2).rounded() / 2
+        let text = rounded == rounded.rounded() ? String(Int(rounded)) : String(format: "%.1f", rounded)
+        return text + unit + line[match.upperBound...]
+    }
 
     init(id: String, title: String, source: String? = nil, servings: Int = 2, kcal: Double, protein: Double,
          carbs: Double = 0, fat: Double = 0, prepMinutes: Int = 15, cookMinutes: Int = 30, freezable: Bool = false,
@@ -168,6 +201,7 @@ enum TeaPlanner {
 
     /// The recipes to swipe on: on target only, in a steady shuffle for the week so both of you see the same order.
     static func deck(_ recipes: [TeaRecipe], week: String) -> [TeaRecipe] {
+        // On target means at the right portion size: most book recipes are a little under 600 kcal as printed.
         recipes.filter(\.meetsTargets).sorted { stableHash($0.id + week) < stableHash($1.id + week) }
     }
 

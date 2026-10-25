@@ -1,1 +1,3992 @@
-[]
+[
+ {
+  "id": "slow-cooker-sausage-casserole",
+  "title": "Slow Cooker Sausage Casserole",
+  "source": "Fit Food Diary: Slow Cooker Recipes, p. 3",
+  "servings": 2,
+  "kcal": 497,
+  "protein": 28,
+  "carbs": 69,
+  "fat": 12,
+  "prepMinutes": 15,
+  "cookMinutes": 240,
+  "freezable": true,
+  "ingredients": [
+   "6 skinny pork sausages (mine are from Aldi 74cals each)",
+   "360g potato",
+   "200g carrots",
+   "200g leek",
+   "20g tomato puree",
+   "10ml Worcester sauce",
+   "250ml beef stock",
+   "2 tbsp gravy granules",
+   "20g reduced fat butter",
+   "rosemary",
+   "thyme"
+  ],
+  "method": [
+   "Fry off your sausages in a pan until browned then add into the slow cooker with the sliced carrots and leek",
+   "Season with rosemary and thyme",
+   "Add in the tomato puree and the beef stock and mix well",
+   "Cover over and cook on low for 4 hours or high for 2",
+   "For the mash, peel and chop the potatoes and boil for 15 minutes until soft",
+   "Mash and add in the butter",
+   "Around 20 minutes before the end add in the gravy granules to the slow cooker and mix well allowing the sauce to thicken up",
+   "Serve up and enjoy!"
+  ],
+  "tags": [
+   "slow cooker"
+  ]
+ },
+ {
+  "id": "slow-cooker-pasta-bolognaise",
+  "title": "Slow Cooker Pasta Bolognaise",
+  "source": "Fit Food Diary: Slow Cooker Recipes, p. 5",
+  "servings": 2,
+  "kcal": 551,
+  "protein": 48,
+  "carbs": 63,
+  "fat": 12,
+  "prepMinutes": 15,
+  "cookMinutes": 140,
+  "freezable": true,
+  "ingredients": [
+   "120g (dried weight) pasta",
+   "200g 5% lean beef mince",
+   "1 small onion diced",
+   "1 red pepper diced",
+   "100g mushrooms sliced",
+   "1 beef stock pot",
+   "300g passata",
+   "20g tomato puree",
+   "1 tbsp balsamic vinegar",
+   "30g parmesan cheese",
+   "salt & pepper",
+   "1 tsp garlic powder",
+   "1 tsp basil",
+   "1 tsp oregano",
+   "sprinkle of chilli flakes",
+   "1 tsp sweetener"
+  ],
+  "method": [
+   "Brown off the mince beef in a pan with the stock pot",
+   "Transfer into the slow cooker with the onion, pepper and mushrooms and all of the seasonings",
+   "Pour in the passata, tomato puree and the balsamic vinegar and mix well",
+   "Cook on high for 2 hours or low for 4",
+   "Around 20 minutes before the end boil the pasta until al dente",
+   "Add the pasta to the slow cooker with the parmesan and mix well",
+   "Cook for a further 10 minutes",
+   "Serve up and sprinkle over a dash of parmesan to finish!"
+  ],
+  "tags": [
+   "slow cooker"
+  ]
+ },
+ {
+  "id": "slow-cooker-chicken-curry",
+  "title": "Slow Cooker Chicken Curry",
+  "source": "Fit Food Diary: Slow Cooker Recipes, p. 7",
+  "servings": 2,
+  "kcal": 542,
+  "protein": 37,
+  "carbs": 70,
+  "fat": 8,
+  "prepMinutes": 15,
+  "cookMinutes": 140,
+  "freezable": true,
+  "ingredients": [
+   "240g chicken breast",
+   "1 white onion",
+   "100g mushrooms",
+   "60g frozen peas",
+   "150g (dried weight) long grain rice",
+   "60g (dried weight) mayflower curry powder (found in Heron foods or B&M)",
+   "salt, pepper",
+   "garlic",
+   "Chinese 5 spice"
+  ],
+  "method": [
+   "To the slow cooker add the sliced onion, mushrooms and chicken breasts",
+   "Season with salt, pepper, garlic and Chinese 5 spice",
+   "Mix the curry powder with 200ml boiling water and pour this in the slow cooker",
+   "Mix well and cover over, cook on high for 2 hours or low for 4 hours",
+   "After the 2 (or 4) hours, remove the chicken breast and shred with a knife and fork and put back into the slow cooker",
+   "Add in the frozen peas, mix and cover over for another 20 minutes",
+   "Boil your rice during this time",
+   "Serve up and enjoy!"
+  ],
+  "tags": [
+   "slow cooker"
+  ]
+ },
+ {
+  "id": "slow-cooker-creamy-beef-orzo-ragu",
+  "title": "Slow Cooker Creamy Beef Orzo Ragu",
+  "source": "Fit Food Diary: Slow Cooker Recipes, p. 9",
+  "servings": 2,
+  "kcal": 564,
+  "protein": 48,
+  "carbs": 27,
+  "fat": 7,
+  "prepMinutes": 15,
+  "cookMinutes": 140,
+  "freezable": true,
+  "ingredients": [
+   "120g (dried weight) orzo",
+   "200g 5% lean beef mince",
+   "1 rich beef stock pot",
+   "1 red onion diced",
+   "1 red pepper diced",
+   "1 grated carrot",
+   "100g sliced mushrooms",
+   "60g frozen peas",
+   "50g cherry tomatoes",
+   "200g tinned chopped tomatoes",
+   "20g tomato puree",
+   "40ml single cream",
+   "20g parmesan cheese",
+   "salt, pepper, oregano & chilli flakes",
+   "1 tsp lazy garlic"
+  ],
+  "method": [
+   "Fry off your beef mince until browned",
+   "Transfer the beef into the slow cooker along with the diced onion, grated carrot, diced red pepper, mushrooms, tsp lazy garli, salt , pepper, oregano, chilli flakes, tomato puree and tinned chopped tomatoes",
+   "Add in the beef stock pot and around 100ml of water (more or less depending on how many portions you are making & how wide your slow cooker is)",
+   "Stir well and cover over, cook on high for around 2 hours or slow for 4 hours",
+   "After 2 hours on high, add in the orzo, chopped cherry tomatoes, frozen peas and cream, give this a good mix (you may need a splash more water to cover the orzo)",
+   "Re-cover and cook for a further 20-30 minutes or until the orzo is fully cooked",
+   "Add in the parmesan cheese and mix, let this simmer for 5 more minutes before serving"
+  ],
+  "tags": [
+   "slow cooker"
+  ]
+ },
+ {
+  "id": "slow-cooker-chinese-chicken-noodles",
+  "title": "Slow Cooker Chinese Chicken Noodles",
+  "source": "Fit Food Diary: Slow Cooker Recipes, p. 11",
+  "servings": 2,
+  "kcal": 527,
+  "protein": 38,
+  "carbs": 59,
+  "fat": 14,
+  "prepMinutes": 15,
+  "cookMinutes": 140,
+  "freezable": false,
+  "ingredients": [
+   "240g chicken breast",
+   "2 nests of noodles (250g dried weight fine egg noodles)",
+   "200ml chicken stock",
+   "60g (dried weight) curry powder (I use Mayflower)",
+   "100g mushrooms",
+   "1 onion diced",
+   "spring onion",
+   "200ml light coconut milk"
+  ],
+  "method": [
+   "Place the chicken breast into the slow cooker along with the diced onion and mushrooms",
+   "Mix the curry powder with around 150ml water and pour in",
+   "Pour in the coconut milk and stir well",
+   "Cover over and cook on high for 2 hours or low for 4",
+   "After 2 hours (or 4 if cooked on low) remove the chicken breast and shred with a knife and fork",
+   "Return the chicken into the slow cooker along with the dried egg noodles",
+   "Pour in the chicken stock (you may need more/ less but just ensure the noodles are all covered)",
+   "Cook for a further 10 minutes",
+   "Serve up once the noodles are cooked and top with some sliced spring onion!"
+  ],
+  "tags": [
+   "slow cooker"
+  ]
+ },
+ {
+  "id": "slow-cooker-beef-keema-curry",
+  "title": "Slow Cooker Beef Keema Curry",
+  "source": "Fit Food Diary: Slow Cooker Recipes, p. 13",
+  "servings": 2,
+  "kcal": 445,
+  "protein": 47,
+  "carbs": 38,
+  "fat": 10,
+  "prepMinutes": 15,
+  "cookMinutes": 140,
+  "freezable": true,
+  "ingredients": [
+   "250g 5% lean beef mince",
+   "130g (dried weight) long grain rice",
+   "250g passata",
+   "20g tomato puree",
+   "2 tsp tikka paste",
+   "1tsp garlic paste (or just any garlic)",
+   "salt & pepper",
+   "1 onion diced",
+   "1 pepper diced",
+   "100g frozen peas",
+   "1/2 tsp sweetener"
+  ],
+  "method": [
+   "First brown off the beef in a pan then transfer into the slow cooker",
+   "Dice the onion and pepper and add this to the slow cooker",
+   "Season with salt & pepper and add in the garlic, tikka paste, tomato puree and passata along with a dash of sweetener",
+   "Stir well and cook on high for 2 hours or low for 4",
+   "At the end add in the frozen peas, stir and cook for a further 15-20 minutes",
+   "Meanwhile boil the rice as per the packet instructions",
+   "Serve up & enjoy!"
+  ],
+  "tags": [
+   "slow cooker"
+  ]
+ },
+ {
+  "id": "slow-cooker-mince-dumplings",
+  "title": "Slow Cooker Mince & Dumplings",
+  "source": "Fit Food Diary: Slow Cooker Recipes, p. 15",
+  "servings": 2,
+  "kcal": 537,
+  "protein": 39,
+  "carbs": 67,
+  "fat": 15,
+  "prepMinutes": 15,
+  "cookMinutes": 140,
+  "freezable": true,
+  "ingredients": [
+   "200g 5% lean beef mince",
+   "1 carrot grated",
+   "1 onion diced",
+   "20g tomato puree",
+   "20ml Worcester sauce",
+   "250ml beef stock",
+   "2 tbsp gravy granules",
+   "70g dumpling mixutre (to make 4 dumplings)",
+   "salt & pepper",
+   "Oregano 1 tsp",
+   "Thyme 1tsp",
+   "Rosemary 1tsp",
+   "1tsp garlic",
+   "300g pre made mash"
+  ],
+  "method": [
+   "Brown off the mince in a pan then transfer over to the slow cooker",
+   "Add in the diced onion and grated carrot",
+   "Pour in the tomato puree, garlic and Worcester sauce",
+   "Season with salt and pepper and the oregano, rosemary and thyme",
+   "Pour in the beef stock and stir",
+   "Cover over and cook on high for 2 hours or low for 4",
+   "Add in the gravy granules and a spash of water and cover for another 10 minutes",
+   "Make the dumplings as per the packet instructions",
+   "Transfer the beef into an oven proof dish and top with the dumplings",
+   "Cover over and bake in the oven for 10 minutes and then for 5 minutes remove the cover to allow the dumplings to crisp slightly",
+   "Microwave the mash and serve up!"
+  ],
+  "tags": [
+   "slow cooker"
+  ]
+ },
+ {
+  "id": "slow-cooker-shredded-enchiladas",
+  "title": "Slow Cooker Shredded Enchiladas",
+  "source": "Fit Food Diary: Slow Cooker Recipes, p. 17",
+  "servings": 2,
+  "kcal": 488,
+  "protein": 45,
+  "carbs": 46,
+  "fat": 12,
+  "prepMinutes": 15,
+  "cookMinutes": 140,
+  "freezable": true,
+  "ingredients": [
+   "240g chicken breast",
+   "1 onion diced",
+   "250g passata",
+   "150g (drained) black beans",
+   "40g (drained) sweetcorn",
+   "40g grated mozzarella",
+   "20g grated red Leicester cheese",
+   "3 mini tortilla wraps",
+   "1 tsp garlic",
+   "1/2 tsp cumin",
+   "1/2 tsp chilli powder",
+   "1/2 tsp oregano",
+   "salt & pepper to taste",
+   "1 spring onion (optional)",
+   "1 red chilli (optional)"
+  ],
+  "method": [
+   "Add the chicken breasts to the slow cooker along with the diced onion",
+   "Add the listed spices & seasonings with the passata & black beans and give it a good stir",
+   "Cover over and cook on high for 2 hours or low for 4",
+   "Once cooked, remove the chicken and shred with a knife and fork",
+   "Stir the chicken back into the sauce with the sweet corn",
+   "Shred the mini wraps and stir these into the sauce too ensure they are all covered with the sauce",
+   "Sprinkle over the cheese mix along with the sliced spring onion and sliced chilli",
+   "Leave for 5-10 minutes until all the cheese has melted then serve & enjoy!"
+  ],
+  "tags": [
+   "slow cooker"
+  ]
+ },
+ {
+  "id": "slow-cooker-nandos-rice",
+  "title": "Slow Cooker Nandos Rice",
+  "source": "Fit Food Diary: Slow Cooker Recipes, p. 19",
+  "servings": 2,
+  "kcal": 341,
+  "protein": 28,
+  "carbs": 53,
+  "fat": 2,
+  "prepMinutes": 15,
+  "cookMinutes": 45,
+  "freezable": false,
+  "ingredients": [
+   "200g (raw weight) pre cooked",
+   "chicken",
+   "120g (dried weight) long grain rice",
+   "1 green pepper",
+   "1 red onion",
+   "100g passata",
+   "200ml chicken stock",
+   "20g Nandos marinade",
+   "Optional topping: nandos perinaise (not counted in macros)",
+   "Cayenne pepper, peri salt, tumeric,",
+   "paprika"
+  ],
+  "method": [
+   "Tip: if you're in decisive pre cook your chicken so it's ready to top on what ever dish you decide to make!",
+   "Add all of the ingredients into the slow cooker, mix well",
+   "Cook on high for 45 minutes",
+   "Give it all a stir round and continue to cook until the rice has soaked up all of the water",
+   "Shred the chicken and drizzle over the Nandos sauce",
+   "Optional topping a drizzle of Nanados perinaise"
+  ],
+  "tags": [
+   "slow cooker"
+  ]
+ },
+ {
+  "id": "slow-cooker-meatball-pasta",
+  "title": "Slow Cooker Meatball Pasta",
+  "source": "Fit Food Diary: Slow Cooker Recipes, p. 21",
+  "servings": 2,
+  "kcal": 560,
+  "protein": 42,
+  "carbs": 65,
+  "fat": 15,
+  "prepMinutes": 15,
+  "cookMinutes": 55,
+  "freezable": true,
+  "ingredients": [
+   "12 meatballs (to reduce the calories you could use the Aldi 5% fat meatballs, I used Muscle foods)",
+   "120g (dried weight) pasta",
+   "1 white onion diced",
+   "1 red onion diced",
+   "lazy garlic",
+   "200g tinned chopped tomatoes",
+   "1tsp sugar",
+   "200ml beef stock",
+   "25g Philadelphia lightest",
+   "Chilli flakes",
+   "Salt & pepper",
+   "Oregano",
+   "Parsley",
+   "Sprinkle of parmesan"
+  ],
+  "method": [
+   "Brown your meatballs off on all sides in the pan then add to the slow cooker",
+   "Dice up your onion and pepper and add this to the slow cooker",
+   "Sprinkle over the sugar, lazy garlic, salt, pepper and oregano",
+   "Pour in the tinned chopped tomatoes and the dried pasta",
+   "Pour in the beef stock (add more/ less depending on the size of your slow cooker so that all of the pasta is covered)",
+   "Mix well and leave for 20 minutes",
+   "After 20 minutes stir and re-cover",
+   "After another 10 minutes stir through the Philadelphia and leave to sit for 5 minutes before serving",
+   "Season with some parsley and a sprinkling of parmesan cheese"
+  ],
+  "tags": [
+   "slow cooker"
+  ]
+ },
+ {
+  "id": "slow-cooker-beef-pie",
+  "title": "Slow Cooker Beef Pie",
+  "source": "Fit Food Diary: Slow Cooker Recipes, p. 25",
+  "servings": 2,
+  "kcal": 547,
+  "protein": 26,
+  "carbs": 42,
+  "fat": 20,
+  "prepMinutes": 15,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "1/2 of the slow cooker beef in red",
+   "wine sauce (see the separate recipe card for this)",
+   "100g puff pastry",
+   "1/2 egg",
+   "100g creamy mash (pre made)",
+   "2tbsp gravy granules",
+   "pepper",
+   "Mint sauce (optional)"
+  ],
+  "method": [
+   "Add half of the slow cooker beef in red wine sauce into an oven proof dish",
+   "Add in 2tbsp gravy granules and stir to help thicken up the sauce",
+   "Egg wash the sides of the dish",
+   "Top with the puff pastry and egg wash",
+   "Prick some holes into the top of the pastry",
+   "Bake in the air fryer on 180 for 10 minutes or in the oven for around 15 untill all the pastry has gone golden and crispy",
+   "Serve with some pre made mash potato",
+   "Sprinkle some pepper and mint sauce on top if you like!"
+  ],
+  "tags": [
+   "slow cooker"
+  ]
+ },
+ {
+  "id": "slow-cooker-beef-tagliatelle-ragu",
+  "title": "Slow Cooker Beef Tagliatelle Ragu",
+  "source": "Fit Food Diary: Slow Cooker Recipes, p. 27",
+  "servings": 2,
+  "kcal": 498,
+  "protein": 37,
+  "carbs": 59,
+  "fat": 10,
+  "prepMinutes": 15,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "160g (dried weight) tagliatelle or",
+   "200g fresh tagliatelle",
+   "1/2 of the slow cooker beef in red",
+   "wine sauce recipe",
+   "30g grated parmesan",
+   "pepper"
+  ],
+  "method": [
+   "Warm up the other half of the beef slow cooker recipe and break up the beef into shredded pieces with a knife and fork",
+   "Boil your pasta as per the instructions (8-10 minutes for dry or 3 minutes for fresh)",
+   "Drain and add to the pan with the beef (or the slow cooker if you’re still using that)",
+   "Stir well so its coated in the sauce",
+   "Season with some black pepper",
+   "Sprinkle over 3/4 of the parmesan and stir",
+   "Dish up and top with the remaining parmesan"
+  ],
+  "tags": [
+   "slow cooker"
+  ]
+ },
+ {
+  "id": "slow-cooker-chicken-satay-noodles",
+  "title": "Slow Cooker Chicken Satay Noodles",
+  "source": "Fit Food Diary: Slow Cooker Recipes, p. 29",
+  "servings": 2,
+  "kcal": 609,
+  "protein": 36,
+  "carbs": 73,
+  "fat": 20,
+  "prepMinutes": 15,
+  "cookMinutes": 140,
+  "freezable": false,
+  "ingredients": [
+   "240g chicken thighs",
+   "20g curry powder (mayflower)",
+   "2 tbsp dark soy sauce",
+   "30g reduced sugar sweet chilli sauce",
+   "20g peanut butter",
+   "100ml chicken stock",
+   "2 nests (70g each) egg noodles",
+   "10g cornflour",
+   "1tsp garlic",
+   "1 spring onion",
+   "1/2 diced onion"
+  ],
+  "method": [
+   "To the slow cooker, add in the diced onion, garlic, curry powder, dark soy, sweet chilli, peanut butter, chicken stock and the chicken thighs",
+   "Give it a good mix and cook on high for 2 hours or low for 4",
+   "Remove the chicken once cooked and shred with a knife and fork",
+   "Add in the corn flour and stir",
+   "Re-add the chicken into the sauce and mix well",
+   "Cover over and cook for a further 10 minutes until the sauce thickens uo",
+   "Meanwhile boil the noodles as per the packet instructions",
+   "Serve up and top with a sliced spring onion"
+  ],
+  "tags": [
+   "slow cooker"
+  ]
+ },
+ {
+  "id": "slow-cooker-chicken-satay-curry",
+  "title": "Slow Cooker Chicken Satay Curry",
+  "source": "Fit Food Diary: Slow Cooker Recipes, p. 31",
+  "servings": 2,
+  "kcal": 571,
+  "protein": 32,
+  "carbs": 66,
+  "fat": 22,
+  "prepMinutes": 15,
+  "cookMinutes": 140,
+  "freezable": true,
+  "ingredients": [
+   "240g chicken thighs",
+   "20g curry powder (mayflower)",
+   "2 tbsp dark soy sauce",
+   "30g reduced sugar sweet chilli sauce",
+   "20g peanut butter",
+   "100ml chicken stock",
+   "10g cornflour",
+   "1tsp garlic",
+   "1 spring onion",
+   "1/2 diced onion",
+   "1 packet microwave long grain rice (250g)",
+   "200g green beans",
+   "Optional: prawn crackers (not included in macros but are quite low cal generally to add as an extra!)"
+  ],
+  "method": [
+   "To the slow cooker, add in the diced onion, garlic, curry powder, dark soy, sweet chilli, peanut butter, chicken stock and the chicken thighs",
+   "Give it a good mix and cook on high for 2 hours or low for 4",
+   "Remove the chicken once cooked and shred with a knife and fork",
+   "Add in the corn flour and stir",
+   "Re-add the chicken into the sauce and mix well",
+   "Cover over and cook for a further 10 minutes until the sauce thickens up",
+   "Meanwhile boil your green beans and microwave the rice as per the packet instructions",
+   "Serve up and top with a sliced spring onion"
+  ],
+  "tags": [
+   "slow cooker"
+  ]
+ },
+ {
+  "id": "high-volume-spag-bol",
+  "title": "High Volume Spag Bol",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 5",
+  "servings": 4,
+  "kcal": 484,
+  "protein": 37,
+  "carbs": 65,
+  "fat": 8,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "500g lean mice beef",
+   "280g (dried weight) pasta",
+   "2 sticks of celery (sliced)",
+   "2 carrots (finely sliced)",
+   "1 onion (diced)",
+   "1 tin chopped tomatoes",
+   "2 tbsp tomato puree",
+   "1 tsp Worcester sauce",
+   "1 beef stock pot",
+   "Salt, pepper, paprika",
+   "1 tsp lazy garlic",
+   "Sprinkle of parmesan cheese"
+  ],
+  "method": [
+   "Put the pasta onto boil while you cook the sauce",
+   "In a large pan add in the lazy garlic and diced onion & let this soften for a few minutes before adding in the sliced celery and carrots",
+   "Allow the veggies to soften before adding in the lean mince beef",
+   "Once the beef begins to brown, add in the stock pot, salt, pepper and some paprika",
+   "Once the beef is almost fully cooked, add in the tinned tomatoes, tomato puree and",
+   "Worcester sauce",
+   "Bring the heat down to a simmer for 10-15 mins",
+   "When the pasta is cooked though add this to the sauce",
+   "Divide up into 4 meal prep dishes and top with some parmesan cheese"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "chicken-fajita-orzo",
+  "title": "Chicken Fajita Orzo",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 7",
+  "servings": 4,
+  "kcal": 452,
+  "protein": 40,
+  "carbs": 65,
+  "fat": 3,
+  "prepMinutes": 20,
+  "cookMinutes": 25,
+  "freezable": true,
+  "ingredients": [
+   "480g Chicken Breast Fillets (Sliced)",
+   "5 Sprays Cooking Spray",
+   "1 Red Oniom (Sliced)",
+   "1 Green Pepper (Sliced)",
+   "30g Sundried Tomatoes (Sliced)",
+   "300g Orzo (Dried Weight)",
+   "15g Tomato Puree",
+   "750ml Chicken Stock",
+   "20g Fajita Seasoning",
+   "Garlic & Herb Seasoning",
+   "Salt & Pepper",
+   "Fresh Coriander (Chopped)",
+   "1 Spring Onion (Sliced)"
+  ],
+  "method": [
+   "First, coat the chicken breast in half the fajita seasoning and the garlic & herb seasoning",
+   "Slice the red onion and add this to the pan with the chicken",
+   "Once the chicken is sealed, add in the sliced pepper and sundried tomatoes",
+   "Add in your dried orzo with half of the chicken stock and give it a good mix through",
+   "Let this soak up the water for 10 mins before adding the rest of the stock along with the rest of the fajita seasoning and the tomato puree",
+   "Let it simmer for another 15 mins before adding in some salt and pepper",
+   "Once all the water has been soaked up by the orzo top with some fresh coriander and spring onions"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "chicken-sausage-pasta",
+  "title": "Chicken Sausage Pasta",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 9",
+  "servings": 4,
+  "kcal": 450,
+  "protein": 21,
+  "carbs": 63,
+  "fat": 12,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "8 chicken sausages",
+   "280g (dried weight) pasta",
+   "200ml light coconut milk",
+   "120g marinated sundried tomatoes",
+   "40g tomato puree",
+   "Handful of baby spinach",
+   "1 red pepper (diced)",
+   "15g parmesan cheese",
+   "Garlic powder, Italian herbs, paprika",
+   "1 tsp lazy garlic"
+  ],
+  "method": [
+   "Boil your pasta and put your sausages onto a grill while you make the sauce in a separate pan",
+   "In a large pan add in your lazy garlic, diced red pepper and sliced marinated tomatoes",
+   "Once the sausages are cooked, chop them up into small pieces and add them to the pan",
+   "Season with garlic powder, Italian herbs and paprika",
+   "Stir in your coconut milk and tomato puree",
+   "Add in around 10g parmesan (the remaining parmesan is to add once all cooked)",
+   "Once the sauce is combined, add in your baby spinach to wilt down",
+   "Add the drained pasta once its cooked and mix well into the sauce",
+   "Divide into 4 meal prep boxes and top with the remaining parmesan cheese"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "spicy-peanut-noodles",
+  "title": "Spicy Peanut Noodles",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 11",
+  "servings": 4,
+  "kcal": 369,
+  "protein": 41,
+  "carbs": 42,
+  "fat": 3.8,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "4 Whole wheat egg noodle nests",
+   "480g chicken breast",
+   "15ml Sriracha sauce",
+   "120ml Light soy sauce",
+   "30g powdered peanut butter (or your own choice of peanut butter but alter calories accordingly)",
+   "15g honey",
+   "10g garlic puree",
+   "5g sesame seeds",
+   "1 tbsp sesame oil",
+   "Chilli powder, garlic powder",
+   "2 Spring onions (sliced)"
+  ],
+  "method": [
+   "Dice up your chicken breast and coat well in 1tsp chilli powder, garlic powder, 15ml sriracha sauce and 50ml of the soy sauce",
+   "Fry the chicken until cooked though and set to the side",
+   "While you make the sauce set your noodles off to boil",
+   "For the sauce in the same pan which you cooked the chicken add the sesame oil, garlic puree, sesame seeds, chilli flakes, 70ml soy sauce, the peanut butter and honey",
+   "Stir until this is all combined",
+   "Once you have the sauce consistency, add the chicken back in",
+   "Drain the noodles and mix well into the sauce",
+   "Divide into 4 meal prep boxes and top with sliced spring onions and a sprinkle of sesame seeds"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "feta-salmon-orzo",
+  "title": "Feta & Salmon Orzo",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 13",
+  "servings": 2,
+  "kcal": 450,
+  "protein": 32,
+  "carbs": 32,
+  "fat": 24,
+  "prepMinutes": 20,
+  "cookMinutes": 40,
+  "freezable": true,
+  "ingredients": [
+   "2 peri peri spiced salmon fillets",
+   "100g (dried weight) orzo",
+   "60g cherry tomatoes",
+   "Salad leaves (not tracked)",
+   "Cucumber (not tracked)",
+   "100g 0% fat Greek yogurt",
+   "80g crumbled feta cheese",
+   "15g perinaise",
+   "Paprika"
+  ],
+  "method": [
+   "Boil the orzo in one pan for 15-20 mins",
+   "Wrap the salmon filets in foil and place in the oven to bake for 20 mins (or as per the packet)",
+   "While the salmon and orzo cook in one large bowl combine: salad leaves, sliced cucumber and cherry tomatoes",
+   "Add in the crumbled feta and give a good mix",
+   "For the sauce: in a bowl add the Greek yogurt, perinaise and 2 tbsp paprika",
+   "Add the sauce to the salad and give a good mix through",
+   "Once the orzo is cooked add this and mix this in too",
+   "Once the salmon is cooked through shred this with a knife and fork and mix into the salad and orzo",
+   "Separate into 2 dishes and keep in the fridge for up to 3 days"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "spicy-salmon-veg",
+  "title": "Spicy Salmon & Veg",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 15",
+  "servings": 2,
+  "kcal": 488,
+  "protein": 27,
+  "carbs": 51,
+  "fat": 17,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "2 pri pri spiced salmon fillets",
+   "250G Mexican style rice",
+   "100g frozen peas",
+   "1 red pepper",
+   "120g asparagus tips",
+   "20g sriracha mayo",
+   "paprika"
+  ],
+  "method": [
+   "Fry the salmon in a pan on both sides for around 8-10 mins until cooked through and peel off the skin",
+   "Set this to the side and add in the bag of",
+   "Mexican rice, sliced red pepper, asparagus and frozen peas",
+   "Season this mix with a tbsp of paprika",
+   "Share the veg & rice mix out into 2 meal prep dishes and top with the salmon",
+   "Drizzle half of the sriracha mayo over each meal"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "chinese-chicken-curry",
+  "title": "Chinese Chicken Curry",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 17",
+  "servings": 4,
+  "kcal": 478,
+  "protein": 39,
+  "carbs": 60,
+  "fat": 8,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "480g chicken breast",
+   "500g basmati rice",
+   "100g dried weight Mayflower Curry",
+   "Powder",
+   "200g frozen peas",
+   "1 red onion diced",
+   "1 tsp lazy garlic",
+   "Salt & Pepper"
+  ],
+  "method": [
+   "Add the lazy garlic and diced chicken breast to the pan and fry off for a few minutes",
+   "Dice up your red onion and add this to the pan with the chicken",
+   "Season with some salt and pepper",
+   "While this cooks, mix your curry powder with some boiling water, add a little water at a time until it's at your desired consistency",
+   "Add this to the pan with the chicken",
+   "Once it's almost cooked through add your frozen peas for the last 5 minutes",
+   "Cook your rice in the microwave",
+   "Separate it all into 4 meal prep dishes",
+   "This will keep in the fridge for up to 3 days"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "teriyaki-salmon-egg-fried-rice",
+  "title": "Teriyaki Salmon & Egg Fried Rice",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 19",
+  "servings": 2,
+  "kcal": 477,
+  "protein": 33,
+  "carbs": 42,
+  "fat": 18,
+  "prepMinutes": 20,
+  "cookMinutes": 30,
+  "freezable": false,
+  "ingredients": [
+   "2 salmon fillets (240g)",
+   "200g microwave basmati rice",
+   "1 egg",
+   "1 red pepper",
+   "1 red onion",
+   "100g frozen peas",
+   "20g teriyaki sauce",
+   "20g soy sauce",
+   "Salt, pepper & garlic seasoning"
+  ],
+  "method": [
+   "Cover the salmon fillets in the teriyaki sauce and place in the fridge for 30mins (or as long as you can) to marinate",
+   "Dice up your red onion & pepper",
+   "Add both salmon filets to the pan (skin side down) and fry off on both sides",
+   "Peel the skin off when you flip the salmon",
+   "Dice the salmon up and set to the side",
+   "In the same pan add the onion & pepper and fry until softened",
+   "Add in your rice and crack 1 egg",
+   "Keep mixing this round and add in the soy sauce",
+   "Add in your frozen peas and season with salt, pepper and garlic seasoning",
+   "Share out into 2 meal prep dishes and top with the teriyaki salmon"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "nandos-peri-wraps",
+  "title": "Nandos Peri Wraps",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 21",
+  "servings": 2,
+  "kcal": 439,
+  "protein": 38,
+  "carbs": 43,
+  "fat": 12,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "2 plain wraps",
+   "240g chicken",
+   "1 red pepper",
+   "30ml perinaise",
+   "40g lightest Philadelphia",
+   "20g spicy dorritos",
+   "Onion salt, galric powder, paprika",
+   "Lettuce",
+   "Cucumber"
+  ],
+  "method": [
+   "Cover the chicken in the seasoning and fry off in the pan",
+   "Add in a diced red pepper",
+   "While this is cooking prepare the sauce in a separate bowl",
+   "Add in the perinaise and Philadelphia and mix together",
+   "Once the chicken and pepper is cooked add this to the bowl with the sauce and coat well",
+   "In each wrap add the lettuce, cucumber, chicken and Doritos and wrap tightly",
+   "Fry each wrap on both sides untl really crispy",
+   "Wrap in tin foil and keep in the fridge for up to 3 days"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "fajita-mince-orzo",
+  "title": "Fajita Mince Orzo",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 23",
+  "servings": 3,
+  "kcal": 536,
+  "protein": 54,
+  "carbs": 62,
+  "fat": 6,
+  "prepMinutes": 20,
+  "cookMinutes": 30,
+  "freezable": true,
+  "ingredients": [
+   "400g extra lean beef mince (3%)",
+   "180g dried weight orzo",
+   "30g tomato puree",
+   "90g eat lean cheese",
+   "150g drained black beans",
+   "1 red onion",
+   "1 rich beef stock pot (500ml water)",
+   "Lazy garlic",
+   "Paprika, black pepper",
+   "25g fajita seasoning"
+  ],
+  "method": [
+   "Fry off the lean mince with some lazy garlic, salt, pepper and paprika",
+   "Add in the diced red onion and add in all of your fajita seasoning",
+   "Once the beef is well cooked, add in the tomato puree",
+   "Add in the dried orzo and the stock pot in around 500ml water",
+   "Leave this for around 15-20 mins stirring occasionally",
+   "Once the orzo has soaked up the water, add in the black beans and grated cheese for the last 5-10 mins",
+   "A little more water may be needed if the orzo isn't fully cooked",
+   "Separate out into 3 meal prep dishes"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "burger-pasta-salad",
+  "title": "Burger Pasta Salad",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 25",
+  "servings": 2,
+  "kcal": 397,
+  "protein": 27,
+  "carbs": 45,
+  "fat": 11,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "2 5% skinny burgers (Aldi)",
+   "100g dried weight pasta",
+   "2 light cheese slices",
+   "30g peri mayonnaise",
+   "Lettuce, cucumber, tomatoes (not tracked)",
+   "Jalapeños"
+  ],
+  "method": [
+   "Boil the pasta in one pan and fry off the burgers on both sides in another",
+   "Meanwhile, assemble your salad in two tuppa- wear boxes",
+   "Once the burgers are cooked, add a slice of cheese on top of each to melt",
+   "Add the cooked pasta to the meal pre tubs and top with the cheesy burger",
+   "Add 15g of peri mayonnaise on top of each burger and top with your jalapeños"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "chicken-halloumi-mozarella-pasta",
+  "title": "Chicken & Halloumi Mozarella Pasta",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 27",
+  "servings": 2,
+  "kcal": 459,
+  "protein": 43,
+  "carbs": 28,
+  "fat": 19,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "100g halloumi",
+   "200g chicken breast",
+   "120g dried spaghetti",
+   "40g grated mozzarella",
+   "20ml sriracha sauce",
+   "100ml passata",
+   "Lazy garlic",
+   "Paprika, Italian seasoning"
+  ],
+  "method": [
+   "Boil the pasta in one pan and fry off chicken in another with some lazy garlic",
+   "Grill the halloumi while you cook the chicken",
+   "Season the chicken with paprika and Italian seasoning",
+   "Once the chicken is cooked, add the passata and sriracha",
+   "Mix it well and add in the mozzarella",
+   "When the pasta is cooked, add it to the pan with the chicken and cheesy sauce",
+   "Separate out into 2 dishes and top with halloumi"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "lasagne",
+  "title": "Lasagne",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 29",
+  "servings": 4,
+  "kcal": 477,
+  "protein": 44,
+  "carbs": 29,
+  "fat": 19,
+  "prepMinutes": 20,
+  "cookMinutes": 45,
+  "freezable": true,
+  "ingredients": [
+   "500g 5% fat lean mince",
+   "1 onion (diced)",
+   "1 red pepper (diced)",
+   "100g mushrooms",
+   "1 tin of chopped tomatoes",
+   "200ml passata",
+   "1 tbsp balsamic vinegar",
+   "50ml rich beef stock",
+   "lazy garlic, Italian herbs & onion salt",
+   "30g light butter (flora)",
+   "200ml semi skimmed milk",
+   "30g plain flour",
+   "30g reduced fat grated cheese",
+   "15g parmesan",
+   "125g lasagne sheets",
+   "90g grated mozzarella"
+  ],
+  "method": [
+   "Add some lazy garlic to the pan along with your 5% reduced fat lean mince",
+   "Season with onion salt, paprika and Italian seasoning",
+   "Add in your diced onion and pepper",
+   "Add in the tinned tomatoes, passata and balsamic vinegar and mix well",
+   "Add in the mushrooms",
+   "Pour in the beef stock and cook for 10-15 mins on low heat",
+   "In another pan add the butter, milk, flour, reduced fat cheese and parmesan and mix until a nice thick, creamy sauce is formed",
+   "In an oven proof dish add 1 layer of mince, 1 layer of lasagne sheets and 1 layer of creamy sauce and repeat",
+   "On the top layer add your grated mozzarella",
+   "Bake in the oven on 180 for around 30 mins",
+   "This makes 4 portions, keep in the fridge for up to 3 days or freeze"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "penne-arrabbiata",
+  "title": "Penne Arrabbiata",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 31",
+  "servings": 2,
+  "kcal": 488,
+  "protein": 46,
+  "carbs": 59,
+  "fat": 8,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "240g chicken breast",
+   "140g (dried weight) pasta",
+   "1/2 red onion",
+   "240g passata",
+   "10g tomato puree",
+   "100ml chicken stock",
+   "40g grated mozzarella",
+   "Onion salt, paprika, oregano, basil",
+   "Lazy garlic",
+   "Lazy chilli"
+  ],
+  "method": [
+   "Add some lazy garlic to the pan along with your diced onion and chicken breast (meanwhile the pasta is on the boil in a separate pan)",
+   "Season with onion salt, oregano, basil and paprika",
+   "Pour in the passata and tomato puree with the chicken stock",
+   "Mix in the grated cheese and leave until thickened",
+   "Once the pasta is cooked, mix this into the sauce and serve into 2 dishes or meal prep tubs"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "teriyaki-chicken",
+  "title": "Teriyaki Chicken",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 33",
+  "servings": 2,
+  "kcal": 511,
+  "protein": 41,
+  "carbs": 75,
+  "fat": 6.8,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "240g chicken breast",
+   "250g (microwave) basmati rice",
+   "20ml teriyaki sauce",
+   "20ml soy sauce",
+   "20ml honey",
+   "1 red pepper",
+   "1 large carrot",
+   "200g tender stem broccoli",
+   "30g dried weight Mayflower curry powder",
+   "Lazy garlic",
+   "Salt and pepper"
+  ],
+  "method": [
+   "Marinate the diced chicken in the teriyaki sauce and fry off until cooked through then set aside",
+   "In the same pan, fry off your veggies in some lazy garlic, soy sauce and honey",
+   "Once the veggies have softened, add in your cooked rice and mix well",
+   "Add the chicken back in and mix well",
+   "Serve into two meal prep dishes seasoning with salt and pepper",
+   "Optional to top with the mayflower curry sauce"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "cheesy-bacon-pasta-bake",
+  "title": "Cheesy Bacon Pasta Bake",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 35",
+  "servings": 3,
+  "kcal": 470,
+  "protein": 28.4,
+  "carbs": 62,
+  "fat": 12,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "210g (dried weight) penne pasta",
+   "6 lean bacon rashers",
+   "100g 50% fat lightest Philadelphia",
+   "30g grated red leicester cheese",
+   "30% grated mozzarella",
+   "1 red onion",
+   "240g passata",
+   "15ml sriracha",
+   "paprika, lazy garlic, chilli flakes"
+  ],
+  "method": [
+   "Put the pasta onto boil",
+   "In a separate pan fry off the diced onion and sliced bacon rashers",
+   "Season with paprika, chilli flakes & lazy garlic",
+   "Once its nice and crispy, remove some from the pan for the toppings later",
+   "Add in the passata, Philadelphia & sriracha sauce",
+   "Once the pasta is cooked, mix it into the sauce",
+   "Transfer into an oven proof dish",
+   "Top with the mozzarella & red leicester and the bacon topping you set aside earlier",
+   "Bake in the oven for 10-15 minutes until the cheese is all melted and the bacon is crispy",
+   "Share into 3 meal prep tubs"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "tuscan-chicken-orzo",
+  "title": "Tuscan Chicken Orzo",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 37",
+  "servings": 2,
+  "kcal": 556,
+  "protein": 50,
+  "carbs": 64,
+  "fat": 10,
+  "prepMinutes": 20,
+  "cookMinutes": 35,
+  "freezable": true,
+  "ingredients": [
+   "240g diced chicken breast",
+   "1/2 red onion",
+   "Handful of spinach",
+   "150g dried weight orzo",
+   "1 chicken stock pot (around 300ml water)",
+   "60g lightest Philadelphia cheese",
+   "80g marinated tomatoes (the aldi ones are good for the cals)",
+   "30g parmesan cheese grated",
+   "10g tomato puree",
+   "Onion salt, chicken seasoning,",
+   "oregano , pepper"
+  ],
+  "method": [
+   "Fry off the diced chicken breast with 1/2 a diced red onion",
+   "Season with onion salt, chicken seasoning and oregano",
+   "Once the chicken is cooked, add in the dried orzo and chicken stock with around 300ml water",
+   "Pop a cover on the pan and let the orzo soak up the water for 20-30 mins (stir occasionally so it does not stick to the pan)",
+   "Add in some spinach for the last 5 minutes to wilt down",
+   "Add in the tomatoes, tomato puree, philadelphia cheese and grated parmesan",
+   "Stir until you have a thick, creamy consistency",
+   "Season with some pepper then share into 2 meal prep tubs"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "tuscan-chicken-wrap",
+  "title": "Tuscan Chicken Wrap",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 39",
+  "servings": 2,
+  "kcal": 393,
+  "protein": 40,
+  "carbs": 38,
+  "fat": 8,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "2 tortilla wraps (mine were 181 cals)",
+   "240g chicken breast",
+   "60g marinated tomatoes (aldi ones are good for the cals)",
+   "40g lightest Philadelphia",
+   "Handful of spinach",
+   "20g grated parmesan",
+   "Chicken seasoning, oregano, basil,"
+  ],
+  "method": [
+   "In a pan fry off the diced chicken breast in a tbsp of each seasoning",
+   "Add in the marinated tomatoes to fry. for a few minutes",
+   "While the chicken is cooking in a bowl combine the spinach, Philadelphia cheese, parmesan",
+   "Add the tomatoes and chicken to the bowl and mix thoroughly until its a nice creamy sauce",
+   "Share out the mixture between 2 wraps",
+   "Fold up and fry the wraps on both sides until crispy",
+   "Wrap up in tin foil to use as meal prep"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "spicy-cheesy-loaded-fries",
+  "title": "Spicy, Cheesy Loaded Fries",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 41",
+  "servings": 2,
+  "kcal": 374,
+  "protein": 38,
+  "carbs": 42,
+  "fat": 6,
+  "prepMinutes": 20,
+  "cookMinutes": 30,
+  "freezable": false,
+  "ingredients": [
+   "240g chicken breast",
+   "300g potato",
+   "40g passata",
+   "20ml sriracha sauce",
+   "30ml lighter than light mayo",
+   "50g light mozzarella",
+   "Paprika, oregano, chicken seasoning,",
+   "garlic powder",
+   "10ml sriracha mayo",
+   "Spring onion"
+  ],
+  "method": [
+   "Chop up your potato into chips and cover in fry light",
+   "Season with garlic powder, oregano and paprika",
+   "Bake in the oven (turning half way) for 20-30 mins",
+   "While the chips are baking, dice up your chicken and season in garlic powder, paprika and oregano",
+   "Fry this off and add in 2 sliced spring onions and once its cooked though add in the passata, sriracha chilli sauce and mozzarella",
+   "Once the chips are nice and crispy, separate them out into 2 boxes and top each with half of the chicken",
+   "Season with sriracha mayo (5ml on each) and some more spring onions"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "thai-red-chicken-meatballs",
+  "title": "Thai Red Chicken Meatballs",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 43",
+  "servings": 3,
+  "kcal": 477,
+  "protein": 34,
+  "carbs": 44,
+  "fat": 17,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "1 Thai red curry pack from aldi (or get some Thai red paste, low fat coconut milk and Thai spices)",
+   "12 chicken meatballs (I cut mine in half to make 24)",
+   "Mangetout",
+   "Baby corn",
+   "Spring onion",
+   "425g (cooked weight) basmati rice",
+   "Fresh chilli to top"
+  ],
+  "method": [
+   "Add your Mangetout and baby corn to the pan and a small portion of the curry paste and 2tbsp of the milk",
+   "Once the paste becomes fragrant, add in the rest of the paste and the meatballs",
+   "When the meatballs are almost cooked through add the rest of milk and the spring onion",
+   "Cook your rice ( I used 1 1/2 bags of microwave rice and shared into 3 portions",
+   "Top with some fresh chilli"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "spicy-mozzarella-meatballs",
+  "title": "Spicy Mozzarella Meatballs",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 45",
+  "servings": 3,
+  "kcal": 494,
+  "protein": 34,
+  "carbs": 12,
+  "fat": 10,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "210g dried weight spaghetti",
+   "12 5% fat lean meatballs (I cut them in half to make 24)",
+   "1 red onion",
+   "300g passata",
+   "15ml sriracha sauce",
+   "60g lightest Philadeliphia",
+   "45g mozarella",
+   "Parmesan to sprinkle on top",
+   "Garlic powder, paprika, onion salt"
+  ],
+  "method": [
+   "Put your spaghetti on to the boil",
+   "In a separate pan fry off your diced red onion and meatballs in paprika, onion salt and garlic seasoning",
+   "Add in the passata, Philadelphia, grated mozzarella and the sriracha until you have a nice thick creamy sauce",
+   "Once the pasta is cooked, add it to the pan with the meatballs to coat it in the sauce",
+   "Share out into 3 dishes and sprinkle some parmesan on top"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "creamy-chicken-chorizo-pasta",
+  "title": "Creamy Chicken & Chorizo Pasta",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 47",
+  "servings": 2,
+  "kcal": 576,
+  "protein": 38,
+  "carbs": 38,
+  "fat": 26,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "140g dried weight pasta (I used the chickpea protein pasta from Aldi but any is okay)",
+   "30g chorizo",
+   "4 chicken sausages",
+   "1/2 red onion (diced)",
+   "1 tbsp tomato puree",
+   "80ml single cream (low fat)",
+   "20g grated parmesan cheese",
+   "60g marinated tomatoes",
+   "Handful of spinach",
+   "Black pepper, paprika & garlic powder"
+  ],
+  "method": [
+   "Boil your pasta in slightly salted water meanwhile the chicken sausages are cooking under the grill",
+   "In another pan add in the chorizo, after a few minutes add the diced onion and marinated tomatoes",
+   "Add in the tomato puree, cream, parmesan cheese and a splash of the pasta water",
+   "Add in the spinach to wilt down and once the pasta and sausages are cooked add these too",
+   "Mix in the seasoning",
+   "Separate into 2 meal prep tubs and this will keep in the fridge for up to 3 days"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "chicken-mac-cheese",
+  "title": "Chicken Mac & Cheese",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 49",
+  "servings": 3,
+  "kcal": 553,
+  "protein": 50,
+  "carbs": 58,
+  "fat": 13,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "200G (dried weight) macaroni pasta",
+   "320g (raw weight) chicken breast",
+   "20g plan flour",
+   "300ml semi-skimmed milk",
+   "50g grated Red Leicester cheese",
+   "70g Reduced fat grated cheese",
+   "Onion salt, paprika, pepper, parsley"
+  ],
+  "method": [
+   "Boil your pasta in slightly salted water",
+   "In a separate pan, cook your diced chicken breast, once cooked through set it aside",
+   "In a pan, add your flour & milk and stir until it starts to thicken",
+   "Add in your seasonings and then stir again",
+   "Add in your cheese (leave some for the topping) and stir until nice and thick",
+   "Once the pasta is cooked add this and the chicken into the cheese sauce",
+   "Transfer into an oven proof dish and top with the remaining cheese and place into the oven on 180 degrees for 10 minutes",
+   "Top with some dried parsley"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "sweet-chilli-sticky-chicken",
+  "title": "Sweet Chilli Sticky Chicken",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 51",
+  "servings": 2,
+  "kcal": 483,
+  "protein": 38,
+  "carbs": 61,
+  "fat": 5,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "240g chicken breast (raw weight)",
+   "250g bag of microwave egg fried rice",
+   "100g frozen peas",
+   "1 red pepper",
+   "Onion salt, paprika & chilli",
+   "For the sauce:",
+   "20g honey",
+   "15ml soy sauce",
+   "10g tomato puree",
+   "20g sweet chilli sauce (reduced sugar version)",
+   "Sesame seeds"
+  ],
+  "method": [
+   "Cover your chicken in the seasoning and fry off with your sliced red pepper",
+   "While that is cooking, in a bowl combine the honey, soy, tomato puree and sweet chilli sauce and mix well",
+   "When the chicken has cooked, pour over the sauce on a high heat until its really thick and sticky",
+   "Once this is cooked, set the chicken to the side and add the rice to the pan with the frozen peas",
+   "Share it out into 2 portions and top with some sesame seeds"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "creamy-garlic-chicken-chorizo-gnocchi",
+  "title": "Creamy Garlic Chicken & Chorizo Gnocchi",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 53",
+  "servings": 2,
+  "kcal": 506,
+  "protein": 34,
+  "carbs": 63,
+  "fat": 11,
+  "prepMinutes": 20,
+  "cookMinutes": 35,
+  "freezable": false,
+  "ingredients": [
+   "140g (dried weight) orzo",
+   "4 chicken sausages",
+   "30g diced chorizo",
+   "20g grated parmesan cheese",
+   "40g lightest Philadelphia",
+   "100g frozen peas",
+   "1 chicken stock pot with 400ml water",
+   "1 heaped tbsp lazy garlic",
+   "100g asparagus tips",
+   "Black pepper & parsley"
+  ],
+  "method": [
+   "Grill your sausages while you cook the rest",
+   "Add your lazy garlic and chorizo to the pan and fry off for a few minutes",
+   "Add in your dried orzo along with the chicken stock, stir and cover over",
+   "Leave this to cook for around 20-30 mins stirring occasionally (you may need to add more water as the orzo soaks it up)",
+   "When the water is fully soaked up, add in the parmesan cheese and the Philadelphia and mix well",
+   "Once the sausages are cooked, slice them up and add to the orzo 5 minutes before the end add in the frozen peas",
+   "Serve with grilled asparagus & season with pepper and parsley"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "chipotle-honey-salmon-tacos",
+  "title": "Chipotle & Honey Salmon Tacos",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 55",
+  "servings": 2,
+  "kcal": 451,
+  "protein": 32,
+  "carbs": 51,
+  "fat": 13,
+  "prepMinutes": 20,
+  "cookMinutes": 25,
+  "freezable": false,
+  "ingredients": [
+   "2 salmon fillets (120g each) skin",
+   "removed",
+   "4 mini tortilla wraps",
+   "40g red cabbage (sliced into thin strips)",
+   "50g carrot (sliced into thin strips)",
+   "Parsley",
+   "Salmon Marinade",
+   "20g chipotle",
+   "20g honey",
+   "Juice of 1/2 lime",
+   "Taco Sauce",
+   "20g chipotle paste",
+   "20g lighter than light mayo",
+   "Juice of 1/2 lime"
+  ],
+  "method": [
+   "Take the skin off the salmon and coat in the marinade and leave at room temperature for 10 minutes",
+   "Cook in the air fryer for around 15 mins (you can also fry this or bake in the oven)",
+   "Once cooked through, shred the salmon with a knife and fork",
+   "Lightly toast your mini tortillas and spread the taco sauce evenly on each one",
+   "Layer with the red cabbage & carrots (or salad)",
+   "Layer with the shredded salmon & season with parsley"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "nandos-chicken-rice",
+  "title": "Nandos Chicken & Rice",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 57",
+  "servings": 2,
+  "kcal": 481,
+  "protein": 36,
+  "carbs": 74,
+  "fat": 4,
+  "prepMinutes": 20,
+  "cookMinutes": 20,
+  "freezable": false,
+  "ingredients": [
+   "240g chicken breast",
+   "150g (uncooked) long grain rice",
+   "1 red pepper diced",
+   "1 diced onion",
+   "Lemon juice",
+   "60g Nandos marinade",
+   "50g tomato puree",
+   "Fresh coriander",
+   "Chicken seasoning:",
+   "Smoked paprika, oregano, onion salt,",
+   "black pepper",
+   "Rice seasoning:",
+   "Cumin, turmeric, chilli powder, onion",
+   "salt"
+  ],
+  "method": [
+   "Marinate your chicken breasts in the seasonings listed, half the Nandos sauce and a tbsp of lemon juice",
+   "Bake in the air fryer or in the oven",
+   "While that is cooking, in a pan add your diced onion and red pepper along with the rice seasonings listed",
+   "Add in your tomato puree and give it a mix",
+   "Add in your uncooked rice and around 300ml water, stir and cover over for around 20 mins (it may need stirring occasionally)",
+   "The rice may need topping up with water and re-covering until it's cooked through",
+   "Separate the rice into 2 dishes topping each with one of the chicken breasts, the remaining",
+   "Nandos sauce and some fresh coriander"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "sweet-chilli-crispy-chicken",
+  "title": "Sweet Chilli Crispy Chicken",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 59",
+  "servings": 2,
+  "kcal": 440,
+  "protein": 36,
+  "carbs": 73,
+  "fat": 5,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "240g chicken breast",
+   "250g (1 microwavable bag) basmati",
+   "rice",
+   "2 tsp light & 2 tsp dark soy sauce",
+   "30g honey",
+   "20g corn flour",
+   "1 red pepper",
+   "Spring onions",
+   "1 tsp lazy garlic",
+   "30g reduced sugar sweet chilli sauce (blue dragon) (optional topping)",
+   "Sesame seeds"
+  ],
+  "method": [
+   "In a bowl add your diced chicken breast and mix with the lazy garlic, soy sauces and cornflour",
+   "Mix this well until all of the chicken is coated",
+   "Add the chicken to a pan or air fryer until cooked through and crispy",
+   "Meanwhile slice your red pepper into strips and dice up your spring onions",
+   "Take your chicken out of the pan/ air fryer and coat in the honey",
+   "Add it back into the air fryer with the red peppers and spring onions for another 5 minutes",
+   "While this is cooking, microwave your rice",
+   "Share into 2 portions and top with sesame seeds & some sweet chilli sauce (optional)"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "creamy-spicy-sticky-chicken",
+  "title": "Creamy Spicy Sticky Chicken",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 61",
+  "servings": 3,
+  "kcal": 432,
+  "protein": 47,
+  "carbs": 44,
+  "fat": 9,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "450g chicken breast",
+   "3 nests of whole wheat noodles (50g each dried weight)",
+   "15g sriracha sauce",
+   "15g light soy sauce",
+   "60g lightest Philadelphia",
+   "15g honey",
+   "10g sesame oil",
+   "3 sliced spring onions",
+   "1tsp sesame seeds",
+   "Seasonings",
+   "Onion salt, garlic powder and black",
+   "pepper"
+  ],
+  "method": [
+   "Put your noodles on to the boil",
+   "In a separate pan add your diced chicken breast and cover with the oil, seasonings and half of the soy sauce",
+   "Once the chicken is cooked add in the sliced spring onions",
+   "Mix in the sriracha, honey, the rest of the soy sauce and the sesame seeds",
+   "Put it onto a high heat so that the chicken goes extra sticky",
+   "Once the noodles are cooked add these to the pan and mix through the Philadelphia",
+   "Separate into 3 meal prep dishes and top with some more spring onion and sesame seeds",
+   "This will keep in the fridge for up to 3 days"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "chicken-alfredo",
+  "title": "Chicken Alfredo",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 63",
+  "servings": 2,
+  "kcal": 515,
+  "protein": 50,
+  "carbs": 52,
+  "fat": 11,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "250g chicken breast",
+   "140g (dried weight) tagliatelle pasta",
+   "Sauce",
+   "100ml milk (almond or skimmed)",
+   "40g lightest Philadelphia",
+   "60g mozzarella",
+   "Seasonings",
+   "Italian herbs, garlic powder, smoked",
+   "paprika, salt and pepper",
+   "Toppings",
+   "Parmesan & parsley"
+  ],
+  "method": [
+   "Spray your chicken in low cal cooking spray or olive oil spray and cover in the seasonings",
+   "Air fry on 180 for 15 minutes or bake in the oven",
+   "Put your pasta on to boil",
+   "In another pan pour in the milk, mozzarella and",
+   "Philadelphia and mix until combined",
+   "Add in some garlic and Italian herbs",
+   "Once the pasta is cooked, add it to the sauce and mix until it is coated",
+   "Separate into 2 meal prep tubs and add the chicken on top",
+   "Season with a sprinkle of parmesan and parsley"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "sweet-chilli-chicken-one-pot-rice",
+  "title": "Sweet Chilli Chicken One Pot Rice",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 65",
+  "servings": 2,
+  "kcal": 499,
+  "protein": 43,
+  "carbs": 81,
+  "fat": 3,
+  "prepMinutes": 20,
+  "cookMinutes": 20,
+  "freezable": true,
+  "ingredients": [
+   "260g chicken breast",
+   "140g (dried weight) long grain rice",
+   "1 pepper",
+   "1/2 red onion",
+   "30g tomato puree",
+   "10ml light soy sauce",
+   "40g reduced sugar sweet chilli sauce (Blue dragon was the brand I used)",
+   "1 chicken stock pot & 500ml water",
+   "1tsp lazy garlic, paprika, chilli flakes,",
+   "1 sliced spring onion",
+   "Sprinkle of sesame seeds"
+  ],
+  "method": [
+   "Dice up your chicken breasts and season in the lazy garlic, paprika, chilli flakes, soy sauce and the sweet chilli",
+   "Mix until all the chicken is coated and fry off",
+   "Once the chicken is cooked through take it out the pan and pop it to the side to marinate",
+   "In the same pan add in your diced red onion and pepper",
+   "Then add in your dried rice and the chicken stock",
+   "Add in the tomato puree and mix through",
+   "Let this cook for 20 minutes stirring occasionally and adding in extra water as and when is needed",
+   "Once the rice is cooked add in the chicken and mix",
+   "Share into 2 meal prep dishes and top with sliced spring onion and sesame seeds"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "thai-red-salmon-rice-bowl",
+  "title": "Thai Red Salmon Rice Bowl",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 67",
+  "servings": 2,
+  "kcal": 411,
+  "protein": 30,
+  "carbs": 46,
+  "fat": 11,
+  "prepMinutes": 20,
+  "cookMinutes": 30,
+  "freezable": false,
+  "ingredients": [
+   "240G salmon fillets",
+   "270g cooked long grain rice (microwave bag)",
+   "30g Thai red paste",
+   "Cucumber",
+   "Spring onion",
+   "Sriracha mayo (8g per bowl)",
+   "Sesame seeds"
+  ],
+  "method": [
+   "Dice up your salmon fillets spray with cooking spray and cover in the Thai red paste",
+   "Air fry the salmon for 10 minutes or bake in the oven for around 18-20 minutes at 180 degrees",
+   "Microwave your rice and start building your bowl with the rice in the bottom",
+   "Top with cucumber, spring onions, the cooked salmon and sriracha mayo",
+   "Sprinkle some sesame seeds on top to finish"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "chicken-fajita-pasta",
+  "title": "Chicken Fajita Pasta",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 69",
+  "servings": 2,
+  "kcal": 602,
+  "protein": 48,
+  "carbs": 75,
+  "fat": 10,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "250g chicken breast",
+   "140g (dried weight) penne pasta",
+   "1/2 an onion",
+   "1 red pepper",
+   "40g lightest Philadelphia cheese",
+   "170g tomato and chilli passata",
+   "40g light grated cheese",
+   "20g fajita seasoning",
+   "1tsp lazy garlic",
+   "Black pepper & chilli flakes"
+  ],
+  "method": [
+   "Dice up your chicken breast and cover in the fajita spices- air fry for 15 minutes or fry off in a pan until cooked through",
+   "Boil your pasta in one pan",
+   "In another pan, fry off a tsp of lazy garlic, your diced onion and red pepper and sprinkle a little more fajita seasoning over the veg",
+   "Mix in your tomato and chilli passata, lightest",
+   "Philadelphia",
+   "Add the chicken into the sauce and your cooked pasta",
+   "Stir in the grated cheese",
+   "Top with some black pepper and chilli flakes"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "creamy-chilli-chicken-noodle",
+  "title": "Creamy Chilli Chicken Noodle",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 71",
+  "servings": 2,
+  "kcal": 487,
+  "protein": 40,
+  "carbs": 53,
+  "fat": 12,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "240g chicken breast",
+   "2 nests of medium egg noodles (239 calories each)",
+   "1 red pepper",
+   "2 spring onions",
+   "1tsp garlic puree",
+   "1tsp chilli puree",
+   "100ml single cream",
+   "Salt, pepper and paprika"
+  ],
+  "method": [
+   "Cover your chicken breast in salt, pepper and paprika and air fry for 12 minutes (or bake in the oven for 20)",
+   "Boil your noodles in one pan",
+   "In another pan fry off your diced red pepper",
+   "Stir in the garlic and chilli puree",
+   "Stir through the cream and a ladle of the noodle water",
+   "When the chicken is cooked, shred this with a knife and fork and add it to the sauce making sure it is well coated",
+   "Once the noodles are cooked add this to the pan too",
+   "Top with some fresh spring onion"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "creamy-cajun-prawn-linguini",
+  "title": "Creamy Cajun Prawn Linguini",
+  "source": "Fit Food Diary: Meal Prep Made Easy, p. 73",
+  "servings": 2,
+  "kcal": 558,
+  "protein": 28,
+  "carbs": 63,
+  "fat": 17,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "140g (dried weight) linguini",
+   "170g frozen, raw, king prawns",
+   "60g sun dried tomatoes",
+   "Fresh parsley",
+   "Prawn seasonings:",
+   "cajun spice, salt and pepper",
+   "Sauce:",
+   "100ml single cream",
+   "20g light butter",
+   "20g plain flour",
+   "25g grated parmesan cheese",
+   "Splash of pasta water",
+   "cajun spice, onion powder, garlic powder and black pepper"
+  ],
+  "method": [
+   "Put your pasta on to the boil",
+   "In another pan spray with cooking spray and add your prawns",
+   "Season with the prawn seasonings listed",
+   "Remove the cooked prawns from the pan and use the same pan to make your sauce",
+   "Add in your butter, flour, cream and some pasta water to loosen up the sauce and whisk until you have a smooth consistency",
+   "Add in your sun dried tomatoes along with the sauce seasonings listed",
+   "Add the cooked pasta to the sauce and stir through the grated parmesan cheese and some fresh parsley",
+   "Share into 2 bowls and add half of the prawns to each",
+   "Top with some more black pepper and grated parmesan cheese"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "spicy-creamy-cajun-chicken-meal-prep",
+  "title": "Spicy Creamy Cajun Chicken Meal Prep",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 5",
+  "servings": 2,
+  "kcal": 381,
+  "protein": 34,
+  "carbs": 45,
+  "fat": 6,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "240g chicken breast",
+   "100g (dried weight) long grain rice",
+   "1 white onion diced",
+   "10g low fat butter",
+   "10g sriracha sauce",
+   "20g tomato puree",
+   "50ml semi skimmed milk",
+   "20g Philadelphia lightest",
+   "10g parmesan cheese",
+   "garlic powder",
+   "oregano",
+   "cajun seasoning",
+   "lazy garlic"
+  ],
+  "method": [
+   "Put your rice onto the boil",
+   "Spray your diced chicken breast with cooking spray and season in oregano, garlic powder, cajun seasoning and sriracha sauce",
+   "Add this to the pan and fry off until cooked through and slightly charred then remove from the pan",
+   "In the pan then add the light butter, a tsp of lazy garlic, the diced onion, tomato puree, oregano, cajun seasoning and the milk",
+   "Once mixed well and onions softened, re add in the chicken",
+   "Pour over the parmesan cheese and stir well"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "cheesy-chorizo-chicken-pasta",
+  "title": "Cheesy Chorizo & Chicken Pasta",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 7",
+  "servings": 2,
+  "kcal": 545,
+  "protein": 36,
+  "carbs": 64,
+  "fat": 17,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "140g (dried weight) penne pasta",
+   "4 chicken sausages (I used Musclefoods)",
+   "30g diced chorizo",
+   "30g grated mozzarella cheese",
+   "40g reduced fat cheddar cheese (I used Sainsbury’s Be Good to Yourself range)",
+   "200g tomato & chilli pasta sauce (Lloyd Grossman brand)",
+   "1 white onion diced",
+   "Lazy garlic",
+   "Salt & pepper",
+   "Paprika",
+   "Garlic powder",
+   "Oregano"
+  ],
+  "method": [
+   "Put your pasta onto the boil",
+   "In another pan fry off the chorizo and diced onion with some lazy garlic",
+   "De-skin your chicken sausages and break up in the pan and season with salt, pepper, paprika, garlic powder and oregano",
+   "Add in your tomato sauce (if you don’t have any, use passata with some chilli flakes, paprika and oregano)",
+   "Add in half of the cheese",
+   "Once the pasta is cooked add this to the pan with the remaining cheese",
+   "Top with some more pepper and oregano"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "high-volume-peri-chicken-halloumi-meal-prep",
+  "title": "High Volume Peri Chicken & Halloumi Meal Prep",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 9",
+  "servings": 2,
+  "kcal": 486,
+  "protein": 41,
+  "carbs": 56,
+  "fat": 10,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "100g (dried weight) long grain rice",
+   "200g chicken breast",
+   "80g (lighter) halloumi (found in Sainsbury’s)",
+   "1 red pepper",
+   "200g mushrooms",
+   "100g frozen garden peas",
+   "20g peri peri marinade (Nandos)",
+   "40g sweet chilli jam (Nandos)",
+   "chilli & garlic seasoning",
+   "peri peri salt",
+   "medium chilli powder (leave out if you don’t like too spicy)",
+   "garlic powder"
+  ],
+  "method": [
+   "Wash the rice and put onto the boil for 10-15 minutes",
+   "Fry off your halloumi pieces on both sides for a few minutes then remove from the pan",
+   "To the pan add the peppers and mushrooms (or veg of choice) 4.Pour over the peri peri marinade onto the chicken and mix well 5.Add the chicken into the pan with the veggies",
+   "Season with the chilli & garlic seasoning and sprinkle over some peri peri salt",
+   "Once the chicken is cooked through add in the frozen peas and fry off for a few minutes",
+   "Then add in the cooked rice and season with some more of the above seasonings",
+   "Add in some chilli powder for extra spice and some garlic powder",
+   "Share it out into your meal prep dishes and top with the halloumi and with 20g of sweet chilli jam on each",
+   "Season with some parsley and chilli flakes"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "sticky-harissa-salmon-veg",
+  "title": "Sticky Harissa Salmon & Veg",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 11",
+  "servings": 1,
+  "kcal": 495,
+  "protein": 34,
+  "carbs": 34,
+  "fat": 24,
+  "prepMinutes": 20,
+  "cookMinutes": 40,
+  "freezable": false,
+  "ingredients": [
+   "1 salmon fillet",
+   "100g asparagus",
+   "100g mushrooms",
+   "100g chopped tinned tomatoes 20g",
+   "lightest Philadelphia",
+   "150g (pre made) mash potato 5g",
+   "honey",
+   "10g harissa paste",
+   "lazy garlic",
+   "salt & pepper paprika garlic powder",
+   "chilli flakes"
+  ],
+  "method": [
+   "Season your salmon with salt, pepper, garlic and paprika",
+   "In a bowl mix the harissa paste with the honey and then coat this over the salmon",
+   "Air fry your salmon for 15 minutes on 180 (or wrap in tin foil and bake in the oven on 180 for 20-25 minutes",
+   "Meanwhile chop up your asparagus and mushrooms and fry off with 1/2 tsp of lazy garlic",
+   "Once softened, add in the tinned tomatoes and stir through the",
+   "Philadelphia",
+   "Cook the mashed potato as per the packet instructions",
+   "Serve up once the salmon is cooked through"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "hunters-chicken-sausages",
+  "title": "Hunters Chicken Sausages",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 13",
+  "servings": 2,
+  "kcal": 499,
+  "protein": 52,
+  "carbs": 46,
+  "fat": 12,
+  "prepMinutes": 20,
+  "cookMinutes": 40,
+  "freezable": true,
+  "ingredients": [
+   "6 chicken sausages (I used muscle foods but Heck & Aldi also do good ones)",
+   "6 lean bacon medallions",
+   "30g reduced fat grated cheddar",
+   "cheese",
+   "30g grated Eat Lean cheese (could just use 60g cheddar if you don’t have Eat Lean this is just good on protein)",
+   "50g BBQ sauce",
+   "200g tender stem broccoli",
+   "300g pre made mashed potato"
+  ],
+  "method": [
+   "Wrap your chicken sausages in the bacon and place in an oven proof dish",
+   "Cook in the oven on 180 for 30 minutes",
+   "Remove from the oven and cover in the BBQ sauce and the cheese and put back in the oven for 10 minutes or until all the cheese has melted",
+   "Meanwhile, boil your broccoli and cook your mashed potato as per the packet instructions",
+   "This recipe was so good even as a meal prep the next day!"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "creamy-bacon-green-veg-pasta",
+  "title": "Creamy Bacon & Green Veg Pasta",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 15",
+  "servings": 4,
+  "kcal": 386,
+  "protein": 30,
+  "carbs": 50,
+  "fat": 6,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "240g (dried weight) pasta",
+   "8 lean bacon rashers",
+   "200g frozen garden peas",
+   "200g broccoli",
+   "60g reduced fat cheddar cheese (I used Eat Lean)",
+   "40g light creme fraiche",
+   "40g lightest Philadelphia",
+   "salt and pepper",
+   "garlic powder",
+   "lemon"
+  ],
+  "method": [
+   "Put your pasta and broccoli onto the boil",
+   "Dice up your bacon rashers and fry these off on both sides for a few minutes with some salt and pepper",
+   "Sprinkle over some garlic powder",
+   "Once the bacon starts to brown add in your frozen garden peas",
+   "One the peas have softened, add in the creme fraiche and the Philadelphia- add in a splash of pasta water to loosen up the sauce",
+   "Once the broccoli and pasta is cooked, add this to the pan with the bacon",
+   "Sprinkle over your grated cheddar cheese, squeeze the juice of 1/2 a lemon and some more pepper and mix well",
+   "Share into your meal prep tubs!"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "crispy-sweet-chilli-chicken",
+  "title": "Crispy Sweet Chilli Chicken",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 17",
+  "servings": 2,
+  "kcal": 495,
+  "protein": 34,
+  "carbs": 80,
+  "fat": 5,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "240g (diced) chicken breast",
+   "250g (1 packet) of microwave egg",
+   "fried rice (or preferred rice)",
+   "1 large red pepper sliced",
+   "1 red onion sliced",
+   "20g (reduced sugar) sweet chilli",
+   "sauce (I used Blue Dragon brand)",
+   "20g honey",
+   "10g sriracha sauce",
+   "20g cornflour",
+   "15ml dark soy sauce",
+   "15ml light soy sauce",
+   "garlic powder",
+   "onion powder",
+   "paprika",
+   "salt and pepper",
+   "Lazy garlic",
+   "Sesame seeds"
+  ],
+  "method": [
+   "Dice up your chicken breast and spray with cooking spray",
+   "Season with onion powder, garlic powder and paprika",
+   "Cover with the corn flour and mix well until all the chicken is coated",
+   "Cook in the air fryer on 180 for 12 minutes (or you can fry this off in the pan and remove once cooked through)",
+   "In a pan fry off the sliced red pepper and red onion until soft",
+   "While this is cooking make your sauce: light soy, dark soy, sriracha, sweet chilli and honey and mix well",
+   "Once the chicken is cooked add this to the pan with the veg and pour over the sauce",
+   "Cook on high for a few minutes until all the chicken and veg are coated and the sauce goes nice and sticky",
+   "Microwave your rice as per the instructions",
+   "Then share into 2 meal prep dishes",
+   "Top with some pepper and sesame seeds"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "chicken-satay",
+  "title": "Chicken Satay",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 21",
+  "servings": 2,
+  "kcal": 434,
+  "protein": 34,
+  "carbs": 60,
+  "fat": 7,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "240g chicken breast",
+   "1 red pepper",
+   "1 onion",
+   "Tender stem broccoli (optional)",
+   "125g (half a packet) microwave long",
+   "grain rice",
+   "30g reduced sugar sweet chilli sauce",
+   "20g peanut butter",
+   "10g honey",
+   "2tbsp dark soy sauce",
+   "salt & pepper",
+   "Sesame seeds",
+   "Spring onion"
+  ],
+  "method": [
+   "Dice up your chicken and add it to the pan",
+   "Dice your onion and pepper and add this to the pan and season with salt and pepper",
+   "While this is cooking make the sauce",
+   "In a bowl combine the sweet chilli, soy, honey and peanut butter",
+   "Add a splash of boiling water to loosen up the sauce and stir well until it’s nice and smooth",
+   "Once the chicken is cooked, pour over the sauce, bring to the boil for 2 minutes then lower the heat down to a low simmer for 5 minutes",
+   "Cook your rice in the microwave as per the instructions and share out into your prep dishes",
+   "If you serve with broccoli, add this to the dishes then top with half of the chicken satay in each",
+   "Top with a sliced spring onion and some sesame seeds"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "creamy-pesto-chicken",
+  "title": "Creamy Pesto Chicken",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 23",
+  "servings": 2,
+  "kcal": 472,
+  "protein": 35,
+  "carbs": 52,
+  "fat": 14,
+  "prepMinutes": 20,
+  "cookMinutes": 25,
+  "freezable": false,
+  "ingredients": [
+   "240g chicken breast",
+   "1 onion",
+   "300g baking potato",
+   "200g mushrooms",
+   "100g reduced fat creme fraiche",
+   "20g cornflour",
+   "200ml chicken stock",
+   "20g reduced fat green pesto (Sacla is the brand I used found in Tesco)",
+   "salt & pepper",
+   "Cajun seasoning",
+   "Lazy garlic"
+  ],
+  "method": [
+   "Dice up your chicken and spray with cooking spray",
+   "Coat in half of the corn flour and mix well",
+   "Spray it again and coat in the remaining corn flour ensuring all the chicken is fully covered",
+   "Add to a frying pan and cook on both sides, remove once cooked through",
+   "Dice up your potato into small cubes, spray with cooking spray, season with salt, pepper and cajun seasoning and bake in the air fryer on 180 for 15 minute giving a shake half way (or place on a baking tray and cook in the oven on 200 for 25 minutes turning half way)",
+   "In a pan fry off the mushrooms & diced onion with a heaped tsp of lazy garlic",
+   "Add in half of the chicken stock and the spinach and let it wilt down",
+   "Add in the remaining stock, creme fraiche and the pesto and stir well, let it simmer until its a nice thick sauce",
+   "Add the chicken back into the pan and coat in the sauce",
+   "Plate up with the potatoes and season in salt and pepper"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "creamy-chicken-chorizo-gnocchi",
+  "title": "Creamy Chicken & Chorizo Gnocchi",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 25",
+  "servings": 2,
+  "kcal": 475,
+  "protein": 36,
+  "carbs": 56,
+  "fat": 13,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "300g (uncooked weight) gnocchi",
+   "30g diced chorizo",
+   "200g chicken breast",
+   "1/2 onion",
+   "60ml single cream",
+   "20g grated parmesan",
+   "200ml chicken stock",
+   "parsley",
+   "lazy garlic",
+   "paprika",
+   "chilli flakes"
+  ],
+  "method": [
+   "Fry off the diced chorizo for 2-3 minutes then remove from the pan",
+   "In the same pan, add the diced onion and chicken",
+   "Season in paprika, chilli flakes and lazy garlic",
+   "Once the chicken is cooked add in the single cream and chicken stock",
+   "Add in the gnocchi and stir well, cover over for 4 minutes",
+   "Remove the lid and stir again then re-cover for another 2-3 minutes",
+   "Stir through the 18g of parmesan and some parsley",
+   "Serve up and top with the remaining parmesan and the previously cooked chorizo"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "sweet-chilli-chicken-wrap",
+  "title": "Sweet Chilli Chicken Wrap",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 27",
+  "servings": 2,
+  "kcal": 358,
+  "protein": 43,
+  "carbs": 27,
+  "fat": 7,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "2 tortilla wraps (I use the Deli Kitchen carb lite wraps for 127 calories)",
+   "240g chicken breast",
+   "1 red onion",
+   "salt & pepper",
+   "paprika",
+   "40g reduced fat grated cheddar",
+   "cheese",
+   "40g lightest Philadelphia",
+   "30g (reduced sugar) sweet chilli",
+   "sauce (I use Blue Dragon brand)"
+  ],
+  "method": [],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "chicken-satay-potato-salad",
+  "title": "Chicken Satay Potato Salad",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 31",
+  "servings": 2,
+  "kcal": 435,
+  "protein": 34,
+  "carbs": 60,
+  "fat": 7,
+  "prepMinutes": 20,
+  "cookMinutes": 55,
+  "freezable": false,
+  "ingredients": [
+   "240g chicken breast",
+   "300g baking potato cut into cubes",
+   "1 red pepper diced",
+   "1 grated carrot",
+   "30g cucumber",
+   "Handful of lettuce",
+   "2 spring onions",
+   "sesame seeds",
+   "2tbsp soy sauce",
+   "20g peanut butter",
+   "20g honey",
+   "10g sriracha",
+   "Lazy garlic",
+   "cajun seasoning"
+  ],
+  "method": [
+   "Cut the potatoes into cubes, spray in cooking spray and season with cajun spices",
+   "Bake in the air fryer on 180 for 15 minutes shaking half way (or place on a baking tray and cook in the oven on 180 for 20-25 mins turning over half way)",
+   "Dice your chicken breast and spray with cooking spray, mix with 1tbsp dark soy sauce and a tsp of lazy garlic",
+   "Put this in the air fryer on 180 for 15 mins (you could also fry this off in the pan)",
+   "Let the chicken and potatoes cool down once they’ve finished cooking",
+   "Assemble your box with lettuce, chopped pepper, cucumber, grated carrots then add in the chicken and potatoes",
+   "For the sauce mix 1tbsp dark soy sauce, the peanut butter, honey and sriracha, add a splash of hot water to loosen the sauce up",
+   "Mix until a smooth sauce is formed then drizzle this over your salad",
+   "Pop in the fridge overnight and take for your meal prep the next day!"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "bang-bang-chicken-potato-salad",
+  "title": "Bang Bang Chicken Potato Salad",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 35",
+  "servings": 2,
+  "kcal": 372,
+  "protein": 34,
+  "carbs": 41,
+  "fat": 9,
+  "prepMinutes": 20,
+  "cookMinutes": 83,
+  "freezable": false,
+  "ingredients": [
+   "200g baking potato",
+   "240g chicken breast",
+   "100g sugar snap peas",
+   "2 spring onions",
+   "lettuce",
+   "cucumber",
+   "grated carrot",
+   "1tsp sesame oil",
+   "5g sriracha",
+   "1tbsp rice wine vinegar",
+   "2tbsp dark soy sauce",
+   "20g peanut butter",
+   "Aromat seasoning",
+   "Salt & pepper",
+   "Cajun seasoning"
+  ],
+  "method": [
+   "Spray the chicken breast in cooking spray and season with salt, pepper and Aromat",
+   "Cook this in the air fryer on 180 for 15 minutes (or wrap in foil and bake in the oven on 180 for 20-25 minutes)",
+   "Dice up the baking potato into cubes, spray with cooking spray and season with salt, pepper, Aromat and cajun seasoning",
+   "Cook this in the air fryer on 180 for 15 minutes turning half way (or place on a baking tray bake in the oven on 180 for 20-25 minutes turning half way)",
+   "Prepare the salad, to a meal prep dish add the lettuce, chopped cucumber, grated carrot and sugar snap peas (fry these for 2-3 minutes and let cool)",
+   "For the dressing combine: the sesame oil, sriracha, rice wine vinegar, soy sauce and peanut butter and mix well",
+   "Add a splash of boiling water to loosen the sauce, keep mixing until you have a smooth consistency",
+   "Once the chicken and potatoes are cooked, let them cook before adding them to the salad",
+   "Then top each salad with half of the dressing"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "one-pot-pizza-rice",
+  "title": "One Pot Pizza Rice",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 37",
+  "servings": 2,
+  "kcal": 569,
+  "protein": 47,
+  "carbs": 62,
+  "fat": 15,
+  "prepMinutes": 20,
+  "cookMinutes": 17,
+  "freezable": false,
+  "ingredients": [
+   "240g chicken breast",
+   "120g (dried weight) long grain rice",
+   "1/2 red onion diced.",
+   "1 red pepper diced",
+   "160g passata",
+   "1tbsp balsamic vinegar",
+   "200ml chicken stock",
+   "6 pepperoni slices",
+   "60g grated mozzarella",
+   "20g reduced fat grated cheddar",
+   "10g grated parmesan",
+   "Aromat seasoning",
+   "Italian seasoning",
+   "Salt and pepper",
+   "Basil",
+   "Oregano",
+   "Lazy garlic"
+  ],
+  "method": [
+   "To a pan fry off the diced chicken breast seasoned in",
+   "Aromat and Italian seasoning",
+   "Remove from the pan once cooked through",
+   "To the pan, add the diced red pepper and red onion and a tsp of lazy garlic and a sprinkle of oregano",
+   "Pour in the balsamic vinegar and stir",
+   "Add in the dried rice, passata and chicken stock and the cooked chicken",
+   "Stir well and season with salt and pepper",
+   "Cover over for 10-12 minutes on a simmer, stir then re-cover for another few minutes until the rice is cooked and has soaked up the water (you may need to add a little more if it isn’t quite cooked through)",
+   "Once cooked, top with the mozzarella and cheddar and the pepperoni slices",
+   "Place under the grill for 4-5 minutes until all the cheese has melted",
+   "Then top with the basil and the parmesan and enjoy!"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "creamy-chicken-bacon-sweetcorn-pasta",
+  "title": "Creamy Chicken, Bacon & Sweetcorn Pasta",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 39",
+  "servings": 2,
+  "kcal": 547,
+  "protein": 55,
+  "carbs": 61,
+  "fat": 8,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "140g (dried weight) pasta",
+   "240g chicken breast",
+   "1 onion diced",
+   "4 reduced fat bacon rashers",
+   "100g sweetcorn",
+   "80g Philadelphia lightest",
+   "20g parmesan cheese",
+   "salt & pepper",
+   "garlic powder",
+   "chicken seasoning",
+   "Aromat seasoning"
+  ],
+  "method": [
+   "Put the pasta onto the boil",
+   "In another pan fry off your bacon pieces on both sides then remove once cooked",
+   "Then add in the diced chicken breast and season in aromat, chicken seasoning, salt and pepper",
+   "Add in the diced onion",
+   "Once the chicken is cooked through add in the Philadelphia with some pasta water to create a creamy sauce",
+   "Sprinkle in the parmesan and stir well",
+   "Add in the cooked pasta along with the bacon and the sweet corn",
+   "Season with some garlic, salt and pepper",
+   "Serve up!"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "cajun-chilli-beef-rice",
+  "title": "Cajun Chilli Beef & Rice",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 41",
+  "servings": 4,
+  "kcal": 487,
+  "protein": 48,
+  "carbs": 50,
+  "fat": 9,
+  "prepMinutes": 20,
+  "cookMinutes": 25,
+  "freezable": true,
+  "ingredients": [
+   "500g 5% lean beef mince",
+   "1 red pepper",
+   "1 red onion",
+   "40g tomato puree",
+   "1 rich beef stock pot",
+   "320g passata",
+   "120g (drained weight) red kidney",
+   "beans",
+   "260g (cooked weight) microwave",
+   "rice bag",
+   "1 pack of tender stem broccoli",
+   "2 tsp cajun seasoning",
+   "pinch of cayenne pepper",
+   "a sprinkle of chilli flakes (more or less depending on how spicy you like it)",
+   "1 tsp cumin",
+   "1 tsp smoked paprika",
+   "1 tsp lazy garlic",
+   "1 tsp sweetener"
+  ],
+  "method": [
+   "Brown the mince in the frying pan with the beef stock pot",
+   "Add in the diced onion and pepper and fry to soften",
+   "Next, add the lazy garlic, cajun seasoning, pinch of cayenne, smoked paprika, chilli flakes, cumin and sweetener",
+   "Then add the tomato puree and the passata and mix well",
+   "Simmer for around 20 mins",
+   "Around 5 minutes before the end add in the kidney beans",
+   "Serve with rice & broccoli"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "chipotle-chicken-burrito-bowl",
+  "title": "Chipotle Chicken Burrito Bowl",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 43",
+  "servings": 2,
+  "kcal": 428,
+  "protein": 30,
+  "carbs": 48,
+  "fat": 11,
+  "prepMinutes": 20,
+  "cookMinutes": 30,
+  "freezable": false,
+  "ingredients": [
+   "200g chicken breast",
+   "250g (one bag) microwave basmati",
+   "rice",
+   "90g avocado",
+   "20g chipotle paste",
+   "50g cherry tomatoes",
+   "jalapeños",
+   "40g black beans (or kidney beans)",
+   "1/2 lime",
+   "1/2 lemon",
+   "salt & pepper",
+   "Chipotle seasoning (use paprika if you don’t have this)",
+   "garlic powder"
+  ],
+  "method": [
+   "Dice the chicken breast and coat in the chipotle paste along with some garlic powder, chipotle powder (or paprika), salt and pepper and let this marinade for 10-15 minutes",
+   "Then add the chicken to the pan and fry for 10-15 minutes until fully cooked",
+   "Mash up the avocado and dice up the tomatoes and add to a bowl",
+   "Slice up the jalapeños and add this to the bowl with some salt & pepper",
+   "Squeeze the juice of half a lemon and half a lime into the avocado mix and stir",
+   "Cook your rice and beans in the microwave as per the packet instructions",
+   "Serve up and enjoy!",
+   "Optional: serve with a spoon of sour cream (not accounted for in the macros)"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "creamy-sweet-chilli-halloumi-chorizo-pasta",
+  "title": "Creamy Sweet Chilli Halloumi & Chorizo Pasta",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 45",
+  "servings": 2,
+  "kcal": 519,
+  "protein": 30,
+  "carbs": 60,
+  "fat": 18,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "120g (dried weight) pasta",
+   "80g (light) halloumi",
+   "40g diced chorizo",
+   "80g lightest Philadelphia",
+   "40g Reduced sugar (I use Blue dragon) sweet chilli sauce",
+   "20g grated parmesan cheese",
+   "1 red pepper diced",
+   "1 onion diced",
+   "Chilli flakes (optional)",
+   "Salt & pepper"
+  ],
+  "method": [
+   "Put the pasta onto the boil",
+   "Slice up the halloumi into squares and fry on both sides for 2 minutes then remove from the pan",
+   "Fry off the chorizo for 2-3 minutes and remove from the pan",
+   "In the same pan add in the diced onion and red pepper with some chilli flakes (leave out if you don’t like it too spicy), salt and pepper",
+   "Pour in the sweet chilli sauce and the Philadelphia, add a splash of pasta water and mix well until a creamy sauce is formed",
+   "Sprinkle in the parmesan (save a little to sprinkle on top at the end) and a little more pasta water and mix well",
+   "Once the pasta is cooked, drain and add to the pan with the sauce along with the halloumi and chorizo 8.Stir well until all is coated",
+   "Dish up and top with the remaining parmesan"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "honey-garlic-chicken-meal-prep",
+  "title": "Honey & Garlic Chicken Meal Prep",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 47",
+  "servings": 2,
+  "kcal": 434,
+  "protein": 38,
+  "carbs": 67,
+  "fat": 5,
+  "prepMinutes": 20,
+  "cookMinutes": 23,
+  "freezable": false,
+  "ingredients": [
+   "140g (dried weight) long grain rice",
+   "240g chicken breast",
+   "30g dark soy sauce",
+   "20g honey",
+   "200g carrots",
+   "1 onion diced",
+   "100g frozen peas",
+   "1 egg",
+   "garlic (lazy or minced)",
+   "Optional toppings: sesame seeds &",
+   "spring onion"
+  ],
+  "method": [
+   "Wash and drain the rice before putting it onto the boil",
+   "Dice up the chicken breast and cover with a tsp of garlic, half of the soy sauce and the honey",
+   "Mix well and let marinade for 10 minutes",
+   "Add this to the pan for 10 minutes",
+   "While the chicken is cooking, slice up the carrot and onion",
+   "When the chicken is cooked through, remove from the pan",
+   "Add the carrot and onion and a tsp of lazy garlic",
+   "Once the veg has softened, push to one side of the pan and scramble the egg on the other side",
+   "Add the cooked rice to the pan and the remaining part of the soy sauce",
+   "Add in the frozen peas and let them cook for 2-3 minutes before re-adding in the chicken breast",
+   "Serve up and top with some sliced spring onion & sesame seeds"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "creamy-pesto-bacon-broccoli-pasta",
+  "title": "Creamy Pesto Bacon & Broccoli Pasta",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 49",
+  "servings": 2,
+  "kcal": 525,
+  "protein": 38,
+  "carbs": 60,
+  "fat": 13,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "6 lean bacon medallions",
+   "140g (dried weight) pasta",
+   "200g broccoli",
+   "20g green pesto",
+   "40g lighter soft cheese (or lightest Philadelphia)",
+   "100ml stock (veg or chicken)",
+   "60g frozen peas",
+   "20g parmesan cheese",
+   "garlic powder (or lazy garlic)",
+   "black pepper"
+  ],
+  "method": [
+   "Weigh out your dried pasta and put onto the boil",
+   "Slice your bacon medallions and fry off in a pan on both sides for a few minutes",
+   "Season with garlic and black pepper",
+   "Chop up the broccoli into small pieces and add to the pan",
+   "Once the broccoli has started to soften and the bacon is browned add in the pesto and soft cheese",
+   "Pour in half of the stock, mix and simmer until the sauce has thickened up",
+   "Once the sauce has started to thicken, pour in the remaining stock and stir well",
+   "Add in the frozen peas",
+   "Once the pasta has cooked add this into the pan with the parmesan (save a little for the end)",
+   "Season with some more pepper",
+   "Serve up and top with the remaining parmesan"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "one-pot-hunters-bbq-chicken-bacon-rice",
+  "title": "One Pot Hunters Bbq Chicken & Bacon Rice",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 51",
+  "servings": 2,
+  "kcal": 472,
+  "protein": 46,
+  "carbs": 41,
+  "fat": 14,
+  "prepMinutes": 20,
+  "cookMinutes": 19,
+  "freezable": false,
+  "ingredients": [
+   "4 lean bacon medallions",
+   "200g chicken breast",
+   "1 onion diced",
+   "1 red pepper diced",
+   "130g (dried weight) long grain rice",
+   "60g BBQ sauce",
+   "1tbsp Worcester sauce",
+   "10g tomato puree",
+   "40g mozzarella",
+   "30g red leicester",
+   "garlic powder",
+   "paprika",
+   "bbq seasoning",
+   "200ml chicken stock",
+   "1 spring onion"
+  ],
+  "method": [
+   "Chop up the bacon medallions and chicken breast into small pieces and season in bbq seasoning, paprika and garlic, fry off until cooked through then remove from the pan",
+   "Fry off the diced onion and pepper until softened and season with garlic",
+   "Pour in 40g of the BBQ sauce, the Worcester sauce and the tomato puree",
+   "Add in the dried rice followed by the chicken stock",
+   "Cover over for 10-15 minutes until the rice is cooked (you may need to add a little more water in)",
+   "Add the chicken back into the pan with the bacon (save some for the topping)",
+   "Sprinkle over the grated cheese and the remaining bacon and place under the grill for 3-4 minutes until the cheese has melted",
+   "Pour over the remaining 20g BBQ sauce and top with a sliced spring onion"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "pizza-pasta-bake",
+  "title": "Pizza Pasta Bake",
+  "source": "Fit Food Diary: Meal Prep Volume 2, p. 53",
+  "servings": 2,
+  "kcal": 541,
+  "protein": 37,
+  "carbs": 66,
+  "fat": 13,
+  "prepMinutes": 20,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "6 chicken sausages",
+   "140g (dried weight) pasta",
+   "40g grated mozzarella",
+   "300g pizza sauce (or pasta sauce)",
+   "100g mushrooms",
+   "4 pepperoni slices",
+   "Chilli flakes"
+  ],
+  "method": [
+   "Air fry or grill the sausages",
+   "Put the pasta onto the boil",
+   "Drain the pasta once cooked and chop up the sausages and add to the pan with the pasta",
+   "Pour in the pizza sauce (you can also use pasta sauce Lloyd Grossman have good sauces for the calorie range)",
+   "Mix well then transfer into an ovenproof dish",
+   "Top with your mozzarella, mushrooms and sliced pepperoni",
+   "Bake in the oven on 180 for 10-15 minutes or until all the cheese has melted",
+   "Season with some chilli flakes"
+  ],
+  "tags": [
+   "meal prep"
+  ]
+ },
+ {
+  "id": "double-cheeseburger",
+  "title": "Double Cheeseburger",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 4",
+  "servings": 1,
+  "kcal": 466,
+  "protein": 44,
+  "carbs": 31,
+  "fat": 18,
+  "prepMinutes": 15,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "150g extra lean beef mince",
+   "1 brioche bun",
+   "2 reduced fat cheese slices",
+   "15g light mayo",
+   "5g sriracha",
+   "2 jalapeños",
+   "Salt & pepper",
+   "Lettuce"
+  ],
+  "method": [
+   "Roll the beef mince into 2 balls and flatten into a pan",
+   "Season with salt & pepper and fry on both sides untill cooked through",
+   "Lightly toast the bun",
+   "In a bowl, combine the mayo, sriracha and some sliced jalapeños",
+   "In the pan, top one burger with a cheese slice, layer the other burger on top and top with another cheese slice",
+   "Layer the bun with lettuce, the burgers & cheese and the spicy mayo sauce",
+   "Wrap in tin foil for 2-3 minutes to let the cheese melt further"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "honey-bbq-chicken-burger",
+  "title": "Honey Bbq Chicken Burger",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 6",
+  "servings": 1,
+  "kcal": 461,
+  "protein": 33,
+  "carbs": 51,
+  "fat": 12,
+  "prepMinutes": 15,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "1 brioche bun",
+   "100g chicken breast",
+   "10g corn flakes",
+   "15g bbq sauce",
+   "10g honey",
+   "1/2 egg",
+   "15g light mayo",
+   "tsp sriracha",
+   "tsp garlic puree",
+   "1 reduced fat cheese slice",
+   "paprika",
+   "cajun seasoning",
+   "lettuce"
+  ],
+  "method": [
+   "Cover the chicken breast in paprika and cajun seasoning",
+   "Crush up the corn flakes and whisk the egg in another bowl",
+   "Dip the chicken in the egg wash and then cover in the cornflakes",
+   "Put in the air fryer on 180 for 15 minutes or bake in the oven for 20",
+   "In a bowl make your spicy sauce by mixing the mayo and sriracha",
+   "In a pan make your honey bbq sauce by combining the garlic puree, bbq sauce and the honey",
+   "When the chicken is cooked, coat it in the honey bbq sauce",
+   "Lightly toast your brioche bun and layer with lettuce, the chicken and cheese slice, spread the spicy sauce on one side of the bun"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "chinese-chicken-curry-sides",
+  "title": "Chinese Chicken Curry & Sides",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 8",
+  "servings": 2,
+  "kcal": 592,
+  "protein": 39,
+  "carbs": 73,
+  "fat": 55,
+  "prepMinutes": 15,
+  "cookMinutes": 52,
+  "freezable": true,
+  "ingredients": [
+   "240g chicken breast",
+   "250g long grain microwave rice",
+   "40g (dried weight) mayflower curry powder",
+   "1 white onion",
+   "100g frozen peas",
+   "6 mini vegetable spring roll",
+   "20g prawn crackers",
+   "salt, pepper, garlic powder, onion powder & Chinese 5 spice"
+  ],
+  "method": [
+   "Roast the chicken in the air fryer on 180 for 15 minutes or bake in the oven for 20-25 minutes",
+   "Put the mini spring rolls in the oven or air fryer for 12 minutes",
+   "In a pan fry off the onion until softened",
+   "Once the onion is soft, add in the frozen peas",
+   "When the chicken is cooked, shred with a knife and fork and add into the pan",
+   "Season with salt, pepper, garlic powder, onion powder and Chinese 5 spice",
+   "Mix the curry powder with some boiling water and pour over the chicken",
+   "Cook the rice in the microwave",
+   "Serve with the prawn crackers"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "bbq-chicken-wrap-pizza",
+  "title": "Bbq Chicken Wrap Pizza",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 10",
+  "servings": 1,
+  "kcal": 446,
+  "protein": 38,
+  "carbs": 52,
+  "fat": 8,
+  "prepMinutes": 15,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "1 tortilla wrap",
+   "80g pre cooked chicken",
+   "20g reduced sugar ketchup",
+   "25g bbq sauce (5g is for the topping)",
+   "40g sweetcorn",
+   "20g mozzarella cheese",
+   "20g eat lean cheese",
+   "Tomato sauce seasoning",
+   "Pizza seasoning"
+  ],
+  "method": [
+   "On a tortilla wrap. add the ketchup and 20g of the BBQ sauce and spread this out",
+   "Sprinkle the tomato sauce seasoning over",
+   "Sprinkle the cheeses over and top with the chicken & sweetcorn",
+   "Cook in the oven for 10-15 minutes on 180 degrees",
+   "Top with some pizza seasoning"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "shredded-chicken-loaded-potato-nachos",
+  "title": "Shredded Chicken Loaded Potato Nachos",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 12",
+  "servings": 1,
+  "kcal": 580,
+  "protein": 45,
+  "carbs": 40,
+  "fat": 27,
+  "prepMinutes": 15,
+  "cookMinutes": 55,
+  "freezable": false,
+  "ingredients": [
+   "150g potato",
+   "120g chicken breast",
+   "20g light mayo",
+   "5g sriracha",
+   "25g grated red Leicester cheese",
+   "25g grated mozzarella cheese",
+   "30g salsa dip",
+   "20g soured cream dip",
+   "Jalapeños",
+   "paprika, cajun spices"
+  ],
+  "method": [
+   "Slice your potato into thin circles",
+   "Spray them with olive oil spray/ fry light and season with paprika and cajun",
+   "Bake them in the air fryer on 180 for 15 minutes or in the oven for 20-25 minutes",
+   "Season the chicken in the same seasonings and bake for 15 minutes",
+   "Shred the cooked chicken with a knife and fork",
+   "In a bowl, combine the mayo and sriracha and mix well",
+   "Stir the chicken through the sauce",
+   "Top the cooked potatoes with the chicken",
+   "Layer the cheese and put under the grill for a few minutes until all the cheese has melted",
+   "Top with the jalapeños, salsa and soured cream"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "high-protein-loaded-fries",
+  "title": "High Protein Loaded Fries",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 14",
+  "servings": 1,
+  "kcal": 466,
+  "protein": 47,
+  "carbs": 47,
+  "fat": 9,
+  "prepMinutes": 15,
+  "cookMinutes": 50,
+  "freezable": false,
+  "ingredients": [
+   "180g baking potato",
+   "140g minced turkey thigh",
+   "80g passata",
+   "5g sriracha",
+   "cajun spice",
+   "salt and pepper",
+   "garlic puree",
+   "30g grated mozzarella"
+  ],
+  "method": [
+   "Slice your potato into chips, spray with cooking spray and season with the cajun spices",
+   "Bake in the air fryer on 180 for 15-20 minutes giving it a shake in the middle (or you can place on a baking tray and bake in the oven on 180 for 25-30 mins, turn the chips half way through cooking)",
+   "In a pan, fry off your turkey mince and season in cajun, salt and pepper",
+   "Once cooked through add in the passata and the sriracha",
+   "When the chips are cooked, top with the turkey and the mozzarella",
+   "Place under the grill for a few minutes until all the cheese has melted"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "sweet-chilli-halloumi-flat-bread",
+  "title": "Sweet Chilli Halloumi Flat Bread",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 16",
+  "servings": 1,
+  "kcal": 558,
+  "protein": 30,
+  "carbs": 47,
+  "fat": 27,
+  "prepMinutes": 15,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "1 flat bread (I use Deli Kitchen Greek flat bread)",
+   "80g halloumi (use reduced fat to lower the calories)",
+   "10g honey",
+   "chilli flakes",
+   "paprika",
+   "10g perinaise",
+   "10g reduced sugar sweet chilli sauce (I use Blue Dragon brand)",
+   "1/2 red pepper",
+   "1/2 red onion",
+   "Lettuce"
+  ],
+  "method": [
+   "In a bowl combine the honey, paprika, chilli flakes and a splash of water",
+   "Slice the halloumi and coat in the honey mixture",
+   "Fry the halloumi in a pan on both sides for a few minutes on a high heat",
+   "Then turn the heat down and add in the onion and pepper for a few more minutes",
+   "Then layer up the flat bread with the lettuce, peppers and onion and the halloumi",
+   "Top with the sweet chilli sauce and perinaise"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "salt-pepper-chicken-flatbread",
+  "title": "Salt & Pepper Chicken Flatbread",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 18",
+  "servings": 1,
+  "kcal": 459,
+  "protein": 35,
+  "carbs": 60,
+  "fat": 8,
+  "prepMinutes": 15,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "1 flat bread (I use Deli Kitchen Greek flat bread)",
+   "120g chicken",
+   "1/2 red onion",
+   "1 red pepper",
+   "15g light mayo",
+   "10g reduced sugar sweet chilli sauce",
+   "10g honey",
+   "salt & pepper seasoning, chilli flakes",
+   "lazy garlic",
+   "lettuce"
+  ],
+  "method": [
+   "In a pan fry off the onion and red pepper",
+   "Add in the chicken and lazy garlic and cook on both sides",
+   "Season with salt & pepper seasoning and chilli flakes",
+   "Combine the honey and sweet chilli sauce and cook on a high heat for 2-3 minutes then turn down",
+   "Toast the flat bread on both sides",
+   "Layer the flat bread with lettuce, the chicken, peppers & onion",
+   "Top with the mayo",
+   "Wrap in tin foil & enjoy!"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "chicken-halloumi-gyros",
+  "title": "Chicken & Halloumi Gyros",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 20",
+  "servings": 1,
+  "kcal": 568,
+  "protein": 52,
+  "carbs": 55,
+  "fat": 15,
+  "prepMinutes": 15,
+  "cookMinutes": 55,
+  "freezable": false,
+  "ingredients": [
+   "1 flat bread (I use Deli Kitchen Greek Flat Bread)",
+   "100g chicken breast",
+   "Chicken seasoning: paprika, oregano,",
+   "cumin, coriander, salt and pepper",
+   "80g potato (cut into fries)",
+   "Potato seasoning: garlic powder,",
+   "cajun, salt and pepper",
+   "40g halloumi",
+   "50g 0% fat free Greek yogurt",
+   "cucumber",
+   "1/2 lemon",
+   "1/2 red onion",
+   "2 tomatoes"
+  ],
+  "method": [
+   "Season your chicken & spray in cooking spray cook in the air fryer on 180 for 15 minutes (or in the oven for 25)",
+   "Season your chips & spray in cooking spray also cook in the air fryer on 180 for 15 mins, give them a shake half way! (or bake on a baking tray in the oven for 25 mins)",
+   "Grill or air fry your halloumi until golden brown",
+   "Tzatziki: mix the Greek yogurt, grated cucumber, lemon juice and garlic powder together",
+   "Toast your flat bread",
+   "Layer up!",
+   "Later the onions and tomatoes followed by the chips, chicken and halloumi",
+   "Drizzle over the tzatziki",
+   "Wrap in tin foil and enjoy!"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "butter-chicken-2-ways",
+  "title": "Butter Chicken 2 Ways",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 22",
+  "servings": 2,
+  "kcal": 325,
+  "protein": 32,
+  "carbs": 11,
+  "fat": 17,
+  "prepMinutes": 15,
+  "cookMinutes": 140,
+  "freezable": true,
+  "ingredients": [
+   "240g chicken breast",
+   "1 onion diced",
+   "160g passata",
+   "40g reduced fat butter",
+   "160g passata",
+   "20g tomato puree",
+   "60ml single cream",
+   "60g 0% fat free Greek yogurt",
+   "1tsp sugar",
+   "garam masala",
+   "cumin",
+   "ginger seasoning",
+   "garlic puree",
+   "chilli powder",
+   "turmeric"
+  ],
+  "method": [
+   "Season the diced chicken breast in 1 tsp of all of the listed spices and mix well with the Greek yogurt",
+   "Add this and the diced onion to the air fryer",
+   "Add in the passata, tomato puree and the butter",
+   "When its ready to cook season with some more of the garam masala, a small amount of the turmeric and chilli powder and the sugar",
+   "Mix well and cook on high for 2 hours",
+   "After 2 hours add in the cream, stir and return the lid for another 10 minutes",
+   "Macros served with 170g microwave long grain rice: 569 calories, 36g protein, 63g carbs, 19g fats",
+   "Macros served in a wrap with 30g grated mozzarella: 587 calories, 44g protein, 41g carbs, 27g fats"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "sweet-bbq-hassle-back-halloumi-chicken",
+  "title": "Sweet Bbq Hassle Back Halloumi Chicken",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 24",
+  "servings": 1,
+  "kcal": 464,
+  "protein": 46,
+  "carbs": 44,
+  "fat": 11,
+  "prepMinutes": 15,
+  "cookMinutes": 35,
+  "freezable": false,
+  "ingredients": [
+   "120g chicken breast",
+   "50g halloumi (light)",
+   "100g diced potato",
+   "100g tender stem broccolo",
+   "20g barbecue sauce",
+   "10g honey",
+   "BBQ seasoning",
+   "salt & pepper",
+   "Sprinkle of parmesan cheese"
+  ],
+  "method": [
+   "Slice some slits into the chicken about 2/3 of the way through",
+   "Push in the halloumi",
+   "Spray the chicken with cooking spray and season in the bbq seasoning",
+   "For the sauce mix the bbq sauce and honey and brush over the chicken- make sure to get it all covered",
+   "Dice up your potatoes and spray in cooking spray and season in the bbq seasoning",
+   "Place both in the air fryer 0n 180 for 15 minutes (or bake in the oven on 180 for 20 mins, you may need a little longer for the potatoes)",
+   "Meanwhile, boil your broccoli",
+   "Once all are cooked, season with some salt and pepper and a sprinkling of grated parmesan cheese"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "chicken-pizza-burger",
+  "title": "Chicken Pizza Burger",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 26",
+  "servings": 1,
+  "kcal": 366,
+  "protein": 39,
+  "carbs": 30,
+  "fat": 10,
+  "prepMinutes": 15,
+  "cookMinutes": 40,
+  "freezable": false,
+  "ingredients": [
+   "1 brioche bun",
+   "100g chicken breast",
+   "3 pepperoni slices",
+   "30g pizza sauce",
+   "15g red cheese (I used Eat Lean cheese)",
+   "30g 0% fat free Greek yogurt",
+   "garlic powder",
+   "smoked paprika",
+   "salt",
+   "parsley",
+   "oregano"
+  ],
+  "method": [
+   "Spray your chicken breast in cooking spray and season in salt, smoked paprika, oregano and garlic powder",
+   "Bake in the air fryer on 180 for 15 minutes or place on a baking tray and cook in the oven on 180 for 20-25 minutes",
+   "While the chicken in cooking grate your cheese and create your garlic sauce which is the Greek yogurt, garlic powder and parsley mixed together",
+   "When the chicken in cooked top it with the pizza sauce, then the pepperoni and then the cheese and place this under the grill until all the cheese has melted",
+   "Lightly toast your bun then assemble topping the chicken with the garlic sauce",
+   "Enjoy!"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "filet-o-fish",
+  "title": "Filet O’Fish",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 28",
+  "servings": 1,
+  "kcal": 389,
+  "protein": 34,
+  "carbs": 44,
+  "fat": 7,
+  "prepMinutes": 15,
+  "cookMinutes": 35,
+  "freezable": false,
+  "ingredients": [
+   "1 brioche bun",
+   "100g cod fillet",
+   "1 reduced fat cheddar cheese slice",
+   "10g bread crumbs",
+   "1 egg white",
+   "salt & pepper",
+   "For the sauce:",
+   "20g 0% fat free Greek yogurt",
+   "15g light mayo",
+   "5g tomato relish",
+   "Fresh dill",
+   "salt & pepper"
+  ],
+  "method": [
+   "Pat your cod fillet dry with a piece of kitchen roll then coat in the egg white",
+   "Coat in the bread crumbs, salt and pepper",
+   "Air fry for 12-15 minutes on 180 or bake in the oven for 20 minutes",
+   "Meanwhile assemble the sauce, combine the",
+   "Greek yogurt, mayo, tomato relish, fresh dill, salt and pepper",
+   "Lightly toast your bun and layer with the cheese, cooked fish and top with the sauce",
+   "Tip: wrap the burger up in tin foil for a few minutes and warm in the air fryer or in the oven to melt the cheese."
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "garlic-parmesan-chicken-burger",
+  "title": "Garlic & Parmesan Chicken Burger",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 30",
+  "servings": 1,
+  "kcal": 419,
+  "protein": 38,
+  "carbs": 40,
+  "fat": 11,
+  "prepMinutes": 15,
+  "cookMinutes": 35,
+  "freezable": false,
+  "ingredients": [
+   "1 brioche bun",
+   "100g chicken breast",
+   "10g parmesan cheese",
+   "1/2 egg",
+   "15g breadcrumbs",
+   "20g Philadelphia lightest",
+   "20ml semi skimmed milk",
+   "smoked paprika",
+   "onion granules",
+   "garlic powder",
+   "juice of 1/2 lemon",
+   "salt",
+   "pepper",
+   "parsley",
+   "oregano"
+  ],
+  "method": [
+   "Spray your chicken breast in cooking spray and season with the smoked paprika, onion granules and the garlic granules",
+   "Dip in the whisked egg and then in the breadcrumbs combined with 5g parmesan cheese",
+   "Air fry for 15 minutes on 180 or bake in the oven for 20 minutes",
+   "In a pan combine the milk, Philadelphia, other half of the parmesan cheese, squeeze of lemon juice, salt, pepper, parsley and oregano",
+   "Stir until smooth",
+   "Lightly toast your bun and layer with some lettuce",
+   "Coat the chicken in the sauce then drizzle any remaining sauce over the top",
+   "Add to the bun and enjoy!"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "chorizo-bacon-mac-cheese",
+  "title": "Chorizo & Bacon Mac & Cheese",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 32",
+  "servings": 1,
+  "kcal": 478,
+  "protein": 43,
+  "carbs": 55,
+  "fat": 10,
+  "prepMinutes": 15,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "20g diced chorizo",
+   "70g (dried weight) macaroni pasta",
+   "2 lean bacon medallions",
+   "30g lightest Philadelphia",
+   "1tbsp sriracha (optional, leave out if you don’t like spice)",
+   "40g grated reduced fat cheese (I used Eat lean cheese)",
+   "onion powder",
+   "garlic powder"
+  ],
+  "method": [
+   "Put your macaroni pasta onto the boil in one pan",
+   "In another fry off the diced chorizo for 3-4 minutes then remove from the pan",
+   "In the same pan fry off the chopped up bacon on each side for 2-3 minutes and season with onion powder and garlic powder",
+   "Add in your Philadelphia with a splash of the pasta water (add this in in small amounts until you find the consistency you like, I like my sauce quite thick so I didn’t add much around 4-5 tbsp)",
+   "Then add in your grated cheese and mix well until you have a thick, creamy sauce",
+   "Optional: add in some sriracha for a little extra spice, if you don’t like too much spice add in some paprika instead",
+   "Once your pasta is cooked, add this to the pan and stir well until it is all coated in the sauce",
+   "Plate up and top with the chorizo from earlier"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "slow-cooker-enchiladas",
+  "title": "Slow Cooker Enchiladas",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 34",
+  "servings": 3,
+  "kcal": 639,
+  "protein": 50,
+  "carbs": 83,
+  "fat": 10,
+  "prepMinutes": 15,
+  "cookMinutes": 140,
+  "freezable": true,
+  "ingredients": [
+   "400g chicken breast",
+   "1 onion (diced)",
+   "1 red pepper (diced)",
+   "10g tomato puree",
+   "500g passata",
+   "1tsp sugar",
+   "1 packet (30g) fajita seasoning",
+   "40g reduced fat red cheese (I used Eat Lean)",
+   "30g grated mozzarella",
+   "6 tortilla wrap",
+   "jalapeños",
+   "salt & pepper"
+  ],
+  "method": [
+   "Put the chicken breasts into the slow cooker along with the diced red pepper and diced onion",
+   "Add in the sugar, salt, pepper and fajita spices",
+   "Pour in the passata and the tomato puree and mix well",
+   "Cook on high for 2 hours or low for 4",
+   "Once the chicken is cooked, remove from the slow cooker and shred with a knife and fork then add back into the slow cooker and mix well",
+   "Add (around 1/4) of the grated cheeses & mix until all the cheese has melted",
+   "Assemble the wraps and pop into an oven proof dish",
+   "Spread over any remaining tomato sauce and the grated cheese on top",
+   "Optional: top with some jalapeños",
+   "Bake in the oven for around 10 minutes on 180 or until all the cheese has melted",
+   "The macros are for 2 enchiladas per person"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "sweet-nandos-hassle-back-chicken-halloumi",
+  "title": "Sweet Nandos Hassle Back Chicken & Halloumi",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 36",
+  "servings": 2,
+  "kcal": 477,
+  "protein": 44,
+  "carbs": 42,
+  "fat": 14,
+  "prepMinutes": 15,
+  "cookMinutes": 40,
+  "freezable": false,
+  "ingredients": [
+   "240g chicken breast",
+   "200g broccoli",
+   "200g baking potato",
+   "40g Nandos (or peri peri) sauce",
+   "20g honey",
+   "20g Nandos rub",
+   "90g halloumi (use light halloumi to reduce cals further)",
+   "cajun seasoning",
+   "garlic powder",
+   "Peri peri salt",
+   "Optional: a drizzle sriracha mayo (not counted in the macros)"
+  ],
+  "method": [
+   "Cut the slices into your chicken breast, spray with cooking spray and cover in the Nandos rub",
+   "Cut your halloumi into thin pieces and slot into the slices in the chicken",
+   "In a bowl mix the Nandos (or any peri peri) sauce with the honey and pour over the chicken & halloumi",
+   "Make sure it is all well covered",
+   "Slice your potato into chips and spray with cooking spray",
+   "Season with cajun seasoning and garlic powder",
+   "Put both into the air fryer on 180 for 15 minutes (shake the chips half way) or place on a baking tray and cook in the oven for 20-25 minutes",
+   "While this is cooking boil your broccoli",
+   "Plate it up and season with the peri peri salt (Aldi’s version is just as good) and sriracha mayo for some extra spice!"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "nandos-sunset-burger",
+  "title": "Nandos Sunset Burger",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 38",
+  "servings": 1,
+  "kcal": 439,
+  "protein": 36,
+  "carbs": 32,
+  "fat": 18,
+  "prepMinutes": 15,
+  "cookMinutes": 76,
+  "freezable": false,
+  "ingredients": [
+   "120g chicken thigh (use chicken breast if you want to reduce the calories a little more)",
+   "1 brioche burger",
+   "1 slice of reduced fat cheese",
+   "15g light mayo",
+   "20g Nandos marinade",
+   "Mixed herbs",
+   "juice of 1/2 a lemon",
+   "20g sweet chilli jam"
+  ],
+  "method": [
+   "Spray your chicken with cooking spray and cover in the Nandos marinade (if possible let it marinade in the sauce in the fridge for a few hours prior)",
+   "Pop in the air fryer on 180 for 15 minutes, turning half way (or wrap in some foil and bake in the oven for 20 minutes on 180",
+   "Toast your bun",
+   "In a bowl, mix the mayo, mixed herbs and lemon juice",
+   "Spread this over the bottom of the bun",
+   "When the chicken has 1 min left to cook, pop the cheese slice on top and let it melt",
+   "Assemble the burger with the lettuce, chicken and cheese and then top with the sweet chilli jam",
+   "If serving with chips cut 120g of potato into fries, spray with cooking spray and season in cajun spices. Bake in the air fryer on 180 for 15 mins turning half way or in the oven on 180 for 20-25 minutes turning half way, 120g potato will add approximately 131 calories to the total."
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "sweet-chilli-beef-curried-noodles",
+  "title": "Sweet Chilli Beef & Curried Noodles",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 40",
+  "servings": 2,
+  "kcal": 471,
+  "protein": 32,
+  "carbs": 25,
+  "fat": 16,
+  "prepMinutes": 15,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "200g sirloin steak",
+   "1 nest of fine egg noodles",
+   "1 red pepper",
+   "1 red onion",
+   "2 spring onions",
+   "fresh chilli",
+   "sesame seeds",
+   "2 tbsp rice vinegar",
+   "20g reduced sugar sweet chilli sauce",
+   "20g tomato puree",
+   "20g 50% less sugar ketchup",
+   "2 tsp dark soy sauce",
+   "sweetener",
+   "chilli flakes",
+   "garlic",
+   "tsp Chinese 5 spice",
+   "20g corn flour",
+   "10g (dried weight) mayflower curry powder",
+   "1 egg",
+   "salt & pepper"
+  ],
+  "method": [
+   "Slice your sirloin steak into thin strips (cutting off all of the fat) and season with salt and pepper",
+   "Cover with the whisked egg then the corn flour",
+   "Fry off in the pan for 3-4 minutes turning half way (make sure the steak slices are separated)",
+   "Remove from the pan and set your noodles off to boil in another pan",
+   "Fry off a sliced red pepper and red onion and 1 spring onion",
+   "While they are softening in a bowl, mix the rice vinegar, sweet chilli sauce, tomato puree, ketchup, soy, sweetener, chilli flakes, garlic and Chinese 5 spice",
+   "Pour over the veg then re-add the beef and stir well until everything is coated in the sauce",
+   "Drain your noodles",
+   "Mix the curry powder with a small amount of water until you have a thick curry paste",
+   "Pour this over the noodled and mix well until they are all coated in the sauce",
+   "Serve up into 2 dishes and top with some fresh chilli, fresh spring onion and some sesame seeds"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "chicken-parmigiana",
+  "title": "Chicken Parmigiana",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 42",
+  "servings": 2,
+  "kcal": 622,
+  "protein": 47,
+  "carbs": 74,
+  "fat": 16,
+  "prepMinutes": 15,
+  "cookMinutes": 35,
+  "freezable": false,
+  "ingredients": [
+   "200g chicken breast",
+   "140g (dried weight) pasta",
+   "1 white onion diced",
+   "20g tomato puree",
+   "20g light mayo",
+   "20g golden breadcrumbs",
+   "80g grated mozzarella",
+   "300g passata",
+   "1tsp sugar",
+   "20g parmesan cheese",
+   "Oregano",
+   "Salt and pepper",
+   "Lazy garlic"
+  ],
+  "method": [
+   "Slice your chicken breast into thin pieces and season with salt and pepper then spread over the mayo",
+   "Combine the bread crumbs with 5g parmesan and some oregano",
+   "Dip the chicken breast in the bread crumb mix and bake in the air fryer on 200 for 10 minutes (or place on a baking tray and cook in the oven on 180 for 15 minutes )",
+   "Meanwhile, put the pasta onto the boil",
+   "In another pan add in the diced onion with some oregano, a tsp of lazy garlic salt, pepper and the tomato puree and fry off for a few minutes",
+   "Add in the passata to the pan with the sugar and mix well",
+   "Once the pasta has cooked, add most of the sauce and mix (save 2 spoon fulls for the top of the chicken)",
+   "Top with 70g of the grated mozzarella and 10g parmesan, pop in the oven for 5 minutes on 180 until all the cheese has melted",
+   "Once the chicken has cooked, top with the remaining sauce, remaining mozzarella and cook for a further 5 minutes",
+   "Top the pasta bake with the chicken and remaining parmesan and a sprinkle of oregano"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "air-fryer-bang-bang-salmon",
+  "title": "Air Fryer Bang Bang Salmon",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 44",
+  "servings": 1,
+  "kcal": 559,
+  "protein": 27,
+  "carbs": 27,
+  "fat": 22,
+  "prepMinutes": 15,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "3/4 of a nest of noodles",
+   "1 salmon fillet",
+   "2 pieces of baby corn",
+   "6 green beans",
+   "1/2 red pepper",
+   "1 fresh red chilli",
+   "1 spring onion",
+   "15g reduced sugar sweet chilli sauce",
+   "10g light mayo",
+   "5s sriracha",
+   "1 tbsp dark soy",
+   "1tsp lazy garlic",
+   "5g sriracha mayo"
+  ],
+  "method": [
+   "Mix the sriracha, mayo and sweet chilli and spread half of the sauce over the salmon fillet",
+   "Bake in the air fryer on 200 for 10 minutes",
+   "Put the noodles onto the boil",
+   "Slice up the baby corn, green beans, red pepper and the spring onion (save the green top for later ) and spray with cooking spray and bake for 3 minutes in the air fryer on 180",
+   "When the noodles are cooked add this to the air fryer with the veg, the dark soy, the remaining bang bang sauce and the lazy garlic",
+   "Mix well and cook for a further 2 minutes",
+   "Plate up with the salmon and drizzle over the sriracha mayo, the rest of the spring onion and the fresh chilli"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "cajun-chilli-beef-tacos",
+  "title": "Cajun Chilli Beef Tacos",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 46",
+  "servings": 2,
+  "kcal": 594,
+  "protein": 55,
+  "carbs": 48,
+  "fat": 18,
+  "prepMinutes": 15,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "2 portions of the cajun chilli beef",
+   "mince recipe (in meal prep guide volume 2)",
+   "4 mini tortillas",
+   "60g grated mozzarella",
+   "optional: jalapeños"
+  ],
+  "method": [
+   "Re-heat the chilli in the pan for 5 minutes",
+   "Dip each taco into the mixture on both sides",
+   "Fill half of the tacos with the chilli and sprinkle 1/4 of the cheese in each",
+   "Add in the jalapeños if using",
+   "Fold over the tacos",
+   "Spray a pan with some cooking spray and fry off on both sides until crispy",
+   "The macros are per 2 tacos"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "creamy-chicken-bacon-pie",
+  "title": "Creamy Chicken & Bacon Pie",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 48",
+  "servings": 2,
+  "kcal": 521,
+  "protein": 36,
+  "carbs": 20,
+  "fat": 23,
+  "prepMinutes": 15,
+  "cookMinutes": 27,
+  "freezable": true,
+  "ingredients": [
+   "200g chicken breast",
+   "2 lean bacon rashers",
+   "200g leek",
+   "160g puff pastry",
+   "40g 50% less fat creme fraiche",
+   "30ml chicken stock",
+   "1 egg whisked",
+   "6g corn flour",
+   "salt and pepper",
+   "Aromat seasoning",
+   "garlic seasoning"
+  ],
+  "method": [
+   "Spray the diced chicken breast in cooking spray and season with salt, pepper, Aromat and garlic powder",
+   "Coat in the corn flour and mix well",
+   "Air fry on 180 for 5 minutes, stir then return for a further 5 minutes (you could also fry in a pan)",
+   "Grill or air fry the bacon rashers then cut in to small pieces",
+   "Add the chopped leek in with the chicken for 1-2 minutes",
+   "Transfer the chicken, bacon and leek into your oven proof dish and pour in the creme fraiche and the chicken stock and mix well",
+   "Egg wash the sides of the dish then cover with your pastry",
+   "Egg wash the pastry",
+   "Bake the pie in the air fryer on 180 for 10-15 minutes (or in the oven for 15-20)"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "beef-chow-mien",
+  "title": "Beef Chow Mien",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 50",
+  "servings": 1,
+  "kcal": 531,
+  "protein": 43,
+  "carbs": 43,
+  "fat": 16,
+  "prepMinutes": 15,
+  "cookMinutes": 33,
+  "freezable": false,
+  "ingredients": [
+   "150g diced beef",
+   "1 nest of fine egg noodles",
+   "1tsp sesame oil",
+   "2 tbsp dark soy sauce",
+   "5g cornfour",
+   "1/2 tsp bicarbonate soda",
+   "100g beansprouts",
+   "1 spring onion"
+  ],
+  "method": [
+   "Add the beef to a bowl and add the bicarbonate soda, cornflour, and 1 tsp dark soy sauce and mix well",
+   "Set to the side for 10-20 minutes to marinate in the sauce",
+   "Next, add to a pan with the sesame oil, fry off on both sides for 3-5 minutes",
+   "Meanwhile boil the noodles in a separate pan",
+   "Once the noodles are cooked, drain and add to the pan with the beef",
+   "Add the remaining tbsp of soy sauce and fry for a further 3-4 minutes until the noodles start to char",
+   "Slice the spring onion, then add these to the noodles along with the beansprouts",
+   "Fry for a further 3-4 minutes and then serve!"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "marry-me-chicken-pasta",
+  "title": "Marry Me Chicken Pasta",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 52",
+  "servings": 2,
+  "kcal": 455,
+  "protein": 39,
+  "carbs": 39,
+  "fat": 8,
+  "prepMinutes": 15,
+  "cookMinutes": 15,
+  "freezable": true,
+  "ingredients": [
+   "200g chicken breast (2 thinly sliced breasts)",
+   "140g (dried weight) spaghetti",
+   "1 onion diced",
+   "20g tomato puree",
+   "200ml chicken stock",
+   "60g lighter soft cheese (or phili light)",
+   "20g grated parmesan cheese",
+   "2 tsp Garlic powder",
+   "2 tsp Onion powder",
+   "Sprinkle of Thyme",
+   "2 tsp Paprika",
+   "Salt & pepper",
+   "Basil"
+  ],
+  "method": [
+   "Thinly slice the chicken into 2 breasts",
+   "Spray with cooking spray and season with garlic powder, onion powder, paprika, thyme, salt & pepper",
+   "Fry off on both sides in a pan until cooked through & remove",
+   "Put the spaghetti onto the boil",
+   "In another pan fry off a diced onion with the tomato puree",
+   "Once softened, add in the chicken stock, a sprinkle of basil and soft cheese",
+   "Once the spaghetti is cooked add this to the pan with the sauce with the parmesan (saving a little for the end)",
+   "Plate up the spaghetti & top with the chicken and drizzle the remaining sauce in the pan over the chicken",
+   "Top with the remaining parmesan"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "salt-pepper-chicken-curry-flat-bread",
+  "title": "Salt & Pepper Chicken Curry Flat Bread",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 54",
+  "servings": 2,
+  "kcal": 565,
+  "protein": 36,
+  "carbs": 80,
+  "fat": 11,
+  "prepMinutes": 15,
+  "cookMinutes": 55,
+  "freezable": true,
+  "ingredients": [
+   "200g chicken breast",
+   "2 flat breads (mine were 232 cals from aldi)",
+   "120g potato cut into chips",
+   "40g (dried weight) mayflower curry powder (or any curry powder)",
+   "1 red pepper",
+   "1 onion diced",
+   "10g corn flour",
+   "2 tbsp dark soy sauce",
+   "salt & pepper",
+   "aromat",
+   "Chinese 5 spice",
+   "1 spring onion",
+   "chilli flakes"
+  ],
+  "method": [
+   "Cut your potatoes into chips, spray with cooking spray and season with salt, pepper and aromat",
+   "Cook in the air fryer on 180 for 15 minutes turning half way (or place on a baking tray and cook in the oven for 20-25 minutes on 180 turning half way)",
+   "Mix the cornflour with salt, pepper and a dash of Chinese 5 spice",
+   "Whisk 1 egg in another bowl",
+   "Dice the chicken and egg wash then coat in the cornflour mix",
+   "Cook in the air fryer on 180 for 12-15 minutes turning half way (or you can fry off in a pan)",
+   "Dice the pepper and onion and fry off, season with salt and pepper and some aromat",
+   "Add the chicken and chips to the pan once cooked and pour over the soy sauce",
+   "Toast the flat bread",
+   "Mix the curry powder with 100ml boiling water",
+   "Load up the flat bread with the chicken, chips & veg and drizzle over the curry sauce",
+   "Top with some sliced spring onion and chilli flakes"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "crispy-chilli-sticky-chicken-tacos",
+  "title": "Crispy Chilli Sticky Chicken Tacos",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 56",
+  "servings": 2,
+  "kcal": 586,
+  "protein": 38,
+  "carbs": 86,
+  "fat": 37,
+  "prepMinutes": 15,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "2 mini tortilla wraps",
+   "120g chicken breast",
+   "1 red pepper sliced",
+   "1 egg whisked",
+   "20g corn flour",
+   "2 tbsp dark soy sauce",
+   "10g tomato puree",
+   "15g reduced sugar sweet chilli sauce",
+   "10g honey",
+   "10g ketchup",
+   "50ml chicken stock",
+   "salt and pepper",
+   "garlic powder",
+   "Optional toppings: a drizzle of",
+   "sriracha mayo & spring onions"
+  ],
+  "method": [
+   "Slice the chicken breast into strips and coat in 1 tbsp soy sauce and season with salt and pepper",
+   "Dip in the egg wash and then coat in the corn flour",
+   "Cook in the air fryer on 180 for 13-15 minutes or fry off in a pan until cooked through & crispy",
+   "For the sauce mix the tomato puree, sweet chilli sauce, 1 tbsp soy sauce, honey, ketchup, 1/2 tsp garlic powder and the chicken stock",
+   "Slice up the pepper and fry off in a pan",
+   "Cover with the sauce and then add in the chicken once cooked",
+   "Ensure the chicken is well coated in the sauce and fry on a high heat so that it goes really sticky",
+   "Fill the mini wraps with the chicken & peppers",
+   "Optional toppings: a drizzle of sriracha mayo & spring onions"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "5-guys-fake-away",
+  "title": "5 Guys Fake Away",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 58",
+  "servings": 1,
+  "kcal": 592,
+  "protein": 47,
+  "carbs": 64,
+  "fat": 16,
+  "prepMinutes": 15,
+  "cookMinutes": 49,
+  "freezable": false,
+  "ingredients": [
+   "100g 5% lean been mince",
+   "150g baking potato",
+   "aromat seasoing",
+   "cajun seasoning",
+   "salt & pepper",
+   "1 brioche bun",
+   "2 cheese slices",
+   "shredded lettuce",
+   "Optional toppings:",
+   "jalapeños",
+   "Sauce of choice (i used BBQ but not counted in the macros so make sure you account for what ever sauce you choose)"
+  ],
+  "method": [
+   "Cut the potato into chips, spray with cooking spray and season with aromat & cajun",
+   "Bake in the air fryer for 12 minutes on 180, shake then return for a further 10 minutes (or place on a baking tray and cook in the oven for 20 minutes on 180 turning them half way)",
+   "Roll the mince into 2 50g balls, flatten in a pan and fry off on both sides for around 3-4 minutes",
+   "Meanwhile, toast your bun and slice up the lettuce",
+   "Season the burger patties with salt and pepper",
+   "Layer a cheese slice on each burger and then add to the bun with the lettuce",
+   "Add your toppings of choice then wrap in tin foil",
+   "Place in the air fryer for 2-3 minutes to allow the cheese to melt further",
+   "Serve up and enjoy!"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "spaghetti-carbonara",
+  "title": "Spaghetti Carbonara",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 60",
+  "servings": 2,
+  "kcal": 494,
+  "protein": 35,
+  "carbs": 56,
+  "fat": 13,
+  "prepMinutes": 15,
+  "cookMinutes": 15,
+  "freezable": false,
+  "ingredients": [
+   "140g (dried weight) spaghetti 4 lean",
+   "bacon medallions",
+   "2 eggs",
+   "50g parmesan cheese",
+   "100g mushrooms 1 onion diced",
+   "pepper",
+   "1tsp lazy garlic"
+  ],
+  "method": [
+   "Put the pasta onto the boil",
+   "In another pan fry off the sliced up bacon medallions on both sides until browned",
+   "Add in the diced onion and mushrooms",
+   "Season with a tsp of lazy garlic and pepper",
+   "For the sauce whisk 2 eggs and add in the parmesan and a dash of pepper",
+   "Once the pasta is cooked, add this to the pan with the bacon along with a few tbsp of pasta water",
+   "Remove the pan from the heat and pour in the sauce",
+   "Mix until all the pasta is coated with the sauce 9.Serve up & enjoy!"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "crispy-nandos-chicken-burger",
+  "title": "Crispy Nandos Chicken Burger",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 62",
+  "servings": 2,
+  "kcal": 524,
+  "protein": 34,
+  "carbs": 63,
+  "fat": 14,
+  "prepMinutes": 15,
+  "cookMinutes": 55,
+  "freezable": false,
+  "ingredients": [
+   "2 brioche buns",
+   "200g chicken breast",
+   "2 cheese slices",
+   "shredded lettuce",
+   "10g plain flour",
+   "20g cornflakes",
+   "20g peri sauce",
+   "40g light mayo",
+   "240g baking potato cut into chips",
+   "salt & pepper",
+   "garlic powder",
+   "aromat seasoning"
+  ],
+  "method": [
+   "Cut the potato into chips and season with salt, pepper, garlic powder and aromat",
+   "Bake in the air fryer on 180 for 15 minutes turning half way (or place on a baking tray and oven cook on 180 for 20-25 minutes turning half way)",
+   "Cut the chicken breast into 2x 100g slices",
+   "On a plate spread the flour with some salt, pepper and garlic powder and coat the chicken breasts with this",
+   "Coat each chicken breast in 10g of light mayo",
+   "In a bowl crush up the cornflakes into small pieces and dip the chicken breasts in this so they are fully coated",
+   "Season again with pepper",
+   "Bake in the air fryer on 180 for 15 minutes or in the oven for 20",
+   "In a bowl combine the remaining mayo and the peri sauce",
+   "Toast the buns and layer with the lettuce and peri/ mayo sauce",
+   "Place the cooked chicken into the bun layering with a cheese slice",
+   "Wrap the burger in tin foil and place in the air fryer or oven for a few minutes to allow the cheese to mely",
+   "Serve up with the chips and season with some peri salt if you like!"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ },
+ {
+  "id": "cajun-chicken-pizza-loaded-fries",
+  "title": "Cajun Chicken Pizza Loaded Fries",
+  "source": "Fit Food Diary: Fakeaway Guide, p. 64",
+  "servings": 1,
+  "kcal": 509,
+  "protein": 40,
+  "carbs": 56,
+  "fat": 14,
+  "prepMinutes": 15,
+  "cookMinutes": 45,
+  "freezable": false,
+  "ingredients": [
+   "180g baking potato",
+   "100g chicken breast",
+   "2 pepperoni slices",
+   "1 pepper",
+   "1/2 red onion",
+   "60g passata",
+   "30g grated mozzarella",
+   "30g 0% fat Greek yogurt",
+   "10g light mayo",
+   "Splash of lemon juice",
+   "cajun seasoning",
+   "smoked paprika",
+   "oregano",
+   "parsley",
+   "garlic powder",
+   "salt & pepper",
+   "Optional: jalapeños"
+  ],
+  "method": [
+   "Slice up the baking potato into chips, dab dry with a piece of kitchen roll",
+   "Spay with cooking spray and season with oregano and smoked paprika",
+   "Cook in the air fryer on 180 for 15 minutes turning half way or on a baking tray in the oven on 180 for 25 minutes also turning half way",
+   "Season the chicken in cajun seasoning and fry in the pan with the diced pepper and onion",
+   "Once the chicken is cooked, remove from the pan and shred it with a knife and fork",
+   "Return the chicken to the pan and pour in the passata with some more of the cajun seasoning",
+   "Let this simmer on a low heat",
+   "Meanwhile in a bowl add the Greek yogurt, mayo, lemon juice, garlic powder and parsley add a splash of water and mix well",
+   "Layer the chips then the chicken and then sprinkle the cheese on top",
+   "Add your sliced up pepperoni and jalapeños (if using)",
+   "Place under the grill for 5 minutes or until all the cheese has melted",
+   "Top with the garlic sauce & enjoy!"
+  ],
+  "tags": [
+   "fakeaway"
+  ]
+ }
+]

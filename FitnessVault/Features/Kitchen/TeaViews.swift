@@ -92,7 +92,7 @@ private struct NightRow: View {
                         Label("Freezer", systemImage: "snowflake")
                     }
                     if let recipe {
-                        Text("\(Int(recipe.kcal)) kcal · \(Int(recipe.protein)) g protein")
+                        Text("\(Int(recipe.portionKcal)) kcal · \(Int(recipe.portionProtein)) g protein")
                     }
                 }
                 .font(.caption)
@@ -365,6 +365,10 @@ private struct TeaCard: View {
                     Chip(text: "Freezes", symbol: "snowflake", tint: Palette.frost, fill: Palette.frost.opacity(0.14))
                 }
                 Chip(text: PlannerFormat.minutes(recipe.totalMinutes), symbol: "timer")
+                if let scale = recipe.portionScale, abs(scale - 1) > 0.001 {
+                    Chip(text: "×\(TeaFormat.scale(scale)) portion", symbol: "scalemass", tint: Palette.kitchen,
+                         fill: Palette.kitchen.opacity(0.14))
+                }
                 Spacer()
             }
             Spacer(minLength: 0)
@@ -378,10 +382,10 @@ private struct TeaCard: View {
                     .foregroundStyle(Palette.textSecondary)
             }
             HStack(spacing: Spacing.s) {
-                MacroPill(value: recipe.kcal, unit: "kcal")
-                MacroPill(value: recipe.protein, unit: "g protein")
-                MacroPill(value: recipe.carbs, unit: "g carbs")
-                MacroPill(value: recipe.fat, unit: "g fat")
+                MacroPill(value: recipe.portionKcal, unit: "kcal")
+                MacroPill(value: recipe.portionProtein, unit: "g protein")
+                MacroPill(value: recipe.portionCarbs, unit: "g carbs")
+                MacroPill(value: recipe.portionFat, unit: "g fat")
             }
             if !recipe.ingredients.isEmpty {
                 Text(recipe.ingredients.prefix(5).joined(separator: " · "))
@@ -441,6 +445,7 @@ private struct MacroPill: View {
 // MARK: - Recipe
 
 struct TeaRecipeDetail: View {
+    @Environment(TeaModel.self) private var teas
     let recipe: TeaRecipe
 
     var body: some View {
@@ -465,17 +470,26 @@ struct TeaRecipeDetail: View {
                         }
                     }
                 }
-                HStack(spacing: Spacing.s) {
-                    MacroPill(value: recipe.kcal, unit: "kcal")
-                    MacroPill(value: recipe.protein, unit: "g protein")
-                    MacroPill(value: recipe.carbs, unit: "g carbs")
-                    MacroPill(value: recipe.fat, unit: "g fat")
+                VStack(alignment: .leading, spacing: Spacing.s) {
+                    Text(portionText)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(recipe.meetsTargets ? Palette.kitchen : Palette.warning)
+                        .fixedSize(horizontal: false, vertical: true)
+                    HStack(spacing: Spacing.s) {
+                        MacroPill(value: recipe.portionKcal, unit: "kcal")
+                        MacroPill(value: recipe.portionProtein, unit: "g protein")
+                        MacroPill(value: recipe.portionCarbs, unit: "g carbs")
+                        MacroPill(value: recipe.portionFat, unit: "g fat")
+                    }
+                    Toggle("Freezes", isOn: Binding(get: { current.freezable },
+                                                    set: { teas.setFreezable($0, for: current) }))
+                        .tint(Palette.frost)
                 }
                 .surface()
                 if !recipe.ingredients.isEmpty {
-                    SectionTitle(title: "Ingredients")
+                    SectionTitle(title: "Ingredients", detail: recipe.portionIngredients == recipe.ingredients ? nil : "For your portion")
                     VStack(alignment: .leading, spacing: 6) {
-                        ForEach(recipe.ingredients, id: \.self) { line in
+                        ForEach(recipe.portionIngredients, id: \.self) { line in
                             Text("• " + line)
                                 .foregroundStyle(Palette.textPrimary)
                         }
@@ -507,6 +521,24 @@ struct TeaRecipeDetail: View {
         .pageBackground()
         .navigationTitle("Recipe")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    /// The live copy, so the freezes switch shows what was saved.
+    private var current: TeaRecipe { teas.recipe(recipe.id) ?? recipe }
+
+    private var portionText: String {
+        guard let scale = recipe.portionScale else {
+            return "As the book: \(Int(recipe.kcal)) kcal, \(Int(recipe.protein)) g protein. It can't reach 50 g protein inside 700 kcal, so it isn't offered."
+        }
+        if abs(scale - 1) < 0.001 { return "As the book: on target." }
+        return "×\(TeaFormat.scale(scale)) the book's portion (\(Int(recipe.kcal)) kcal, \(Int(recipe.protein)) g as printed) hits your targets. Gram and ml amounts below are scaled; for \(recipe.servings) people, scale the whole recipe."
+    }
+}
+
+enum TeaFormat {
+    static func scale(_ value: Double) -> String {
+        let text = String(format: "%.2f", value)
+        return text.hasSuffix("0") ? String(text.dropLast()) : text
     }
 }
 
@@ -568,7 +600,7 @@ struct RecipeBankView: View {
             } header: {
                 Text("Add recipes")
             } footer: {
-                Text(message ?? "Send Claude photos or PDFs from your recipe books with the prompt, then paste or import what it gives back. Only meals of 600–700 kcal with 50 g+ protein are offered to swipe.")
+                Text(message ?? "Send Claude photos or PDFs from your recipe books with the prompt, then paste or import what it gives back. Each recipe's portion is sized to land on 600–700 kcal with 50 g+ protein; ones that can't get there aren't offered to swipe.")
             }
 
             Section("Recipes") {
@@ -583,7 +615,7 @@ struct RecipeBankView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(recipe.title)
                                 .foregroundStyle(Palette.textPrimary)
-                            Text("\(Int(recipe.kcal)) kcal · \(Int(recipe.protein)) g protein\(recipe.freezable ? " · freezes" : "")")
+                            Text(bankLine(recipe))
                                 .font(.caption)
                                 .foregroundStyle(recipe.meetsTargets ? Palette.textTertiary : Palette.warning)
                         }
@@ -603,6 +635,14 @@ struct RecipeBankView: View {
             defer { if access { url.stopAccessingSecurityScopedResource() } }
             importFrom(try? Data(contentsOf: url))
         }
+    }
+
+    private func bankLine(_ recipe: TeaRecipe) -> String {
+        let freezes = recipe.freezable ? " · freezes" : ""
+        guard let scale = recipe.portionScale else {
+            return "\(Int(recipe.kcal)) kcal · \(Int(recipe.protein)) g protein: can't reach your targets\(freezes)"
+        }
+        return "×\(TeaFormat.scale(scale)): \(Int(recipe.portionKcal)) kcal · \(Int(recipe.portionProtein)) g protein\(freezes)"
     }
 
     private func importFrom(_ data: Data?) {
