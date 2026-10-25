@@ -1,6 +1,6 @@
 import Foundation
 
-// The Kitchen's 8-week cycle: one batch-cooked lunch (Monday to Friday) and one five-minute breakfast (every day) per
+// The Kitchen's 8-week cycle: one batch-cooked lunch (Monday to Friday) and one five-minute breakfast (Monday to Friday) per
 // week. Every meal is built from the catalogue by weight, so its numbers are calculated, not typed in, and the unit
 // tests hold each one to its target: lunches ≈ 600 kcal, breakfasts ≈ 500 kcal, both 50 g+ protein and low fat.
 
@@ -9,8 +9,8 @@ enum CycleSlot: String, Codable, Sendable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
     var title: String { self == .breakfast ? "Breakfast" : "Lunch" }
-    /// Portions needed each week: breakfast every day, lunch on work days.
-    var portionsPerWeek: Int { self == .breakfast ? 7 : 5 }
+    /// Portions needed each week: both Monday to Friday. Weekends aren't planned.
+    var portionsPerWeek: Int { 5 }
     var targetKcal: Double { self == .breakfast ? 500 : 600 }
 }
 
@@ -202,7 +202,7 @@ enum MealCycle {
         return list
     }
 
-    // MARK: Breakfasts: five minutes, every day
+    // MARK: Breakfasts: five minutes, Monday to Friday
 
     static let breakfasts: [CycleMeal] = makeBreakfasts()
 

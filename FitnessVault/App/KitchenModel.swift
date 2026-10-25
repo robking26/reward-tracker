@@ -69,8 +69,8 @@ final class KitchenModel {
         defaults.set(anchor.description, forKey: Self.anchorKey)
     }
 
-    /// Lunch is on the cycle Monday to Friday; breakfast every day.
-    func isLunchDay(_ day: DayKey) -> Bool {
+    /// Breakfast and lunch are on the cycle Monday to Friday; weekends aren't planned.
+    func isCycleDay(_ day: DayKey) -> Bool {
         let weekday = calendar.component(.weekday, from: day.startDate(calendar: calendar))
         return weekday != 1 && weekday != 7
     }
@@ -136,15 +136,24 @@ final class KitchenModel {
 
     /// True once today's breakfast or lunch from the cycle has been logged.
     func hasLoggedCycle(_ slot: CycleSlot, on day: DayKey) -> Bool {
-        let meal = self.meal(slot, on: day)
-        return entries(on: day).contains { $0.source == .cycle && $0.name == meal.title }
+        hasLoggedPlanned(meal(slot, on: day).title, on: day)
     }
 
     func logCycle(_ slot: CycleSlot, on day: DayKey) {
-        guard !hasLoggedCycle(slot, on: day) else { return }
         let meal = self.meal(slot, on: day)
-        insert(FoodLogEntry(date: now(), day: day, meal: slot == .breakfast ? .breakfast : .lunch, name: meal.title,
-                            source: .cycle, amountText: "1 portion", macros: meal.macros))
+        logPlanned(meal.title, meal: slot == .breakfast ? .breakfast : .lunch, macros: meal.macros,
+                   amountText: "1 portion", on: day)
+    }
+
+    /// A planned meal (the cycle's breakfast or lunch, or tonight's tea), logged with one tap.
+    func hasLoggedPlanned(_ name: String, on day: DayKey) -> Bool {
+        entries(on: day).contains { $0.source == .cycle && $0.name == name }
+    }
+
+    func logPlanned(_ name: String, meal: FoodMeal, macros: Macros, amountText: String, on day: DayKey) {
+        guard !hasLoggedPlanned(name, on: day) else { return }
+        insert(FoodLogEntry(date: now(), day: day, meal: meal, name: name, source: .cycle, amountText: amountText,
+                            macros: macros))
     }
 
     func log(_ product: FoodProduct, grams: Double, amountText: String, meal: FoodMeal) {

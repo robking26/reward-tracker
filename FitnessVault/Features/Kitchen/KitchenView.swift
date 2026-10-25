@@ -125,7 +125,7 @@ struct CycleSection: View {
                     .accessibilityLabel("Change the cycle week")
                 }
                 SegmentedProgress(total: MealCycle.weeks, done: current - 1, tint: Palette.kitchen)
-                Text("Same breakfast every day and the same batch-cooked lunch Monday to Friday, for a week. Eight weeks, then round again.")
+                Text("The same breakfast and the same batch-cooked lunch Monday to Friday, for a week; weekends are free. Eight weeks, then round again.")
                     .font(.footnote)
                     .foregroundStyle(Palette.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)

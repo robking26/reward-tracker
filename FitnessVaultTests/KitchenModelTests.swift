@@ -62,9 +62,16 @@ final class KitchenModelTests: XCTestCase {
 
     func testLunchOnlyOnWorkDays() {
         let h = make(at: at(9))
-        XCTAssertTrue(h.kitchen.isLunchDay(wednesday))
-        XCTAssertFalse(h.kitchen.isLunchDay(DayKey(year: 2026, month: 10, day: 24)), "Saturday")
-        XCTAssertFalse(h.kitchen.isLunchDay(DayKey(year: 2026, month: 10, day: 25)), "Sunday")
+        XCTAssertTrue(h.kitchen.isCycleDay(wednesday))
+        XCTAssertFalse(h.kitchen.isCycleDay(DayKey(year: 2026, month: 10, day: 24)), "Saturday: no breakfast or lunch planned")
+        XCTAssertFalse(h.kitchen.isCycleDay(DayKey(year: 2026, month: 10, day: 25)), "Sunday")
+        XCTAssertEqual(CycleSlot.breakfast.portionsPerWeek, 5, "Breakfasts Monday to Friday")
+        h.kitchen.logPlanned("Lasagne", meal: .evening, macros: Macros(kcal: 650, protein: 55, carbs: 60, fat: 15),
+                             amountText: "×1.2 portion", on: wednesday)
+        h.kitchen.logPlanned("Lasagne", meal: .evening, macros: Macros(kcal: 650, protein: 55, carbs: 60, fat: 15),
+                             amountText: "×1.2 portion", on: wednesday)
+        XCTAssertTrue(h.kitchen.hasLoggedPlanned("Lasagne", on: wednesday))
+        XCTAssertEqual(h.kitchen.entries(on: wednesday).filter { $0.name == "Lasagne" }.count, 1, "Once only")
     }
 
     func testLoggingTheCycleMealsAddsUpTheDay() {

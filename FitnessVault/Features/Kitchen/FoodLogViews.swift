@@ -3,58 +3,36 @@ import VisionKit
 
 // MARK: - Today
 
-/// Today's food: the totals, this week's breakfast and lunch from the cycle, and the evening meal by barcode or by hand.
+/// Today's food: the totals, then each meal. Planned meals (the cycle's breakfast and lunch Monday to Friday, and
+/// tonight's tea) are one tap; a meal with nothing planned gets a placeholder to scan or add by hand. Extras have their
+/// own card.
 struct FoodTodaySection: View {
     @Environment(KitchenModel.self) private var kitchen
+    @Environment(TeaModel.self) private var teas
     @State private var sheet: FoodSheet?
 
     var body: some View {
         let day = kitchen.today
         let nutrition = kitchen.nutrition(on: day)
         let logged = kitchen.entries(on: day)
+        let weekday = kitchen.isCycleDay(day)
         VStack(alignment: .leading, spacing: Spacing.m) {
             DayTotalsCard(nutrition: nutrition, count: logged.count)
 
-            CycleTodayCard(slot: .breakfast, day: day)
-            if kitchen.isLunchDay(day) {
+            if weekday {
+                CycleTodayCard(slot: .breakfast, day: day)
                 CycleTodayCard(slot: .lunch, day: day)
+            } else {
+                UnplannedMealCard(meal: .breakfast, reason: "Nothing planned at the weekend", logged: logged, sheet: $sheet)
+                UnplannedMealCard(meal: .lunch, reason: "Nothing planned at the weekend", logged: logged, sheet: $sheet)
+            }
+            if let tea = teas.plannedTea(on: day) {
+                TeaTodayCard(recipe: tea, day: day)
+            } else {
+                UnplannedMealCard(meal: .evening, reason: "No tea planned tonight", logged: logged, sheet: $sheet)
             }
 
-            VStack(alignment: .leading, spacing: Spacing.m) {
-                CardHeader(title: "Evening meal and extras", symbol: "moon.stars.fill", tint: Palette.rehab,
-                           subtitle: "Scan the barcode, or add it by hand")
-                Button {
-                    sheet = .scan
-                } label: {
-                    Label("Scan a barcode", systemImage: "barcode.viewfinder")
-                }
-                .buttonStyle(PrimaryButtonStyle(tint: Palette.kitchen))
-                Button {
-                    sheet = .manual
-                } label: {
-                    Label("Add by hand", systemImage: "square.and.pencil")
-                }
-                .buttonStyle(SecondaryButtonStyle())
-                if !kitchen.recentProducts.isEmpty {
-                    Text("Recent")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(Palette.textTertiary)
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: Spacing.xs) {
-                            ForEach(kitchen.recentProducts, id: \.barcode) { saved in
-                                Button {
-                                    sheet = .product(saved.product)
-                                } label: {
-                                    Chip(text: saved.name, symbol: "arrow.counterclockwise", tint: Palette.textPrimary)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                    }
-                    .scrollClipDisabled()
-                }
-            }
-            .surface()
+            ExtrasCard(sheet: $sheet)
 
             if !logged.isEmpty {
                 SectionTitle(title: "Logged today", detail: logged.count == 1 ? "1 item" : "\(logged.count) items")
@@ -71,9 +49,9 @@ struct FoodTodaySection: View {
         .sheet(item: $sheet) { item in
             NavigationStack {
                 switch item {
-                case .scan: ScanFlowView { sheet = nil }
-                case .manual: ManualFoodView { sheet = nil }
-                case .product(let product): ProductAmountView(product: product) { sheet = nil }
+                case .scan(let meal): ScanFlowView(meal: meal) { sheet = nil }
+                case .manual(let meal): ManualFoodView(preset: meal) { sheet = nil }
+                case .product(let product, let meal): ProductAmountView(product: product, preset: meal) { sheet = nil }
                 }
             }
             .presentationBackground(Palette.background)
@@ -82,14 +60,171 @@ struct FoodTodaySection: View {
 }
 
 enum FoodSheet: Identifiable {
-    case scan, manual, product(FoodProduct)
+    /// The meal it's for, or nil to go by the time of day.
+    case scan(FoodMeal?), manual(FoodMeal?), product(FoodProduct, FoodMeal?)
 
     var id: String {
         switch self {
-        case .scan: "scan"
-        case .manual: "manual"
-        case .product(let product): "product-\(product.barcode)"
+        case .scan(let meal): "scan-\(meal?.rawValue ?? "")"
+        case .manual(let meal): "manual-\(meal?.rawValue ?? "")"
+        case .product(let product, let meal): "product-\(product.barcode)-\(meal?.rawValue ?? "")"
         }
+    }
+}
+
+/// A meal with nothing planned: a placeholder to scan or add by hand, which shows what you logged once you have.
+private struct UnplannedMealCard: View {
+    let meal: FoodMeal
+    let reason: String
+    let logged: [FoodLogEntry]
+    @Binding var sheet: FoodSheet?
+
+    var body: some View {
+        let mine = logged.filter { $0.meal == meal }
+        let kcal = mine.reduce(0) { $0 + $1.macros.kcal }
+        VStack(alignment: .leading, spacing: Spacing.s) {
+            HStack(spacing: Spacing.s) {
+                IconTile(symbol: meal.symbol, tint: Palette.textTertiary, size: 44)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(meal.title.uppercased())
+                        .font(.caption.weight(.bold))
+                        .tracking(0.6)
+                        .foregroundStyle(Palette.textTertiary)
+                    Text(mine.isEmpty ? reason : mine.map(\.name).joined(separator: ", "))
+                        .font(.headline)
+                        .foregroundStyle(mine.isEmpty ? Palette.textSecondary : Palette.textPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if !mine.isEmpty {
+                        Text("\(Int(kcal.rounded())) kcal")
+                            .font(.caption)
+                            .monospacedDigit()
+                            .foregroundStyle(Palette.textTertiary)
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+            HStack(spacing: Spacing.s) {
+                Button {
+                    sheet = .scan(meal)
+                } label: {
+                    Label("Scan", systemImage: "barcode.viewfinder")
+                }
+                .buttonStyle(SecondaryButtonStyle())
+                Button {
+                    sheet = .manual(meal)
+                } label: {
+                    Label("By hand", systemImage: "square.and.pencil")
+                }
+                .buttonStyle(SecondaryButtonStyle())
+            }
+        }
+        .padding(Spacing.m)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Palette.surface.opacity(0.5)))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous)
+            .strokeBorder(Palette.textTertiary.opacity(0.35), style: StrokeStyle(lineWidth: 1, dash: [5, 4])))
+    }
+}
+
+/// Tonight's tea from the Teas plan, with one tap to log your portion.
+private struct TeaTodayCard: View {
+    @Environment(KitchenModel.self) private var kitchen
+    let recipe: TeaRecipe
+    let day: DayKey
+
+    var body: some View {
+        let logged = kitchen.hasLoggedPlanned(recipe.title, on: day)
+        VStack(alignment: .leading, spacing: Spacing.s) {
+            NavigationLink {
+                TeaRecipeDetail(recipe: recipe)
+            } label: {
+                HStack(spacing: Spacing.s) {
+                    IconTile(symbol: "frying.pan.fill", tint: Palette.rehab, size: 44)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("TEA")
+                            .font(.caption.weight(.bold))
+                            .tracking(0.6)
+                            .foregroundStyle(Palette.rehab)
+                        Text(recipe.title)
+                            .font(.headline)
+                            .foregroundStyle(Palette.textPrimary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text("\(Int(recipe.portionKcal)) kcal · \(Int(recipe.portionProtein)) g protein · \(Int(recipe.portionFat)) g fat")
+                            .font(.caption)
+                            .monospacedDigit()
+                            .foregroundStyle(Palette.textTertiary)
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(Palette.textTertiary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            if logged {
+                Label("Logged", systemImage: "checkmark.circle.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Palette.success)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .background(Palette.success.opacity(0.12), in: Capsule())
+            } else {
+                Button {
+                    kitchen.logPlanned(recipe.title, meal: .evening,
+                                       macros: Macros(kcal: recipe.portionKcal, protein: recipe.portionProtein,
+                                                      carbs: recipe.portionCarbs, fat: recipe.portionFat),
+                                       amountText: "Your portion", on: day)
+                } label: {
+                    Label("Had it", systemImage: "checkmark")
+                }
+                .buttonStyle(SecondaryButtonStyle(tint: Palette.rehab, fill: Palette.rehab.opacity(0.14)))
+            }
+        }
+        .surface()
+    }
+}
+
+/// Snacks and anything else: by barcode or by hand, with recent products one tap away.
+private struct ExtrasCard: View {
+    @Environment(KitchenModel.self) private var kitchen
+    @Binding var sheet: FoodSheet?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            CardHeader(title: "Extras", symbol: "carrot.fill", tint: Palette.kitchen,
+                       subtitle: "Snacks and anything else: scan the barcode, or add it by hand")
+            Button {
+                sheet = .scan(.snack)
+            } label: {
+                Label("Scan a barcode", systemImage: "barcode.viewfinder")
+            }
+            .buttonStyle(PrimaryButtonStyle(tint: Palette.kitchen))
+            Button {
+                sheet = .manual(.snack)
+            } label: {
+                Label("Add by hand", systemImage: "square.and.pencil")
+            }
+            .buttonStyle(SecondaryButtonStyle())
+            if !kitchen.recentProducts.isEmpty {
+                Text("Recent")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(Palette.textTertiary)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: Spacing.xs) {
+                        ForEach(kitchen.recentProducts, id: \.barcode) { saved in
+                            Button {
+                                sheet = .product(saved.product, nil)
+                            } label: {
+                                Chip(text: saved.name, symbol: "arrow.counterclockwise", tint: Palette.textPrimary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .scrollClipDisabled()
+            }
+        }
+        .surface()
     }
 }
 
@@ -239,6 +374,8 @@ private struct FoodEntryRow: View {
 /// Scan, look the barcode up, then choose how much. A barcode can also be typed.
 struct ScanFlowView: View {
     @Environment(KitchenModel.self) private var kitchen
+    /// The meal it's for, or nil to go by the time of day.
+    var meal: FoodMeal? = nil
     let done: () -> Void
     @State private var typed = ""
     @State private var looking = false
@@ -250,9 +387,9 @@ struct ScanFlowView: View {
     var body: some View {
         Group {
             if let found {
-                ProductAmountView(product: found, done: done)
+                ProductAmountView(product: found, preset: meal, done: done)
             } else if addingByHand {
-                ManualFoodView(done: done)
+                ManualFoodView(preset: meal, done: done)
             } else {
                 scanner
             }
@@ -392,6 +529,7 @@ struct BarcodeScanner: UIViewControllerRepresentable {
 struct ProductAmountView: View {
     @Environment(KitchenModel.self) private var kitchen
     let product: FoodProduct
+    var preset: FoodMeal? = nil
     let done: () -> Void
     @State private var gramsText = ""
     @State private var meal: FoodMeal = .evening
@@ -484,7 +622,7 @@ struct ProductAmountView: View {
         }
         .onAppear {
             if gramsText.isEmpty { gramsText = clean(product.servingGrams ?? 100) }
-            meal = FoodMeal.likely(hour: kitchen.calendar.component(.hour, from: kitchen.now()))
+            meal = preset ?? FoodMeal.likely(hour: kitchen.calendar.component(.hour, from: kitchen.now()))
         }
     }
 
@@ -511,6 +649,7 @@ private struct AmountChip: View {
 
 struct ManualFoodView: View {
     @Environment(KitchenModel.self) private var kitchen
+    var preset: FoodMeal? = nil
     let done: () -> Void
     @State private var name = ""
     @State private var kcal = ""
@@ -556,7 +695,7 @@ struct ManualFoodView: View {
                 .disabled(macros.kcal <= 0)
             }
         }
-        .onAppear { meal = FoodMeal.likely(hour: kitchen.calendar.component(.hour, from: kitchen.now())) }
+        .onAppear { meal = preset ?? FoodMeal.likely(hour: kitchen.calendar.component(.hour, from: kitchen.now())) }
     }
 }
 

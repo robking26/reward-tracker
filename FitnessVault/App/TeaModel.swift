@@ -181,6 +181,12 @@ final class TeaModel {
             .sorted { liked.contains($0.id) == liked.contains($1.id) ? $0.title < $1.title : liked.contains($0.id) }
     }
 
+    /// Your tea on a night, if one's planned and you're eating.
+    func plannedTea(on day: DayKey) -> TeaRecipe? {
+        guard let week = currentWeek, diner(on: day).includesRob else { return nil }
+        return recipe(week.meals[day.description])
+    }
+
     /// Tonight's slow cooker tea, as a morning routine item: it goes on in the morning.
     func slowCookerPrep(on day: DayKey) -> RoutineItem? {
         guard let week = currentWeek, diner(on: day) != .notCooking,
