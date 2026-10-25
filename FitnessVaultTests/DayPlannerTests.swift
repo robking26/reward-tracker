@@ -103,7 +103,11 @@ final class DayPlannerTests: XCTestCase {
     var london: Calendar { helper.london }
     var monday: DayKey { helper.monday }
 
-    private func place(_ name: String) -> SavedPlace { SavedPlace(name: name, coordinate: .bolton) }
+    /// Each place somewhere of its own, so the gym and pool aren't taken for one building.
+    private func place(_ name: String) -> SavedPlace {
+        let offset = Double(TeaPlanner.stableHash(name) % 50) / 100
+        return SavedPlace(name: name, coordinate: Coordinate(latitude: 53.2 + offset, longitude: -2.43))
+    }
 
     private func settings(gym: Int = 3, swims: Int = 1, runs: Int = 2) -> PlannerSettings {
         var settings = PlannerSettings()
