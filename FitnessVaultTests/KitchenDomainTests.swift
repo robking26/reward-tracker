@@ -83,13 +83,13 @@ final class KitchenDomainTests: XCTestCase {
         XCTAssertEqual(estimate.value, list.filter { !$0.checkFirst }.reduce(0) { $0 + $1.pricePence })
     }
 
-    func testBreakfastListCoversSevenPortions() {
+    func testBreakfastListCoversFiveWeekdays() {
         let shake = MealCycle.meal(.breakfast, week: 4)
         let list = CycleShopping.list(for: shake)
-        // 7 × 120 g of banana is 7 bananas: two packs of five.
-        XCTAssertEqual(list.first { $0.foodID == "bananas" }?.needed, "7 bananas")
-        XCTAssertEqual(list.first { $0.foodID == "bananas" }?.packs, "2 × pack of 5")
-        // 7 × 300 ml of milk is 2.1 litres: one 2,272 ml bottle.
+        // Monday to Friday: 5 × 120 g of banana is 5 bananas, one pack of five.
+        XCTAssertEqual(list.first { $0.foodID == "bananas" }?.needed, "5 bananas")
+        XCTAssertEqual(list.first { $0.foodID == "bananas" }?.packs, "pack of 5")
+        // 5 × 300 ml of milk is 1.5 litres: one 2,272 ml bottle.
         XCTAssertEqual(list.first { $0.foodID == "milk" }?.packs, "2.3 l")
     }
 
